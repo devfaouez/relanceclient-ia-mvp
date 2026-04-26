@@ -1,0 +1,131 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  prospects Prospect[]
+  templates ReminderTemplate[]
+  approvals Reminder[] @relation("ReminderApprovedBy")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Prospect {
+  id        String         @id @default(cuid())
+  userId    String
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  email     String?
+  phone     String?
+  company   String?
+  status    ProspectStatus @default(NEW)
+  quotes    Quote[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([userId])
+}
+
+model Quote {
+  id          String      @id @default(cuid())
+  prospectId  String
+  prospect    Prospect    @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  quoteNumber String?
+  title       String
+  amount      Decimal?
+  currency    String      @default("EUR")
+  status      QuoteStatus @default(DRAFT)
+  sentAt      DateTime?
+  acceptedAt  DateTime?
+  rejectedAt  DateTime?
+  reminders   Reminder[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([prospectId])
+  @@index([status])
+}
+
+model Reminder {
+  id                    String         @id @default(cuid())
+  quoteId               String
+  quote                 Quote          @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  templateId            String?
+  template              ReminderTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  approvedById          String?
+  approvedBy            User?          @relation("ReminderApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  subject               String
+  body                  String
+  status                ReminderStatus @default(DRAFT)
+  requiresHumanApproval Boolean        @default(true)
+  approvedAt            DateTime?
+  scheduledAt           DateTime?
+  sentAt                DateTime?
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+
+  @@index([quoteId])
+  @@index([templateId])
+  @@index([approvedById])
+  @@index([status])
+}
+
+model ReminderTemplate {
+  id        String     @id @default(cuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  subject   String
+  body      String
+  status    TemplateStatus @default(ACTIVE)
+  reminders Reminder[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@unique([userId, name])
+}
+
+enum ProspectStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  WON
+  LOST
+  ARCHIVED
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+  EXPIRED
+  CANCELLED
+}
+
+enum ReminderStatus {
+  DRAFT
+  PENDING_APPROVAL
+  APPROVED
+  SCHEDULED
+  SENT
+  CANCELLED
+  FAILED
+}
+
+enum TemplateStatus {
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
