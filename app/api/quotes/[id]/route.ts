@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { updateProspectSchema } from "@/lib/validations";
+import { updateQuoteSchema } from "@/lib/validations";
 
 // TODO: Replace with authenticated user ID from Supabase session
 const DEMO_USER_ID = "demo-user-id";
@@ -8,15 +8,15 @@ const DEMO_USER_ID = "demo-user-id";
 type RouteContext = { params: { id: string } };
 
 export async function GET(_request: NextRequest, { params }: RouteContext) {
-  const prospect = await prisma.prospect.findFirst({
-    where: { id: params.id, userId: DEMO_USER_ID },
+  const quote = await prisma.quote.findFirst({
+    where: { id: params.id, prospect: { userId: DEMO_USER_ID } },
   });
 
-  if (!prospect) {
+  if (!quote) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  return NextResponse.json(prospect);
+  return NextResponse.json(quote);
 }
 
 export async function PATCH(request: NextRequest, { params }: RouteContext) {
@@ -27,7 +27,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const parsed = updateProspectSchema.safeParse(body);
+  const parsed = updateQuoteSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
       { error: "Validation error", details: parsed.error.flatten() },
@@ -35,32 +35,32 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     );
   }
 
-  const existing = await prisma.prospect.findFirst({
-    where: { id: params.id, userId: DEMO_USER_ID },
+  const existing = await prisma.quote.findFirst({
+    where: { id: params.id, prospect: { userId: DEMO_USER_ID } },
   });
 
   if (!existing) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const prospect = await prisma.prospect.update({
+  const quote = await prisma.quote.update({
     where: { id: params.id },
     data: parsed.data,
   });
 
-  return NextResponse.json(prospect);
+  return NextResponse.json(quote);
 }
 
 export async function DELETE(_request: NextRequest, { params }: RouteContext) {
-  const existing = await prisma.prospect.findFirst({
-    where: { id: params.id, userId: DEMO_USER_ID },
+  const existing = await prisma.quote.findFirst({
+    where: { id: params.id, prospect: { userId: DEMO_USER_ID } },
   });
 
   if (!existing) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  await prisma.prospect.delete({ where: { id: params.id } });
+  await prisma.quote.delete({ where: { id: params.id } });
 
   return new NextResponse(null, { status: 204 });
 }
