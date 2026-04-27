@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { resend } from "@/lib/resend";
+import { requireCurrentUser } from "@/lib/auth";
 import { sendReminderSchema } from "@/lib/validations";
 import { ReminderStatus } from "@prisma/client";
 
-// TODO: Replace with authenticated user ID from Supabase session
-const DEMO_USER_ID = "demo-user-id";
-
 export async function POST(request: NextRequest) {
+  let user;
+  try {
+    user = await requireCurrentUser();
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   let body: unknown;
   try {
     body = await request.json();
@@ -26,7 +31,7 @@ export async function POST(request: NextRequest) {
   const reminder = await prisma.reminder.findFirst({
     where: {
       id: parsed.data.reminderId,
-      quote: { prospect: { userId: DEMO_USER_ID } },
+      quote: { prospect: { userId: user.id } },
     },
     include: {
       quote: { include: { prospect: true } },
@@ -75,7 +80,9 @@ export async function POST(request: NextRequest) {
 
   const { error: sendError } = await resend.emails.send({
     // TODO: Set RESEND_FROM_EMAIL env var to a verified sender domain
-    from: process.env.RESEND_FROM_EMAIL ?? "RelanceClient IA <onboarding@resend.dev>",
+    from:
+      process.env.RESEND_FROM_EMAIL ??
+      "RelanceClient IA <onboarding@resend.dev>",
     to: prospectEmail,
     subject: reminder.subject,
     text: reminder.body,

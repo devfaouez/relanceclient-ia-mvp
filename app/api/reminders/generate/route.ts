@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireCurrentUser } from "@/lib/auth";
 import { generateReminderSchema } from "@/lib/validations";
 import { ReminderStatus } from "@prisma/client";
-
-// TODO: Replace with authenticated user ID from Supabase session
-const DEMO_USER_ID = "demo-user-id";
 
 function buildBody(
   prospectName: string,
@@ -28,6 +26,13 @@ L'équipe RelanceClient IA`;
 }
 
 export async function POST(request: NextRequest) {
+  let user;
+  try {
+    user = await requireCurrentUser();
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   let body: unknown;
   try {
     body = await request.json();
@@ -46,7 +51,7 @@ export async function POST(request: NextRequest) {
   const quote = await prisma.quote.findFirst({
     where: {
       id: parsed.data.quoteId,
-      prospect: { userId: DEMO_USER_ID },
+      prospect: { userId: user.id },
     },
     include: { prospect: true },
   });

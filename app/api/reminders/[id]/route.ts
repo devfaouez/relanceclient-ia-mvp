@@ -1,21 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireCurrentUser } from "@/lib/auth";
 import { updateReminderSchema } from "@/lib/validations";
 import { ReminderStatus } from "@prisma/client";
 
-// TODO: Replace with authenticated user ID from Supabase session
-const DEMO_USER_ID = "demo-user-id";
-
 type RouteContext = { params: { id: string } };
 
-const ownershipFilter = (id: string) => ({
-  id,
-  quote: { prospect: { userId: DEMO_USER_ID } },
-});
-
 export async function GET(_request: NextRequest, { params }: RouteContext) {
+  let user;
+  try {
+    user = await requireCurrentUser();
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const reminder = await prisma.reminder.findFirst({
-    where: ownershipFilter(params.id),
+    where: { id: params.id, quote: { prospect: { userId: user.id } } },
   });
 
   if (!reminder) {
@@ -26,6 +26,13 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
 }
 
 export async function PATCH(request: NextRequest, { params }: RouteContext) {
+  let user;
+  try {
+    user = await requireCurrentUser();
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   let body: unknown;
   try {
     body = await request.json();
@@ -42,7 +49,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
   }
 
   const existing = await prisma.reminder.findFirst({
-    where: ownershipFilter(params.id),
+    where: { id: params.id, quote: { prospect: { userId: user.id } } },
   });
 
   if (!existing) {
@@ -51,7 +58,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
   const approvalFields =
     parsed.data.status === ReminderStatus.APPROVED
-      ? { approvedById: DEMO_USER_ID, approvedAt: new Date() }
+      ? { approvedById: user.id, approvedAt: new Date() }
       : {};
 
   const reminder = await prisma.reminder.update({

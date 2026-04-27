@@ -1,15 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireCurrentUser } from "@/lib/auth";
 import { updateQuoteSchema } from "@/lib/validations";
-
-// TODO: Replace with authenticated user ID from Supabase session
-const DEMO_USER_ID = "demo-user-id";
 
 type RouteContext = { params: { id: string } };
 
 export async function GET(_request: NextRequest, { params }: RouteContext) {
+  let user;
+  try {
+    user = await requireCurrentUser();
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const quote = await prisma.quote.findFirst({
-    where: { id: params.id, prospect: { userId: DEMO_USER_ID } },
+    where: { id: params.id, prospect: { userId: user.id } },
   });
 
   if (!quote) {
@@ -20,6 +25,13 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
 }
 
 export async function PATCH(request: NextRequest, { params }: RouteContext) {
+  let user;
+  try {
+    user = await requireCurrentUser();
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   let body: unknown;
   try {
     body = await request.json();
@@ -36,7 +48,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
   }
 
   const existing = await prisma.quote.findFirst({
-    where: { id: params.id, prospect: { userId: DEMO_USER_ID } },
+    where: { id: params.id, prospect: { userId: user.id } },
   });
 
   if (!existing) {
@@ -52,8 +64,15 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 }
 
 export async function DELETE(_request: NextRequest, { params }: RouteContext) {
+  let user;
+  try {
+    user = await requireCurrentUser();
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const existing = await prisma.quote.findFirst({
-    where: { id: params.id, prospect: { userId: DEMO_USER_ID } },
+    where: { id: params.id, prospect: { userId: user.id } },
   });
 
   if (!existing) {

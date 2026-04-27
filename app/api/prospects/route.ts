@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireCurrentUser } from "@/lib/auth";
 import { createProspectSchema } from "@/lib/validations";
 
-// TODO: Replace with authenticated user ID from Supabase session
-const DEMO_USER_ID = "demo-user-id";
-
 export async function GET() {
+  let user;
+  try {
+    user = await requireCurrentUser();
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const prospects = await prisma.prospect.findMany({
-    where: { userId: DEMO_USER_ID },
+    where: { userId: user.id },
     orderBy: { createdAt: "desc" },
   });
 
@@ -15,6 +20,13 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  let user;
+  try {
+    user = await requireCurrentUser();
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   let body: unknown;
   try {
     body = await request.json();
@@ -30,8 +42,15 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Ensure the Prisma User record exists for this Supabase user
+  await prisma.user.upsert({
+    where: { id: user.id },
+    create: { id: user.id, email: user.email! },
+    update: {},
+  });
+
   const prospect = await prisma.prospect.create({
-    data: { ...parsed.data, userId: DEMO_USER_ID },
+    data: { ...parsed.data, userId: user.id },
   });
 
   return NextResponse.json(prospect, { status: 201 });

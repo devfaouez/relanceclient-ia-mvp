@@ -1,14 +1,19 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-
-// TODO: Replace with authenticated user ID from Supabase session
-const DEMO_USER_ID = "demo-user-id";
+import { requireCurrentUser } from "@/lib/auth";
 
 export async function GET() {
+  let user;
+  try {
+    user = await requireCurrentUser();
+  } catch {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const reminders = await prisma.reminder.findMany({
     where: {
       quote: {
-        prospect: { userId: DEMO_USER_ID },
+        prospect: { userId: user.id },
       },
     },
     orderBy: { createdAt: "desc" },
