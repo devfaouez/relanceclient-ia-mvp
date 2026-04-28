@@ -13,10 +13,18 @@ export function createClient() {
           return cookieStore.get(name)?.value;
         },
         set(name: string, value: string, options: CookieOptions) {
-          cookieStore.set({ name, value, ...options });
+          try {
+            cookieStore.set({ name, value, ...options });
+          } catch {
+            // Server Components cannot write cookies; Route Handlers and Server Actions can.
+          }
         },
         remove(name: string, options: CookieOptions) {
-          cookieStore.set({ name, value: "", ...options });
+          try {
+            cookieStore.set({ name, value: "", ...options });
+          } catch {
+            // Server Components cannot write cookies; Route Handlers and Server Actions can.
+          }
         }
       }
     }
