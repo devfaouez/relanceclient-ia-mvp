@@ -4,6 +4,8 @@ import { requireCurrentUser } from "@/lib/auth";
 import { generateReminderSchema } from "@/lib/validations";
 import { ReminderStatus } from "@prisma/client";
 
+export const dynamic = "force-dynamic";
+
 function buildBody(
   prospectName: string,
   quoteTitle: string,

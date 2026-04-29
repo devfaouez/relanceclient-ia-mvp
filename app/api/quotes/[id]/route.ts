@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { requireCurrentUser } from "@/lib/auth";
 import { updateQuoteSchema } from "@/lib/validations";
 
+export const dynamic = "force-dynamic";
+
 type RouteContext = { params: { id: string } };
 
 export async function GET(_request: NextRequest, { params }: RouteContext) {

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { requireCurrentUser } from "@/lib/auth";
 
+export const dynamic = "force-dynamic";
+
 function maskEmailAddress(value: string) {
   const [localPart, domain] = value.split("@");
   if (!localPart || !domain) return "Configuré";

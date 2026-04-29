@@ -4,6 +4,8 @@ import { requireCurrentUser } from "@/lib/auth";
 import { updateReminderSchema } from "@/lib/validations";
 import { ReminderStatus } from "@prisma/client";
 
+export const dynamic = "force-dynamic";
+
 type RouteContext = { params: { id: string } };
 
 export async function GET(_request: NextRequest, { params }: RouteContext) {
