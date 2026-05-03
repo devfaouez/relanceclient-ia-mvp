@@ -46,14 +46,13 @@ export async function POST(request: NextRequest) {
 
   try {
     // Ensure the Prisma User record exists for this Supabase user
-    await prisma.user.upsert({
-      where: { id: user.id },
+    const dbUser = await prisma.user.upsert({
+      where: { email: user.email! },
       create: { id: user.id, email: user.email! },
       update: {},
     });
-
     const prospect = await prisma.prospect.create({
-      data: { ...parsed.data, userId: user.id },
+      data: { ...parsed.data, userId: dbUser.id },
     });
 
     return NextResponse.json(prospect, { status: 201 });
