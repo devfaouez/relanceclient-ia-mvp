@@ -44,16 +44,28 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Ensure the Prisma User record exists for this Supabase user
-  await prisma.user.upsert({
-    where: { id: user.id },
-    create: { id: user.id, email: user.email! },
-    update: {},
-  });
+  try {
+    // Ensure the Prisma User record exists for this Supabase user
+    await prisma.user.upsert({
+      where: { id: user.id },
+      create: { id: user.id, email: user.email! },
+      update: {},
+    });
 
-  const prospect = await prisma.prospect.create({
-    data: { ...parsed.data, userId: user.id },
-  });
+    const prospect = await prisma.prospect.create({
+      data: { ...parsed.data, userId: user.id },
+    });
 
-  return NextResponse.json(prospect, { status: 201 });
+    return NextResponse.json(prospect, { status: 201 });
+  } catch (error) {
+    console.error("PROSPECT_CREATE_ERROR:", error);
+
+    return NextResponse.json(
+      {
+        error: "Prospect creation error",
+        message: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 }
+    );
+  }
 }
