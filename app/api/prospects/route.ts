@@ -13,8 +13,16 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const dbUser = await prisma.user.findUnique({
+    where: { email: user.email! },
+  });
+
+  if (!dbUser) {
+    return NextResponse.json([]);
+  }
+
   const prospects = await prisma.prospect.findMany({
-    where: { userId: user.id },
+    where: { userId: dbUser.id },
     orderBy: { createdAt: "desc" },
   });
 
@@ -45,12 +53,12 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // Ensure the Prisma User record exists for this Supabase user
     const dbUser = await prisma.user.upsert({
       where: { email: user.email! },
       create: { id: user.id, email: user.email! },
       update: {},
     });
+
     const prospect = await prisma.prospect.create({
       data: { ...parsed.data, userId: dbUser.id },
     });
