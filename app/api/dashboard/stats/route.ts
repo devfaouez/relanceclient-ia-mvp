@@ -9,6 +9,21 @@ export async function GET() {
   try {
     const user = await requireCurrentUser();
 
+    const dbUser = await prisma.user.findUnique({
+      where: { email: user.email! },
+    });
+
+    if (!dbUser) {
+      return NextResponse.json({
+        totalProspects: 0,
+        totalQuotes: 0,
+        pendingReminders: 0,
+        sentReminders: 0,
+        latestProspects: [],
+        latestPendingReminders: [],
+      });
+    }
+
     const [
       totalProspects,
       totalQuotes,
@@ -18,25 +33,25 @@ export async function GET() {
       latestPendingReminders,
     ] = await Promise.all([
       prisma.prospect.count({
-        where: { userId: user.id },
+        where: { userId: dbUser.id },
       }),
       prisma.quote.count({
-        where: { prospect: { userId: user.id } },
+        where: { prospect: { userId: dbUser.id } },
       }),
       prisma.reminder.count({
         where: {
           status: ReminderStatus.PENDING_APPROVAL,
-          quote: { prospect: { userId: user.id } },
+          quote: { prospect: { userId: dbUser.id } },
         },
       }),
       prisma.reminder.count({
         where: {
           status: ReminderStatus.SENT,
-          quote: { prospect: { userId: user.id } },
+          quote: { prospect: { userId: dbUser.id } },
         },
       }),
       prisma.prospect.findMany({
-        where: { userId: user.id },
+        where: { userId: dbUser.id },
         orderBy: { createdAt: "desc" },
         take: 5,
         select: {
@@ -52,7 +67,7 @@ export async function GET() {
       prisma.reminder.findMany({
         where: {
           status: ReminderStatus.PENDING_APPROVAL,
-          quote: { prospect: { userId: user.id } },
+          quote: { prospect: { userId: dbUser.id } },
         },
         orderBy: { createdAt: "desc" },
         take: 5,
