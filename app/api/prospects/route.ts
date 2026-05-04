@@ -1,115 +1,84 @@
-import { NextResponse } from "next/server";
-import { ReminderStatus } from "@prisma/client";
-import { requireCurrentUser } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import {
+  requireCurrentUserWithDb,
+  UnauthorizedError,
+} from "@/lib/auth";
+import { createProspectSchema } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const user = await requireCurrentUser();
+    const { dbUser } = await requireCurrentUserWithDb();
 
-    const dbUser = await prisma.user.findUnique({
-      where: { email: user.email! },
+    const prospects = await prisma.prospect.findMany({
+      where: { userId: dbUser.id },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        company: true,
+        status: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
 
-    if (!dbUser) {
-      return NextResponse.json({
-        totalProspects: 0,
-        totalQuotes: 0,
-        pendingReminders: 0,
-        sentReminders: 0,
-        latestProspects: [],
-        latestPendingReminders: [],
-      });
+    return NextResponse.json(prospects);
+  } catch (error) {
+    if (error instanceof UnauthorizedError) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    console.error("PROSPECTS_LIST_ERROR:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const { dbUser } = await requireCurrentUserWithDb();
+
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
     }
 
-    const [
-      totalProspects,
-      totalQuotes,
-      pendingReminders,
-      sentReminders,
-      latestProspects,
-      latestPendingReminders,
-    ] = await Promise.all([
-      prisma.prospect.count({
-        where: { userId: dbUser.id },
-      }),
-      prisma.quote.count({
-        where: { prospect: { userId: dbUser.id } },
-      }),
-      prisma.reminder.count({
-        where: {
-          status: ReminderStatus.PENDING_APPROVAL,
-          quote: { prospect: { userId: dbUser.id } },
-        },
-      }),
-      prisma.reminder.count({
-        where: {
-          status: ReminderStatus.SENT,
-          quote: { prospect: { userId: dbUser.id } },
-        },
-      }),
-      prisma.prospect.findMany({
-        where: { userId: dbUser.id },
-        orderBy: { createdAt: "desc" },
-        take: 5,
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          phone: true,
-          company: true,
-          status: true,
-          createdAt: true,
-        },
-      }),
-      prisma.reminder.findMany({
-        where: {
-          status: ReminderStatus.PENDING_APPROVAL,
-          quote: { prospect: { userId: dbUser.id } },
-        },
-        orderBy: { createdAt: "desc" },
-        take: 5,
-        select: {
-          id: true,
-          subject: true,
-          createdAt: true,
-          quote: {
-            select: {
-              id: true,
-              title: true,
-              quoteNumber: true,
-              prospect: {
-                select: {
-                  id: true,
-                  name: true,
-                  email: true,
-                  company: true,
-                },
-              },
-            },
-          },
-        },
-      }),
-    ]);
+    const parsed = createProspectSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Validation error", details: parsed.error.flatten() },
+        { status: 422 }
+      );
+    }
 
-    return NextResponse.json({
-      totalProspects,
-      totalQuotes,
-      pendingReminders,
-      sentReminders,
-      latestProspects,
-      latestPendingReminders,
-    });
+    const data: Prisma.ProspectUncheckedCreateInput = {
+      userId: dbUser.id,
+      name: parsed.data.name,
+      email: parsed.data.email ?? null,
+      phone: parsed.data.phone ?? null,
+      company: parsed.data.company ?? null,
+      ...(parsed.data.status ? { status: parsed.data.status } : {}),
+    };
+
+    const prospect = await prisma.prospect.create({ data });
+
+    return NextResponse.json(prospect, { status: 201 });
   } catch (error) {
-    console.error("DASHBOARD_STATS_ERROR:", error);
-
+    if (error instanceof UnauthorizedError) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    console.error("PROSPECTS_CREATE_ERROR:", error);
     return NextResponse.json(
-      {
-        error: "Dashboard stats error",
-        message: error instanceof Error ? error.message : String(error),
-      },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

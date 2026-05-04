@@ -1,28 +1,16 @@
 import { NextResponse } from "next/server";
 import { ReminderStatus } from "@prisma/client";
-import { requireCurrentUser } from "@/lib/auth";
+import {
+  requireCurrentUserWithDb,
+  UnauthorizedError,
+} from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const user = await requireCurrentUser();
-
-    const dbUser = await prisma.user.findUnique({
-      where: { email: user.email! },
-    });
-
-    if (!dbUser) {
-      return NextResponse.json({
-        totalProspects: 0,
-        totalQuotes: 0,
-        pendingReminders: 0,
-        sentReminders: 0,
-        latestProspects: [],
-        latestPendingReminders: [],
-      });
-    }
+    const { dbUser } = await requireCurrentUserWithDb();
 
     const [
       totalProspects,
@@ -103,13 +91,12 @@ export async function GET() {
       latestPendingReminders,
     });
   } catch (error) {
+    if (error instanceof UnauthorizedError) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     console.error("DASHBOARD_STATS_ERROR:", error);
-
     return NextResponse.json(
-      {
-        error: "Dashboard stats error",
-        message: error instanceof Error ? error.message : String(error),
-      },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
