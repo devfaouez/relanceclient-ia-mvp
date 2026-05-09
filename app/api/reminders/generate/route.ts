@@ -1,34 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import {
   requireCurrentUserWithDb,
   UnauthorizedError,
 } from "@/lib/auth";
 import { generateReminderSchema } from "@/lib/validations";
-import { ReminderStatus } from "@prisma/client";
+import {
+  generateReminderWithAi,
+  AiQuotaExceededError,
+  AiGenerationError,
+} from "@/lib/ai/reminder-generator";
 
 export const dynamic = "force-dynamic";
-
-function buildBody(
-  prospectName: string,
-  quoteTitle: string,
-  amount: { toString(): string } | null,
-  currency: string
-): string {
-  const amountPart = amount
-    ? ` d'un montant de ${amount.toString()} ${currency}`
-    : "";
-  return `Bonjour,
-
-Nous nous permettons de vous relancer au sujet du devis « ${quoteTitle} »${amountPart} établi pour ${prospectName}.
-
-Sans retour de votre part, nous souhaitions savoir si vous avez des questions ou si vous souhaitez donner suite à cette proposition.
-
-Nous restons à votre disposition pour tout renseignement complémentaire.
-
-Cordialement,
-L'équipe RelanceClient IA`;
-}
+export const maxDuration = 30;
 
 export async function POST(request: NextRequest) {
   try {
@@ -49,52 +32,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const quote = await prisma.quote.findFirst({
-      where: {
-        id: parsed.data.quoteId,
-        prospect: { userId: dbUser.id },
-      },
-      include: { prospect: true },
-    });
-
-    if (!quote) {
-      return NextResponse.json({ error: "Quote not found" }, { status: 404 });
-    }
-
-    // Vérifier que le template appartient bien à l'utilisateur (si fourni)
-    if (parsed.data.templateId) {
-      const template = await prisma.reminderTemplate.findFirst({
-        where: { id: parsed.data.templateId, userId: dbUser.id },
-        select: { id: true },
-      });
-      if (!template) {
-        return NextResponse.json(
-          { error: "Template not found" },
-          { status: 404 }
-        );
-      }
-    }
-
-    const reminder = await prisma.reminder.create({
-      data: {
-        quoteId: quote.id,
-        templateId: parsed.data.templateId ?? null,
-        subject: "Relance concernant votre devis",
-        body: buildBody(
-          quote.prospect.name,
-          quote.title,
-          quote.amount,
-          quote.currency
-        ),
-        status: ReminderStatus.PENDING_APPROVAL,
-        requiresHumanApproval: true,
-      },
+    const reminder = await generateReminderWithAi({
+      userId: dbUser.id,
+      quoteId: parsed.data.quoteId,
+      templateId: parsed.data.templateId ?? null,
+      userNote: parsed.data.userNote ?? null,
+      toneOverride: parsed.data.tone,
     });
 
     return NextResponse.json(reminder, { status: 201 });
   } catch (error) {
     if (error instanceof UnauthorizedError) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (error instanceof AiQuotaExceededError) {
+      return NextResponse.json(
+        { error: "AI daily quota exceeded", limit: error.limit },
+        { status: 429 }
+      );
+    }
+    if (error instanceof AiGenerationError) {
+      console.error("AI_GENERATION_ERROR:", error, error.cause);
+      return NextResponse.json(
+        { error: "AI generation failed" },
+        { status: 502 }
+      );
     }
     console.error("REMINDER_GENERATE_ERROR:", error);
     return NextResponse.json(

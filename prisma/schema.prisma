@@ -9,14 +9,16 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  prospects Prospect[]
-  templates ReminderTemplate[]
-  approvals Reminder[] @relation("ReminderApprovedBy")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  preferences UserPreferences?
+  aiUsages    AiUsage[]
+  id          String             @id @default(cuid())
+  email       String             @unique
+  name        String?
+  prospects   Prospect[]
+  templates   ReminderTemplate[]
+  approvals   Reminder[]         @relation("ReminderApprovedBy")
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
 }
 
 model Prospect {
@@ -56,22 +58,26 @@ model Quote {
 }
 
 model Reminder {
-  id                    String         @id @default(cuid())
+  iteration             Int               @default(1)
+  generatedByAi         Boolean           @default(false)
+  aiModel               String?
+  aiPromptVersion       String?
+  id                    String            @id @default(cuid())
   quoteId               String
-  quote                 Quote          @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  quote                 Quote             @relation(fields: [quoteId], references: [id], onDelete: Cascade)
   templateId            String?
   template              ReminderTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
   approvedById          String?
-  approvedBy            User?          @relation("ReminderApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  approvedBy            User?             @relation("ReminderApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
   subject               String
   body                  String
-  status                ReminderStatus @default(DRAFT)
-  requiresHumanApproval Boolean        @default(true)
+  status                ReminderStatus    @default(DRAFT)
+  requiresHumanApproval Boolean           @default(true)
   approvedAt            DateTime?
   scheduledAt           DateTime?
   sentAt                DateTime?
-  createdAt             DateTime       @default(now())
-  updatedAt             DateTime       @updatedAt
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
 
   @@index([quoteId])
   @@index([templateId])
@@ -80,20 +86,20 @@ model Reminder {
 }
 
 model ReminderTemplate {
-  id        String     @id @default(cuid())
+  id        String         @id @default(cuid())
   userId    String
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   name      String
   subject   String
   body      String
   status    TemplateStatus @default(ACTIVE)
   reminders Reminder[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
 
+  @@unique([userId, name])
   @@index([userId])
   @@index([status])
-  @@unique([userId, name])
 }
 
 enum ProspectStatus {
@@ -128,4 +134,50 @@ enum TemplateStatus {
   ACTIVE
   INACTIVE
   ARCHIVED
+}
+
+model UserPreferences {
+  id             String       @id @default(cuid())
+  userId         String       @unique
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessName   String?
+  trade          Trade?
+  defaultTone    ReminderTone @default(PROFESSIONAL)
+  signatureBlock String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model AiUsage {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  feature      String
+  inputTokens  Int
+  outputTokens Int
+  costEur      Decimal  @db.Decimal(10, 6)
+  reminderId   String?
+  createdAt    DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+enum Trade {
+  PLOMBIER
+  ELECTRICIEN
+  MACON
+  CARRELEUR
+  MENUISIER
+  PEINTRE
+  PAYSAGISTE
+  CHAUFFAGISTE
+  COUVREUR
+  AUTRE
+}
+
+enum ReminderTone {
+  FORMAL
+  PROFESSIONAL
+  FRIENDLY
+  DIRECT
 }

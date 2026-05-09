@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ProspectStatus, QuoteStatus, ReminderStatus } from "@prisma/client";
+import { ProspectStatus, QuoteStatus, ReminderStatus, ReminderTone } from "@prisma/client";
 
 export const envSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),
@@ -36,6 +36,8 @@ export const updateQuoteSchema = createQuoteSchema.partial();
 export const generateReminderSchema = z.object({
   quoteId: z.string().min(1),
   templateId: z.string().nullish(),
+  userNote: z.string().trim().max(500).nullish(),
+  tone: z.nativeEnum(ReminderTone).optional(),
 });
 
 export const updateReminderSchema = z.object({
