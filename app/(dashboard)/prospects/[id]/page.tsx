@@ -49,6 +49,25 @@ const REMINDER_TONES = [
   { value: "DIRECT", label: "Direct" },
 ] as const;
 
+const QUOTE_STATUS_LABELS: Record<string, string> = {
+  DRAFT: "Brouillon",
+  SENT: "Envoyé",
+  ACCEPTED: "Accepté",
+  REJECTED: "Refusé",
+  EXPIRED: "Expiré",
+  CANCELLED: "Annulé",
+};
+
+const REMINDER_STATUS_LABELS: Record<string, string> = {
+  DRAFT: "Brouillon",
+  PENDING_APPROVAL: "À approuver",
+  APPROVED: "Approuvée",
+  SCHEDULED: "Programmée",
+  SENT: "Envoyée",
+  CANCELLED: "Annulée",
+  FAILED: "Échec",
+};
+
 type ReminderTone = (typeof REMINDER_TONES)[number]["value"];
 
 type GenerateReminderModalState = {
@@ -422,7 +441,7 @@ export default function ProspectDetailPage({
                     </td>
                     <td className="px-4 py-3">
                       <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
-                        {q.status}
+                        {QUOTE_STATUS_LABELS[q.status] ?? q.status}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
@@ -547,7 +566,7 @@ export default function ProspectDetailPage({
 
                     <div className="flex shrink-0 flex-col items-end gap-2">
                       <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
-                        {r.status}
+                        {REMINDER_STATUS_LABELS[r.status] ?? r.status}
                       </span>
 
                       {editingReminderId === r.id ? (
@@ -764,7 +783,7 @@ export default function ProspectDetailPage({
             >
               {QUOTE_STATUSES.map((s) => (
                 <option key={s} value={s}>
-                  {s}
+                  {QUOTE_STATUS_LABELS[s] ?? s}
                 </option>
               ))}
             </select>
