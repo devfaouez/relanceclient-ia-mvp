@@ -42,6 +42,20 @@ const QUOTE_STATUSES = [
   "CANCELLED",
 ];
 
+const REMINDER_TONES = [
+  { value: "PROFESSIONAL", label: "Professionnel" },
+  { value: "FORMAL", label: "Formel" },
+  { value: "FRIENDLY", label: "Chaleureux" },
+  { value: "DIRECT", label: "Direct" },
+] as const;
+
+type ReminderTone = (typeof REMINDER_TONES)[number]["value"];
+
+type GenerateReminderModalState = {
+  quoteId: string;
+  quoteTitle: string;
+} | null;
+
 function fmt(date: string | null) {
   if (!date) return "—";
   return new Date(date).toLocaleDateString("fr-FR");
@@ -73,6 +87,13 @@ export default function ProspectDetailPage({
   // Reminder actions
   const [reminderError, setReminderError] = useState<string | null>(null);
   const [pending, setPending] = useState<Set<string>>(new Set());
+
+  // AI generation modal
+  const [generateModal, setGenerateModal] =
+    useState<GenerateReminderModalState>(null);
+  const [generateTone, setGenerateTone] =
+    useState<ReminderTone>("PROFESSIONAL");
+  const [generateNote, setGenerateNote] = useState("");
 
   const addPending = (key: string) =>
     setPending((prev) => new Set(prev).add(key));
@@ -154,15 +175,23 @@ export default function ProspectDetailPage({
     fetchQuotes();
   }
 
-  async function handleGenerateReminder(quoteId: string) {
+  async function handleGenerateReminder(e: React.FormEvent) {
+    e.preventDefault();
+
+    if (!generateModal) return;
+
     setReminderError(null);
-    const key = `gen-${quoteId}`;
+    const key = `gen-${generateModal.quoteId}`;
     addPending(key);
 
     const res = await fetch("/api/reminders/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ quoteId }),
+      body: JSON.stringify({
+        quoteId: generateModal.quoteId,
+        tone: generateTone,
+        userNote: generateNote.trim() || null,
+      }),
     });
 
     removePending(key);
@@ -175,6 +204,9 @@ export default function ProspectDetailPage({
       return;
     }
 
+    setGenerateModal(null);
+    setGenerateTone("PROFESSIONAL");
+    setGenerateNote("");
     fetchReminders();
   }
 
@@ -346,7 +378,13 @@ export default function ProspectDetailPage({
                     </td>
                     <td className="px-4 py-3 text-right">
                       <button
-                        onClick={() => handleGenerateReminder(q.id)}
+                        type="button"
+                        onClick={() =>
+                          setGenerateModal({
+                            quoteId: q.id,
+                            quoteTitle: q.title,
+                          })
+                        }
                         disabled={pending.has(`gen-${q.id}`)}
                         className="text-sm font-medium text-primary hover:underline disabled:opacity-50"
                       >
@@ -454,6 +492,83 @@ export default function ProspectDetailPage({
           </div>
         )}
       </div>
+
+      {generateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-lg rounded-lg border bg-background p-5 shadow-lg">
+            <div className="mb-4">
+              <h2 className="text-lg font-semibold">Générer une relance IA</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Devis : {generateModal.quoteTitle}
+              </p>
+            </div>
+
+            <form onSubmit={handleGenerateReminder} className="space-y-4">
+              <div>
+                <label htmlFor="generateTone" className="block text-sm font-medium">
+                  Ton de la relance
+                </label>
+                <select
+                  id="generateTone"
+                  value={generateTone}
+                  onChange={(e) =>
+                    setGenerateTone(e.target.value as ReminderTone)
+                  }
+                  className={inputClass}
+                >
+                  {REMINDER_TONES.map((tone) => (
+                    <option key={tone.value} value={tone.value}>
+                      {tone.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="generateNote" className="block text-sm font-medium">
+                  Note optionnelle pour l’IA
+                </label>
+                <textarea
+                  id="generateNote"
+                  value={generateNote}
+                  onChange={(e) => setGenerateNote(e.target.value)}
+                  rows={4}
+                  maxLength={500}
+                  placeholder="Exemple : le client m’a dit qu’il devait valider avec sa direction."
+                  className={inputClass}
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {generateNote.length}/500 caractères
+                </p>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setGenerateModal(null);
+                    setGenerateTone("PROFESSIONAL");
+                    setGenerateNote("");
+                  }}
+                  className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
+                >
+                  Annuler
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={pending.has(`gen-${generateModal.quoteId}`)}
+                  className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                >
+                  {pending.has(`gen-${generateModal.quoteId}`)
+                    ? "Génération…"
+                    : "Générer"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Formulaire d'ajout de devis */}
       <div>
