@@ -48,7 +48,16 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
 
     const quote = await prisma.quote.findFirst({
       where: { id: params.id, prospect: { userId: dbUser.id } },
-      select: { id: true },
+      select: {
+        id: true,
+        title: true,
+        amount: true,
+        _count: {
+          select: {
+            lines: true,
+          },
+        },
+      },
     });
 
     if (!quote) {
@@ -70,17 +79,36 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       );
     }
 
-    const line = await prisma.quoteLine.create({
-      data: {
-        quoteId: params.id,
-        description: parsed.data.description,
-        quantity: parsed.data.quantity,
-        unitPrice: parsed.data.unitPrice,
-        sortOrder: parsed.data.sortOrder ?? 0,
-      },
+    const shouldConvertLegacyAmount =
+      quote._count.lines === 0 && quote.amount !== null && Number(quote.amount) > 0;
+
+    const result = await prisma.$transaction(async (tx) => {
+      if (shouldConvertLegacyAmount) {
+        await tx.quoteLine.create({
+          data: {
+            quoteId: params.id,
+            description: quote.title,
+            quantity: 1,
+            unitPrice: quote.amount!,
+            sortOrder: 0,
+          },
+        });
+      }
+
+      return tx.quoteLine.create({
+        data: {
+          quoteId: params.id,
+          description: parsed.data.description,
+          quantity: parsed.data.quantity,
+          unitPrice: parsed.data.unitPrice,
+          sortOrder: shouldConvertLegacyAmount
+            ? 1
+            : parsed.data.sortOrder ?? quote._count.lines,
+        },
+      });
     });
 
-    return NextResponse.json(line, { status: 201 });
+    return NextResponse.json(result, { status: 201 });
   } catch (error) {
     if (error instanceof UnauthorizedError) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
