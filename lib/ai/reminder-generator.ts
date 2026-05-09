@@ -1,13 +1,13 @@
 import { Prisma, ReminderStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { getAnthropicClient, computeCostEur } from "./anthropic";
+import { getOpenAIClient, computeCostEur } from "./openai";
 import {
   buildReminderPrompt,
   REMINDER_PROMPT_VERSION,
   type ReminderPromptContext,
 } from "./prompts/reminder-v1";
 
-const MODEL = process.env.AI_MODEL ?? "claude-haiku-4-5-20251001";
+const MODEL = process.env.AI_MODEL ?? "gpt-5.5";
 const MAX_TOKENS = parseInt(process.env.AI_MAX_TOKENS ?? "600", 10);
 const DAILY_LIMIT = parseInt(process.env.AI_DAILY_LIMIT_PER_USER ?? "50", 10);
 
@@ -103,30 +103,48 @@ export async function generateReminderWithAi(input: GenerateReminderInput) {
 
   const { system, user } = buildReminderPrompt(ctx);
 
-  const anthropic = getAnthropicClient();
-  let response;
+  const openai = getOpenAIClient();
+  let responseText: string;
+  let inputTokens = 0;
+  let outputTokens = 0;
 
   try {
-    response = await anthropic.messages.create({
+    const response = await openai.responses.create({
       model: MODEL,
-      max_tokens: MAX_TOKENS,
-      system,
-      messages: [{ role: "user", content: user }],
+      input: [
+        {
+          role: "system",
+          content: system,
+        },
+        {
+          role: "user",
+          content: user,
+        },
+      ],
+      max_output_tokens: MAX_TOKENS,
+      text: {
+        format: {
+          type: "json_object",
+        },
+      },
     });
+
+    responseText = response.output_text;
+
+    inputTokens = response.usage?.input_tokens ?? 0;
+    outputTokens = response.usage?.output_tokens ?? 0;
   } catch (err) {
-    throw new AiGenerationError("Anthropic API call failed", err);
+    throw new AiGenerationError("OpenAI API call failed", err);
   }
 
-  const textBlock = response.content.find((b) => b.type === "text");
-
-  if (!textBlock || textBlock.type !== "text") {
+  if (!responseText) {
     throw new AiGenerationError("No text response from AI");
   }
 
   let parsed: { subject: string; body: string };
 
   try {
-    const jsonMatch = textBlock.text.match(/\{[\s\S]*\}/);
+    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       throw new Error("No JSON found in response");
     }
@@ -162,8 +180,6 @@ export async function generateReminderWithAi(input: GenerateReminderInput) {
     }
   }
 
-  const inputTokens = response.usage.input_tokens;
-  const outputTokens = response.usage.output_tokens;
   const cost = computeCostEur(inputTokens, outputTokens);
 
   const result = await prisma.$transaction(async (tx) => {
