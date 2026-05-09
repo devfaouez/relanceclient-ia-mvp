@@ -16,13 +16,32 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
 
     const quote = await prisma.quote.findFirst({
       where: { id: params.id, prospect: { userId: dbUser.id } },
+      include: {
+        prospect: true,
+      },
     });
 
     if (!quote) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    return NextResponse.json(quote);
+    const preferences = await prisma.userPreferences.findUnique({
+      where: { userId: dbUser.id },
+      select: {
+        businessName: true,
+        logoUrl: true,
+        companyAddress: true,
+        companyPhone: true,
+        companyEmail: true,
+        companyWebsite: true,
+        quoteFooter: true,
+      },
+    });
+
+    return NextResponse.json({
+      quote,
+      preferences,
+    });
   } catch (error) {
     if (error instanceof UnauthorizedError) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

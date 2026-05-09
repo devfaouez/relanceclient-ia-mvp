@@ -466,21 +466,30 @@ export default function ProspectDetailPage({
                       {fmt(q.createdAt)}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setGenerateModal({
-                            quoteId: q.id,
-                            quoteTitle: q.title,
-                          })
-                        }
-                        disabled={pending.has(`gen-${q.id}`)}
-                        className="text-sm font-medium text-primary hover:underline disabled:opacity-50"
-                      >
-                        {pending.has(`gen-${q.id}`)
-                          ? "Génération…"
-                          : "Générer une relance"}
-                      </button>
+                      <div className="flex justify-end gap-3">
+                        <Link
+                          href={`/quotes/${q.id}`}
+                          className="text-sm font-medium text-primary hover:underline"
+                        >
+                          Voir le devis
+                        </Link>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setGenerateModal({
+                              quoteId: q.id,
+                              quoteTitle: q.title,
+                            })
+                          }
+                          disabled={pending.has(`gen-${q.id}`)}
+                          className="text-sm font-medium text-primary hover:underline disabled:opacity-50"
+                        >
+                          {pending.has(`gen-${q.id}`)
+                            ? "Génération…"
+                            : "Générer une relance"}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
