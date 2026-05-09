@@ -141,9 +141,15 @@ model UserPreferences {
   userId         String       @unique
   user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   businessName   String?
+  logoUrl        String?
+  companyAddress String?
+  companyPhone   String?
+  companyEmail   String?
+  companyWebsite String?
   trade          Trade?
   defaultTone    ReminderTone @default(PROFESSIONAL)
   signatureBlock String?
+  quoteFooter    String?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 }
