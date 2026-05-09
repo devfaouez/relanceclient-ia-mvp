@@ -10,6 +10,16 @@ import { ReminderStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
+function buildEmailBody(reminderBody: string, signatureBlock?: string | null) {
+  const signature = signatureBlock?.trim();
+
+  if (!signature) {
+    return reminderBody;
+  }
+
+  return `${reminderBody.trim()}\n\n--\n${signature}`;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { dbUser } = await requireCurrentUserWithDb();
@@ -90,11 +100,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const preferences = await prisma.userPreferences.findUnique({
+      where: { userId: dbUser.id },
+      select: { signatureBlock: true },
+    });
+
+    const emailBody = buildEmailBody(
+      reminder.body,
+      preferences?.signatureBlock
+    );
+
     const { error: sendError } = await resend.emails.send({
       from: fromEmail,
       to: prospectEmail,
       subject: reminder.subject,
-      text: reminder.body,
+      text: emailBody,
     });
 
     if (sendError) {
