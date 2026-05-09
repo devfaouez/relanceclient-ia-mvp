@@ -118,6 +118,9 @@ export default function ProspectDetailPage({
   const [editingReminderId, setEditingReminderId] = useState<string | null>(null);
   const [editSubject, setEditSubject] = useState("");
   const [editBody, setEditBody] = useState("");
+  const [expandedReminderIds, setExpandedReminderIds] = useState<Set<string>>(
+    new Set()
+  );
 
   const addPending = (key: string) =>
     setPending((prev) => new Set(prev).add(key));
@@ -232,6 +235,18 @@ export default function ProspectDetailPage({
     setGenerateTone("PROFESSIONAL");
     setGenerateNote("");
     fetchReminders();
+  }
+
+  function toggleReminderExpanded(reminderId: string) {
+    setExpandedReminderIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(reminderId)) {
+        next.delete(reminderId);
+      } else {
+        next.add(reminderId);
+      }
+      return next;
+    });
   }
 
   function startEditingReminder(reminder: Reminder) {
@@ -545,9 +560,29 @@ export default function ProspectDetailPage({
                               {quote.quoteNumber ? ` — ${quote.quoteNumber}` : ""}
                             </p>
                           )}
-                          <p className="whitespace-pre-line text-xs text-muted-foreground line-clamp-3">
-                            {r.body}
-                          </p>
+                          <div className="space-y-2">
+                            <p
+                              className={`whitespace-pre-line text-xs text-muted-foreground ${
+                                expandedReminderIds.has(r.id)
+                                  ? ""
+                                  : "line-clamp-3"
+                              }`}
+                            >
+                              {r.body}
+                            </p>
+
+                            {r.body.length > 180 && (
+                              <button
+                                type="button"
+                                onClick={() => toggleReminderExpanded(r.id)}
+                                className="text-xs font-medium text-primary hover:underline"
+                              >
+                                {expandedReminderIds.has(r.id)
+                                  ? "Masquer"
+                                  : "Voir le message complet"}
+                              </button>
+                            )}
+                          </div>
                           <div className="flex flex-wrap gap-4 pt-1 text-xs text-muted-foreground">
                             <span>
                               Approuvé le :{" "}
