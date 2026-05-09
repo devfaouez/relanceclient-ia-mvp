@@ -121,6 +121,8 @@ export default function ProspectDetailPage({
   const [expandedReminderIds, setExpandedReminderIds] = useState<Set<string>>(
     new Set()
   );
+  const [sendConfirmReminder, setSendConfirmReminder] =
+    useState<Reminder | null>(null);
 
   const addPending = (key: string) =>
     setPending((prev) => new Set(prev).add(key));
@@ -341,6 +343,7 @@ export default function ProspectDetailPage({
       return;
     }
 
+    setSendConfirmReminder(null);
     fetchReminders();
   }
 
@@ -657,7 +660,7 @@ export default function ProspectDetailPage({
                           {r.status === "APPROVED" && (
                             <button
                               type="button"
-                              onClick={() => handleSendReminder(r.id)}
+                              onClick={() => setSendConfirmReminder(r)}
                               disabled={pending.has(`send-${r.id}`)}
                               className="rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                             >
@@ -748,6 +751,62 @@ export default function ProspectDetailPage({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {sendConfirmReminder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-lg rounded-lg border bg-background p-5 shadow-lg">
+            <div className="mb-4">
+              <h2 className="text-lg font-semibold">
+                Confirmer l’envoi de la relance
+              </h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Cette action enverra réellement l’e-mail au client. Vérifiez une
+                dernière fois le sujet et le contenu avant confirmation.
+              </p>
+            </div>
+
+            <div className="space-y-3 rounded-md bg-muted/50 p-4 text-sm">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Sujet
+                </p>
+                <p className="mt-1 font-medium">{sendConfirmReminder.subject}</p>
+              </div>
+
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Message
+                </p>
+                <p className="mt-1 max-h-64 overflow-y-auto whitespace-pre-line text-muted-foreground">
+                  {sendConfirmReminder.body}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setSendConfirmReminder(null)}
+                disabled={pending.has(`send-${sendConfirmReminder.id}`)}
+                className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
+              >
+                Annuler
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleSendReminder(sendConfirmReminder.id)}
+                disabled={pending.has(`send-${sendConfirmReminder.id}`)}
+                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              >
+                {pending.has(`send-${sendConfirmReminder.id}`)
+                  ? "Envoi…"
+                  : "Confirmer l’envoi"}
+              </button>
+            </div>
           </div>
         </div>
       )}
