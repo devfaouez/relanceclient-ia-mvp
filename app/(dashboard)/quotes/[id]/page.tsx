@@ -296,7 +296,7 @@ export default function QuotePreviewPage({
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-        <div className="mx-auto w-full max-w-5xl rounded-xl border bg-white p-8 text-slate-950 shadow-sm print:max-w-none print:border-0 print:p-0 print:shadow-none">
+        <div className="quote-print-area mx-auto w-full max-w-5xl rounded-xl border bg-white p-8 text-slate-950 shadow-sm print:max-w-none print:border-0 print:p-0 print:shadow-none">
           <div className="flex items-start justify-between gap-8 border-b pb-8">
             <div>
               {preferences?.logoUrl ? (
@@ -442,7 +442,7 @@ export default function QuotePreviewPage({
           )}
         </div>
 
-        <aside className="space-y-4 print:hidden">
+        <aside className="quote-print-hidden space-y-4 print:hidden">
           {actionError && (
             <p className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
               {actionError}
