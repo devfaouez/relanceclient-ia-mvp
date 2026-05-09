@@ -10,14 +10,27 @@ import { ReminderStatus } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
+function normalizeText(value: string) {
+  return value
+    .trim()
+    .replace(/\r\n/g, "\n")
+    .replace(/[ \t]+/g, " ")
+    .toLowerCase();
+}
+
 function buildEmailBody(reminderBody: string, signatureBlock?: string | null) {
+  const body = reminderBody.trim();
   const signature = signatureBlock?.trim();
 
   if (!signature) {
-    return reminderBody;
+    return body;
   }
 
-  return `${reminderBody.trim()}\n\n--\n${signature}`;
+  if (normalizeText(body).includes(normalizeText(signature))) {
+    return body;
+  }
+
+  return `${body}\n\n--\n${signature}`;
 }
 
 export async function POST(request: NextRequest) {
