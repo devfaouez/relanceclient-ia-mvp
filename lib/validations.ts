@@ -26,6 +26,9 @@ export const createQuoteSchema = z.object({
   amount: z.number().nonnegative().nullish(),
   currency: z.string().trim().length(3).optional(),
   status: z.nativeEnum(QuoteStatus).optional(),
+  validUntil: z.coerce.date().nullish(),
+  legalNotice: z.string().trim().max(2000).nullish(),
+  paymentTerms: z.string().trim().max(2000).nullish(),
   sentAt: z.coerce.date().nullish(),
   acceptedAt: z.coerce.date().nullish(),
   rejectedAt: z.coerce.date().nullish(),
@@ -56,3 +59,12 @@ export const updateReminderSchema = z.object({
 export const sendReminderSchema = z.object({
   reminderId: z.string().min(1),
 });
+
+export const createQuoteLineSchema = z.object({
+  description: z.string().trim().min(1).max(1000),
+  quantity: z.number().positive(),
+  unitPrice: z.number().nonnegative(),
+  sortOrder: z.number().int().nonnegative().optional(),
+});
+
+export const updateQuoteLineSchema = createQuoteLineSchema.partial();

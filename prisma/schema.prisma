@@ -38,23 +38,41 @@ model Prospect {
 }
 
 model Quote {
-  id          String      @id @default(cuid())
-  prospectId  String
-  prospect    Prospect    @relation(fields: [prospectId], references: [id], onDelete: Cascade)
-  quoteNumber String?
-  title       String
-  amount      Decimal?
-  currency    String      @default("EUR")
-  status      QuoteStatus @default(DRAFT)
-  sentAt      DateTime?
-  acceptedAt  DateTime?
-  rejectedAt  DateTime?
-  reminders   Reminder[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id           String      @id @default(cuid())
+  prospectId   String
+  prospect     Prospect    @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  quoteNumber  String?
+  title        String
+  amount       Decimal?
+  currency     String      @default("EUR")
+  status       QuoteStatus @default(DRAFT)
+  validUntil   DateTime?
+  legalNotice  String?
+  paymentTerms String?
+  sentAt       DateTime?
+  acceptedAt   DateTime?
+  rejectedAt   DateTime?
+  reminders    Reminder[]
+  lines        QuoteLine[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 
   @@index([prospectId])
   @@index([status])
+}
+
+model QuoteLine {
+  id          String   @id @default(cuid())
+  quoteId     String
+  quote       Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Decimal  @default(1) @db.Decimal(10, 2)
+  unitPrice   Decimal  @db.Decimal(10, 2)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([quoteId])
 }
 
 model Reminder {

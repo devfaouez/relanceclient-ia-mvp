@@ -18,6 +18,11 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
       where: { id: params.id, prospect: { userId: dbUser.id } },
       include: {
         prospect: true,
+        lines: {
+          orderBy: {
+            sortOrder: "asc",
+          },
+        },
       },
     });
 
