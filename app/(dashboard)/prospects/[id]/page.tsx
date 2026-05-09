@@ -95,6 +95,11 @@ export default function ProspectDetailPage({
     useState<ReminderTone>("PROFESSIONAL");
   const [generateNote, setGenerateNote] = useState("");
 
+  // Reminder edit
+  const [editingReminderId, setEditingReminderId] = useState<string | null>(null);
+  const [editSubject, setEditSubject] = useState("");
+  const [editBody, setEditBody] = useState("");
+
   const addPending = (key: string) =>
     setPending((prev) => new Set(prev).add(key));
   const removePending = (key: string) =>
@@ -207,6 +212,53 @@ export default function ProspectDetailPage({
     setGenerateModal(null);
     setGenerateTone("PROFESSIONAL");
     setGenerateNote("");
+    fetchReminders();
+  }
+
+  function startEditingReminder(reminder: Reminder) {
+    setEditingReminderId(reminder.id);
+    setEditSubject(reminder.subject);
+    setEditBody(reminder.body);
+    setReminderError(null);
+  }
+
+  function cancelEditingReminder() {
+    setEditingReminderId(null);
+    setEditSubject("");
+    setEditBody("");
+  }
+
+  async function handleUpdateReminder(reminderId: string) {
+    setReminderError(null);
+
+    if (!editSubject.trim() || !editBody.trim()) {
+      setReminderError("Le sujet et le contenu de la relance sont obligatoires");
+      return;
+    }
+
+    const key = `edit-${reminderId}`;
+    addPending(key);
+
+    const res = await fetch(`/api/reminders/${reminderId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        subject: editSubject.trim(),
+        body: editBody.trim(),
+      }),
+    });
+
+    removePending(key);
+
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      setReminderError(
+        (json as { error?: string }).error ?? "Erreur lors de la modification"
+      );
+      return;
+    }
+
+    cancelEditingReminder();
     fetchReminders();
   }
 
@@ -431,28 +483,66 @@ export default function ProspectDetailPage({
                 >
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div className="min-w-0 flex-1 space-y-1">
-                      <p className="font-medium">{r.subject}</p>
-                      {quote && (
-                        <p className="text-xs text-muted-foreground">
-                          Devis : {quote.title}
-                          {quote.quoteNumber ? ` — ${quote.quoteNumber}` : ""}
-                        </p>
+                      {editingReminderId === r.id ? (
+                        <div className="space-y-3">
+                          <div>
+                            <label
+                              htmlFor={`subject-${r.id}`}
+                              className="block text-xs font-medium text-muted-foreground"
+                            >
+                              Sujet
+                            </label>
+                            <input
+                              id={`subject-${r.id}`}
+                              type="text"
+                              value={editSubject}
+                              onChange={(e) => setEditSubject(e.target.value)}
+                              className={inputClass}
+                            />
+                          </div>
+
+                          <div>
+                            <label
+                              htmlFor={`body-${r.id}`}
+                              className="block text-xs font-medium text-muted-foreground"
+                            >
+                              Contenu
+                            </label>
+                            <textarea
+                              id={`body-${r.id}`}
+                              value={editBody}
+                              onChange={(e) => setEditBody(e.target.value)}
+                              rows={8}
+                              className={inputClass}
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <p className="font-medium">{r.subject}</p>
+                          {quote && (
+                            <p className="text-xs text-muted-foreground">
+                              Devis : {quote.title}
+                              {quote.quoteNumber ? ` — ${quote.quoteNumber}` : ""}
+                            </p>
+                          )}
+                          <p className="whitespace-pre-line text-xs text-muted-foreground line-clamp-3">
+                            {r.body}
+                          </p>
+                          <div className="flex flex-wrap gap-4 pt-1 text-xs text-muted-foreground">
+                            <span>
+                              Approuvé le :{" "}
+                              <span className="font-medium">
+                                {fmt(r.approvedAt)}
+                              </span>
+                            </span>
+                            <span>
+                              Envoyé le :{" "}
+                              <span className="font-medium">{fmt(r.sentAt)}</span>
+                            </span>
+                          </div>
+                        </>
                       )}
-                      <p className="whitespace-pre-line text-xs text-muted-foreground line-clamp-3">
-                        {r.body}
-                      </p>
-                      <div className="flex flex-wrap gap-4 pt-1 text-xs text-muted-foreground">
-                        <span>
-                          Approuvé le :{" "}
-                          <span className="font-medium">
-                            {fmt(r.approvedAt)}
-                          </span>
-                        </span>
-                        <span>
-                          Envoyé le :{" "}
-                          <span className="font-medium">{fmt(r.sentAt)}</span>
-                        </span>
-                      </div>
                     </div>
 
                     <div className="flex shrink-0 flex-col items-end gap-2">
@@ -460,29 +550,67 @@ export default function ProspectDetailPage({
                         {r.status}
                       </span>
 
-                      {r.status !== "APPROVED" &&
-                        r.status !== "SENT" &&
-                        r.status !== "CANCELLED" &&
-                        r.status !== "FAILED" && (
+                      {editingReminderId === r.id ? (
+                        <>
                           <button
-                            onClick={() => handleApproveReminder(r.id)}
-                            disabled={pending.has(`approve-${r.id}`)}
+                            type="button"
+                            onClick={() => handleUpdateReminder(r.id)}
+                            disabled={pending.has(`edit-${r.id}`)}
+                            className="rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                          >
+                            {pending.has(`edit-${r.id}`) ? "Enregistrement…" : "Enregistrer"}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={cancelEditingReminder}
+                            disabled={pending.has(`edit-${r.id}`)}
                             className="rounded-md border px-3 py-1 text-xs font-medium hover:bg-muted disabled:opacity-50"
                           >
-                            {pending.has(`approve-${r.id}`)
-                              ? "…"
-                              : "Approuver"}
+                            Annuler
                           </button>
-                        )}
+                        </>
+                      ) : (
+                        <>
+                          {r.status !== "SENT" &&
+                            r.status !== "CANCELLED" &&
+                            r.status !== "FAILED" && (
+                              <button
+                                type="button"
+                                onClick={() => startEditingReminder(r)}
+                                className="rounded-md border px-3 py-1 text-xs font-medium hover:bg-muted"
+                              >
+                                Modifier
+                              </button>
+                            )}
 
-                      {r.status === "APPROVED" && (
-                        <button
-                          onClick={() => handleSendReminder(r.id)}
-                          disabled={pending.has(`send-${r.id}`)}
-                          className="rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                        >
-                          {pending.has(`send-${r.id}`) ? "Envoi…" : "Envoyer"}
-                        </button>
+                          {r.status !== "APPROVED" &&
+                            r.status !== "SENT" &&
+                            r.status !== "CANCELLED" &&
+                            r.status !== "FAILED" && (
+                              <button
+                                type="button"
+                                onClick={() => handleApproveReminder(r.id)}
+                                disabled={pending.has(`approve-${r.id}`)}
+                                className="rounded-md border px-3 py-1 text-xs font-medium hover:bg-muted disabled:opacity-50"
+                              >
+                                {pending.has(`approve-${r.id}`)
+                                  ? "…"
+                                  : "Approuver"}
+                              </button>
+                            )}
+
+                          {r.status === "APPROVED" && (
+                            <button
+                              type="button"
+                              onClick={() => handleSendReminder(r.id)}
+                              disabled={pending.has(`send-${r.id}`)}
+                              className="rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                            >
+                              {pending.has(`send-${r.id}`) ? "Envoi…" : "Envoyer"}
+                            </button>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>
