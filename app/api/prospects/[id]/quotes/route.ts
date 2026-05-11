@@ -56,6 +56,13 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
     const quotes = await prisma.quote.findMany({
       where: { prospectId: params.id },
       orderBy: { createdAt: "desc" },
+      include: {
+        lines: {
+          orderBy: {
+            sortOrder: "asc",
+          },
+        },
+      },
     });
 
     return NextResponse.json(quotes);

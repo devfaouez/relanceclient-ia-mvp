@@ -12,6 +12,14 @@ type Prospect = {
   status: string;
 };
 
+type QuoteLine = {
+  id: string;
+  description: string;
+  quantity: string;
+  unitPrice: string;
+  sortOrder: number;
+};
+
 type Quote = {
   id: string;
   title: string;
@@ -20,6 +28,7 @@ type Quote = {
   currency: string;
   status: string;
   createdAt: string;
+  lines: QuoteLine[];
 };
 
 type Reminder = {
@@ -78,6 +87,28 @@ type GenerateReminderModalState = {
 function fmt(date: string | null) {
   if (!date) return "—";
   return new Date(date).toLocaleDateString("fr-FR");
+}
+
+function toNumber(value: string | null | undefined) {
+  if (!value) return 0;
+  return Number(value);
+}
+
+function fmtAmount(amount: number, currency: string) {
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency,
+  }).format(amount);
+}
+
+function quoteTotal(quote: Quote) {
+  if (quote.lines.length > 0) {
+    return quote.lines.reduce((sum, line) => {
+      return sum + toNumber(line.quantity) * toNumber(line.unitPrice);
+    }, 0);
+  }
+
+  return toNumber(quote.amount);
 }
 
 export default function ProspectDetailPage({
@@ -455,7 +486,9 @@ export default function ProspectDetailPage({
                       {q.quoteNumber ?? "—"}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
-                      {q.amount ? `${q.amount} ${q.currency}` : "—"}
+                      {quoteTotal(q) > 0
+                        ? fmtAmount(quoteTotal(q), q.currency)
+                        : "—"}
                     </td>
                     <td className="px-4 py-3">
                       <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
@@ -473,6 +506,13 @@ export default function ProspectDetailPage({
                         >
                           Voir le devis
                         </Link>
+
+                        <a
+                          href={`/api/quotes/${q.id}/pdf`}
+                          className="text-sm font-medium text-primary hover:underline"
+                        >
+                          PDF
+                        </a>
 
                         <button
                           type="button"
