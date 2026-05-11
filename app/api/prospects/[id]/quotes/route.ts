@@ -10,6 +10,36 @@ export const dynamic = "force-dynamic";
 
 type RouteContext = { params: { id: string } };
 
+async function generateQuoteNumber(userId: string) {
+  const year = new Date().getFullYear();
+  const prefix = `DEV-${year}-`;
+
+  const quotes = await prisma.quote.findMany({
+    where: {
+      quoteNumber: {
+        startsWith: prefix,
+      },
+      prospect: {
+        userId,
+      },
+    },
+    select: {
+      quoteNumber: true,
+    },
+  });
+
+  const lastNumber = quotes.reduce((max, quote) => {
+    if (!quote.quoteNumber) return max;
+
+    const match = quote.quoteNumber.match(/^DEV-\d{4}-(\d{4})$/);
+    if (!match) return max;
+
+    return Math.max(max, Number(match[1]));
+  }, 0);
+
+  return `${prefix}${String(lastNumber + 1).padStart(4, "0")}`;
+}
+
 export async function GET(_request: NextRequest, { params }: RouteContext) {
   try {
     const { dbUser } = await requireCurrentUserWithDb();
@@ -69,8 +99,15 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       );
     }
 
+    const quoteNumber =
+      parsed.data.quoteNumber?.trim() || (await generateQuoteNumber(dbUser.id));
+
     const quote = await prisma.quote.create({
-      data: { ...parsed.data, prospectId: params.id },
+      data: {
+        ...parsed.data,
+        quoteNumber,
+        prospectId: params.id,
+      },
     });
 
     return NextResponse.json(quote, { status: 201 });
