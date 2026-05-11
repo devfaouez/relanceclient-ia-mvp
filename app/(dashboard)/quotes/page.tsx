@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { FileText, Plus } from "lucide-react";
+import { FileText, Plus, Search } from "lucide-react";
 
 type Quote = {
   id: string;
@@ -25,6 +25,9 @@ type Quote = {
     company: string | null;
   };
 };
+
+type SortKey = "createdAt" | "amount" | "status" | "prospect" | "title";
+type SortDirection = "asc" | "desc";
 
 const STATUS_LABELS: Record<string, string> = {
   DRAFT: "Brouillon",
@@ -57,11 +60,34 @@ function statusLabel(status: string) {
   return STATUS_LABELS[status] ?? status;
 }
 
+function quoteSearchText(quote: Quote) {
+  return [
+    quote.quoteNumber,
+    quote.title,
+    quote.status,
+    statusLabel(quote.status),
+    quote.prospect.name,
+    quote.prospect.company,
+    quote.prospect.email,
+    quote.prospect.phone,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+function prospectDisplayName(quote: Quote) {
+  return quote.prospect.company ?? quote.prospect.name;
+}
+
 export default function QuotesPage() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("createdAt");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
   useEffect(() => {
     fetch("/api/quotes")
@@ -78,13 +104,63 @@ export default function QuotesPage() {
   }, []);
 
   const filteredQuotes = useMemo(() => {
-    if (statusFilter === "ALL") return quotes;
-    return quotes.filter((quote) => quote.status === statusFilter);
-  }, [quotes, statusFilter]);
+    const query = searchQuery.trim().toLowerCase();
+
+    const filtered = quotes.filter((quote) => {
+      const matchesStatus =
+        statusFilter === "ALL" || quote.status === statusFilter;
+
+      const matchesSearch = !query || quoteSearchText(quote).includes(query);
+
+      return matchesStatus && matchesSearch;
+    });
+
+    return [...filtered].sort((a, b) => {
+      let result = 0;
+
+      if (sortKey === "createdAt") {
+        result =
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      }
+
+      if (sortKey === "amount") {
+        result = a.totalAmount - b.totalAmount;
+      }
+
+      if (sortKey === "status") {
+        result = statusLabel(a.status).localeCompare(statusLabel(b.status));
+      }
+
+      if (sortKey === "prospect") {
+        result = prospectDisplayName(a).localeCompare(prospectDisplayName(b));
+      }
+
+      if (sortKey === "title") {
+        result = a.title.localeCompare(b.title);
+      }
+
+      return sortDirection === "asc" ? result : -result;
+    });
+  }, [quotes, searchQuery, sortDirection, sortKey, statusFilter]);
 
   const totalAmount = filteredQuotes.reduce((sum, quote) => {
     return sum + quote.totalAmount;
   }, 0);
+
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
+      return;
+    }
+
+    setSortKey(key);
+    setSortDirection(key === "createdAt" || key === "amount" ? "desc" : "asc");
+  }
+
+  function sortLabel(key: SortKey) {
+    if (sortKey !== key) return "";
+    return sortDirection === "asc" ? " ↑" : " ↓";
+  }
 
   return (
     <section className="space-y-6">
@@ -128,7 +204,7 @@ export default function QuotesPage() {
         </div>
 
         <div className="rounded-lg border bg-card p-5">
-          <p className="text-sm text-muted-foreground">Filtre</p>
+          <p className="text-sm text-muted-foreground">Filtre statut</p>
           <select
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value)}
@@ -141,6 +217,50 @@ export default function QuotesPage() {
             <option value="REJECTED">Refusé</option>
             <option value="EXPIRED">Expiré</option>
             <option value="CANCELLED">Annulé</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="grid gap-4 rounded-lg border bg-card p-5 lg:grid-cols-[1fr_220px_180px]">
+        <div>
+          <label className="text-sm font-medium">Recherche</label>
+          <div className="mt-2 flex items-center gap-2 rounded-md border bg-background px-3">
+            <Search className="h-4 w-4 text-muted-foreground" />
+            <input
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Numéro, titre, prospect, société, email..."
+              className="w-full bg-transparent py-2 text-sm outline-none"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="text-sm font-medium">Trier par</label>
+          <select
+            value={sortKey}
+            onChange={(event) => setSortKey(event.target.value as SortKey)}
+            className="mt-2 w-full rounded-md border bg-background px-3 py-2 text-sm"
+          >
+            <option value="createdAt">Date de création</option>
+            <option value="amount">Montant</option>
+            <option value="status">Statut</option>
+            <option value="prospect">Prospect</option>
+            <option value="title">Titre</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="text-sm font-medium">Ordre</label>
+          <select
+            value={sortDirection}
+            onChange={(event) =>
+              setSortDirection(event.target.value as SortDirection)
+            }
+            className="mt-2 w-full rounded-md border bg-background px-3 py-2 text-sm"
+          >
+            <option value="desc">Décroissant</option>
+            <option value="asc">Croissant</option>
           </select>
         </div>
       </div>
@@ -166,11 +286,51 @@ export default function QuotesPage() {
             <thead>
               <tr className="border-b bg-muted/50 text-left">
                 <th className="px-4 py-3 font-medium">Numéro</th>
-                <th className="px-4 py-3 font-medium">Titre</th>
-                <th className="px-4 py-3 font-medium">Prospect</th>
-                <th className="px-4 py-3 font-medium">Montant</th>
-                <th className="px-4 py-3 font-medium">Statut</th>
-                <th className="px-4 py-3 font-medium">Créé le</th>
+                <th className="px-4 py-3 font-medium">
+                  <button
+                    type="button"
+                    onClick={() => toggleSort("title")}
+                    className="hover:underline"
+                  >
+                    Titre{sortLabel("title")}
+                  </button>
+                </th>
+                <th className="px-4 py-3 font-medium">
+                  <button
+                    type="button"
+                    onClick={() => toggleSort("prospect")}
+                    className="hover:underline"
+                  >
+                    Prospect{sortLabel("prospect")}
+                  </button>
+                </th>
+                <th className="px-4 py-3 font-medium">
+                  <button
+                    type="button"
+                    onClick={() => toggleSort("amount")}
+                    className="hover:underline"
+                  >
+                    Montant{sortLabel("amount")}
+                  </button>
+                </th>
+                <th className="px-4 py-3 font-medium">
+                  <button
+                    type="button"
+                    onClick={() => toggleSort("status")}
+                    className="hover:underline"
+                  >
+                    Statut{sortLabel("status")}
+                  </button>
+                </th>
+                <th className="px-4 py-3 font-medium">
+                  <button
+                    type="button"
+                    onClick={() => toggleSort("createdAt")}
+                    className="hover:underline"
+                  >
+                    Créé le{sortLabel("createdAt")}
+                  </button>
+                </th>
                 <th className="px-4 py-3 font-medium">Validité</th>
                 <th className="px-4 py-3"></th>
               </tr>
@@ -200,7 +360,7 @@ export default function QuotesPage() {
                       href={`/prospects/${quote.prospect.id}`}
                       className="hover:text-foreground hover:underline"
                     >
-                      {quote.prospect.company ?? quote.prospect.name}
+                      {prospectDisplayName(quote)}
                     </Link>
                   </td>
 
