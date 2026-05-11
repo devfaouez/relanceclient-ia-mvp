@@ -223,6 +223,36 @@ export default function QuotePreviewPage({
     fetchQuote();
   }
 
+  async function handleMarkAsSent() {
+    setSaving(true);
+    setActionError(null);
+    setActionSuccess(null);
+
+    const res = await fetch(`/api/quotes/${params.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        status: "SENT",
+        sentAt: new Date().toISOString(),
+      }),
+    });
+
+    setSaving(false);
+
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      setActionError(
+        (json as { error?: string }).error ??
+          "Erreur lors du changement de statut"
+      );
+      return;
+    }
+
+    setQuoteStatus("SENT");
+    setActionSuccess("Devis marqué comme envoyé");
+    fetchQuote();
+  }
+
   async function handleUpdateTerms(e: React.FormEvent) {
     e.preventDefault();
 
@@ -360,7 +390,18 @@ export default function QuotePreviewPage({
           <h1 className="mt-2 text-2xl font-semibold">Prévisualisation du devis</h1>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          {quote.status !== "SENT" && (
+            <button
+              type="button"
+              onClick={handleMarkAsSent}
+              disabled={saving}
+              className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
+            >
+              Marquer comme envoyé
+            </button>
+          )}
+
           <button
             type="button"
             onClick={() => window.print()}
