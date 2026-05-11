@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 type Prospect = {
   id: string;
@@ -116,6 +117,8 @@ export default function ProspectDetailPage({
 }: {
   params: { id: string };
 }) {
+  const router = useRouter();
+
   const [prospect, setProspect] = useState<Prospect | null>(null);
   const [loadingProspect, setLoadingProspect] = useState(true);
 
@@ -128,7 +131,6 @@ export default function ProspectDetailPage({
 
   // Quote form
   const [title, setTitle] = useState("");
-  const [quoteNumber, setQuoteNumber] = useState("");
   const [amount, setAmount] = useState("");
   const [quoteStatus, setQuoteStatus] = useState("DRAFT");
   const [formError, setFormError] = useState<string | null>(null);
@@ -209,7 +211,6 @@ export default function ProspectDetailPage({
       title,
       status: quoteStatus,
     };
-    if (quoteNumber) body.quoteNumber = quoteNumber;
     if (amount) body.amount = parseFloat(amount);
 
     const res = await fetch(`/api/prospects/${params.id}/quotes`, {
@@ -227,12 +228,13 @@ export default function ProspectDetailPage({
       return;
     }
 
+    const createdQuote = (await res.json()) as { id: string };
+
     setTitle("");
-    setQuoteNumber("");
     setAmount("");
     setQuoteStatus("DRAFT");
     setFormLoading(false);
-    fetchQuotes();
+    router.push(`/quotes/${createdQuote.id}`);
   }
 
   async function handleGenerateReminder(e: React.FormEvent) {
@@ -882,36 +884,22 @@ export default function ProspectDetailPage({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="quoteNumber"
-                className="block text-sm font-medium"
-              >
-                Numéro
-              </label>
-              <input
-                id="quoteNumber"
-                type="text"
-                value={quoteNumber}
-                onChange={(e) => setQuoteNumber(e.target.value)}
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <label htmlFor="amount" className="block text-sm font-medium">
-                Montant (EUR)
-              </label>
-              <input
-                id="amount"
-                type="number"
-                min="0"
-                step="0.01"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className={inputClass}
-              />
-            </div>
+          <div>
+            <label htmlFor="amount" className="block text-sm font-medium">
+              Montant initial (EUR)
+            </label>
+            <input
+              id="amount"
+              type="number"
+              min="0"
+              step="0.01"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className={inputClass}
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              Le numéro du devis sera généré automatiquement.
+            </p>
           </div>
 
           <div>
