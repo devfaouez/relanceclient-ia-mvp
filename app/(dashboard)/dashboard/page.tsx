@@ -3,7 +3,17 @@
 import { useEffect, useState } from "react";
 import type { ComponentType } from "react";
 import Link from "next/link";
-import { FileText, MailCheck, Plus, Send, Users } from "lucide-react";
+import {
+  CheckCircle,
+  Euro,
+  FileText,
+  MailCheck,
+  Percent,
+  Plus,
+  Send,
+  Users,
+  XCircle,
+} from "lucide-react";
 
 type LatestProspect = {
   id: string;
@@ -15,10 +25,27 @@ type LatestProspect = {
   createdAt: string;
 };
 
-type LatestPendingReminder = {
+type LatestQuote = {
+  id: string;
+  title: string;
+  quoteNumber: string | null;
+  status: string;
+  currency: string;
+  totalAmount: number;
+  createdAt: string;
+  prospect: {
+    id: string;
+    name: string;
+    company: string | null;
+  };
+};
+
+type LatestReminder = {
   id: string;
   subject: string;
+  status: string;
   createdAt: string;
+  sentAt: string | null;
   quote: {
     id: string;
     title: string;
@@ -26,7 +53,7 @@ type LatestPendingReminder = {
     prospect: {
       id: string;
       name: string;
-      email: string | null;
+      email?: string | null;
       company: string | null;
     };
   };
@@ -35,10 +62,16 @@ type LatestPendingReminder = {
 type DashboardStats = {
   totalProspects: number;
   totalQuotes: number;
+  totalQuoteAmount: number;
+  acceptedQuotes: number;
+  rejectedQuotes: number;
+  conversionRate: number;
   pendingReminders: number;
   sentReminders: number;
   latestProspects: LatestProspect[];
-  latestPendingReminders: LatestPendingReminder[];
+  latestQuotes: LatestQuote[];
+  latestPendingReminders: LatestReminder[];
+  latestReminders: LatestReminder[];
 };
 
 const dateFormatter = new Intl.DateTimeFormat("fr-FR", {
@@ -51,13 +84,20 @@ function formatDate(date: string) {
   return dateFormatter.format(new Date(date));
 }
 
+function formatAmount(amount: number, currency = "EUR") {
+  return new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency,
+  }).format(amount);
+}
+
 function StatCard({
   label,
   value,
   icon: Icon,
 }: {
   label: string;
-  value: number;
+  value: string | number;
   icon: ComponentType<{ className?: string }>;
 }) {
   return (
@@ -75,6 +115,14 @@ function StatCard({
   );
 }
 
+function StatusBadge({ status }: { status: string }) {
+  return (
+    <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
+      {status}
+    </span>
+  );
+}
+
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -86,6 +134,7 @@ export default function DashboardPage() {
         if (!res.ok) {
           throw new Error("Erreur lors du chargement du dashboard");
         }
+
         return res.json() as Promise<DashboardStats>;
       })
       .then(setStats)
@@ -119,8 +168,7 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-2xl font-semibold">Tableau de bord</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Vue rapide de vos prospects, devis et relances en attente de
-            validation.
+            Vue rapide de vos prospects, devis, montants et relances.
           </p>
         </div>
 
@@ -147,13 +195,32 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          label="Prospects"
-          value={stats.totalProspects}
-          icon={Users}
-        />
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Prospects" value={stats.totalProspects} icon={Users} />
         <StatCard label="Devis" value={stats.totalQuotes} icon={FileText} />
+        <StatCard
+          label="Montant total des devis"
+          value={formatAmount(stats.totalQuoteAmount)}
+          icon={Euro}
+        />
+        <StatCard
+          label="Conversion"
+          value={`${stats.conversionRate} %`}
+          icon={Percent}
+        />
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          label="Devis acceptés"
+          value={stats.acceptedQuotes}
+          icon={CheckCircle}
+        />
+        <StatCard
+          label="Devis refusés"
+          value={stats.rejectedQuotes}
+          icon={XCircle}
+        />
         <StatCard
           label="Relances à approuver"
           value={stats.pendingReminders}
@@ -166,7 +233,7 @@ export default function DashboardPage() {
         />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 xl:grid-cols-3">
         <div className="rounded-lg border bg-card">
           <div className="border-b px-5 py-4">
             <h2 className="font-semibold">5 derniers prospects</h2>
@@ -188,13 +255,14 @@ export default function DashboardPage() {
                     <div className="min-w-0">
                       <p className="truncate font-medium">{prospect.name}</p>
                       <p className="mt-1 truncate text-sm text-muted-foreground">
-                        {prospect.company ?? prospect.email ?? prospect.phone ?? "Sans contact"}
+                        {prospect.company ??
+                          prospect.email ??
+                          prospect.phone ??
+                          "Sans contact"}
                       </p>
                     </div>
                     <div className="shrink-0 text-right">
-                      <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
-                        {prospect.status}
-                      </span>
+                      <StatusBadge status={prospect.status} />
                       <p className="mt-2 text-xs text-muted-foreground">
                         {formatDate(prospect.createdAt)}
                       </p>
@@ -208,7 +276,48 @@ export default function DashboardPage() {
 
         <div className="rounded-lg border bg-card">
           <div className="border-b px-5 py-4">
-            <h2 className="font-semibold">5 dernières relances à approuver</h2>
+            <h2 className="font-semibold">5 derniers devis</h2>
+          </div>
+
+          {stats.latestQuotes.length === 0 ? (
+            <p className="px-5 py-8 text-sm text-muted-foreground">
+              Aucun devis pour l&apos;instant.
+            </p>
+          ) : (
+            <div className="divide-y">
+              {stats.latestQuotes.map((quote) => (
+                <Link
+                  key={quote.id}
+                  href={`/quotes/${quote.id}`}
+                  className="block px-5 py-4 hover:bg-muted/40"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="truncate font-medium">{quote.title}</p>
+                      <p className="mt-1 truncate text-sm text-muted-foreground">
+                        {quote.prospect.company ?? quote.prospect.name}
+                      </p>
+                      <p className="mt-1 truncate text-xs text-muted-foreground">
+                        {quote.quoteNumber ?? "Sans numéro"} ·{" "}
+                        {formatDate(quote.createdAt)}
+                      </p>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <StatusBadge status={quote.status} />
+                      <p className="mt-2 text-sm font-medium">
+                        {formatAmount(quote.totalAmount, quote.currency)}
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-lg border bg-card">
+          <div className="border-b px-5 py-4">
+            <h2 className="font-semibold">5 relances à approuver</h2>
           </div>
 
           {stats.latestPendingReminders.length === 0 ? (
@@ -220,7 +329,7 @@ export default function DashboardPage() {
               {stats.latestPendingReminders.map((reminder) => (
                 <Link
                   key={reminder.id}
-                  href={`/prospects/${reminder.quote.prospect.id}`}
+                  href={`/quotes/${reminder.quote.id}`}
                   className="block px-5 py-4 hover:bg-muted/40"
                 >
                   <div className="flex items-start justify-between gap-4">
@@ -247,6 +356,52 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
+      </div>
+
+      <div className="rounded-lg border bg-card">
+        <div className="border-b px-5 py-4">
+          <h2 className="font-semibold">5 dernières relances</h2>
+        </div>
+
+        {stats.latestReminders.length === 0 ? (
+          <p className="px-5 py-8 text-sm text-muted-foreground">
+            Aucune relance pour l&apos;instant.
+          </p>
+        ) : (
+          <div className="divide-y">
+            {stats.latestReminders.map((reminder) => (
+              <Link
+                key={reminder.id}
+                href={`/quotes/${reminder.quote.id}`}
+                className="block px-5 py-4 hover:bg-muted/40"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{reminder.subject}</p>
+                    <p className="mt-1 truncate text-sm text-muted-foreground">
+                      {reminder.quote.prospect.company ??
+                        reminder.quote.prospect.name}
+                    </p>
+                    <p className="mt-1 truncate text-xs text-muted-foreground">
+                      Devis : {reminder.quote.title}
+                      {reminder.quote.quoteNumber
+                        ? ` #${reminder.quote.quoteNumber}`
+                        : ""}
+                    </p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <StatusBadge status={reminder.status} />
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      {reminder.sentAt
+                        ? `Envoyée le ${formatDate(reminder.sentAt)}`
+                        : `Créée le ${formatDate(reminder.createdAt)}`}
+                    </p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
