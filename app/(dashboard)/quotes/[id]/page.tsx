@@ -286,13 +286,22 @@ export default function QuotePreviewPage({
           <h1 className="mt-2 text-2xl font-semibold">Prévisualisation du devis</h1>
         </div>
 
-        <button
-          type="button"
-          onClick={() => window.print()}
-          className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
-        >
-          Imprimer / Télécharger PDF
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
+          >
+            Imprimer
+          </button>
+
+          <a
+            href={`/api/quotes/${quote.id}/pdf`}
+            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          >
+            Télécharger PDF
+          </a>
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
