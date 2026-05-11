@@ -6,6 +6,7 @@ import { requireCurrentUser, UnauthorizedError } from "@/lib/auth";
 const navigation = [
   { href: "/dashboard", label: "Tableau de bord" },
   { href: "/prospects", label: "Prospects" },
+  { href: "/quotes", label: "Devis" },
   { href: "/reminders", label: "Relances" },
   { href: "/settings", label: "Paramètres" },
 ];
