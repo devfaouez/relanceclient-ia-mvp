@@ -89,6 +89,15 @@ const REMINDER_STATUS_LABELS: Record<string, string> = {
   FAILED: "Échec",
 };
 
+const REMINDER_TONES = [
+  { value: "PROFESSIONAL", label: "Professionnel" },
+  { value: "FORMAL", label: "Formel" },
+  { value: "FRIENDLY", label: "Chaleureux" },
+  { value: "DIRECT", label: "Direct" },
+] as const;
+
+type ReminderTone = (typeof REMINDER_TONES)[number]["value"];
+
 function fmtDate(date: string | null) {
   if (!date) return "—";
   return new Date(date).toLocaleDateString("fr-FR");
@@ -134,6 +143,10 @@ export default function QuotePreviewPage({
   const [lineDescription, setLineDescription] = useState("");
   const [lineQuantity, setLineQuantity] = useState("1");
   const [lineUnitPrice, setLineUnitPrice] = useState("");
+
+  const [generateTone, setGenerateTone] =
+    useState<ReminderTone>("PROFESSIONAL");
+  const [generateNote, setGenerateNote] = useState("");
 
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
   const [editLineDescription, setEditLineDescription] = useState("");
@@ -256,6 +269,40 @@ export default function QuotePreviewPage({
     cancelEditLine();
     setActionSuccess("Ligne modifiée");
     fetchQuote();
+  }
+
+  async function handleGenerateReminder(e: React.FormEvent) {
+    e.preventDefault();
+
+    setSaving(true);
+    setActionError(null);
+    setActionSuccess(null);
+
+    const res = await fetch("/api/reminders/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        quoteId: params.id,
+        tone: generateTone,
+        userNote: generateNote.trim() || null,
+      }),
+    });
+
+    setSaving(false);
+
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      setActionError(
+        (json as { error?: string }).error ??
+          "Erreur lors de la génération de la relance"
+      );
+      return;
+    }
+
+    setGenerateTone("PROFESSIONAL");
+    setGenerateNote("");
+    setActionSuccess("Relance IA générée");
+    fetchReminders();
   }
 
   async function handleMarkAsSent() {
@@ -691,6 +738,52 @@ export default function QuotePreviewPage({
         <aside className="quote-print-hidden space-y-4 print:hidden">
           <div className="rounded-lg border bg-card p-4">
             <h2 className="text-sm font-semibold">Relances liées au devis</h2>
+
+            <form onSubmit={handleGenerateReminder} className="mt-3 space-y-3 border-b pb-4">
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground">
+                  Ton de la relance
+                </label>
+                <select
+                  value={generateTone}
+                  onChange={(e) =>
+                    setGenerateTone(e.target.value as ReminderTone)
+                  }
+                  className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                >
+                  {REMINDER_TONES.map((tone) => (
+                    <option key={tone.value} value={tone.value}>
+                      {tone.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground">
+                  Note optionnelle pour l’IA
+                </label>
+                <textarea
+                  value={generateNote}
+                  onChange={(e) => setGenerateNote(e.target.value)}
+                  rows={3}
+                  maxLength={500}
+                  placeholder="Exemple : le client hésite encore sur le prix."
+                  className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {generateNote.length}/500 caractères
+                </p>
+              </div>
+
+              <button
+                type="submit"
+                disabled={saving}
+                className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              >
+                {saving ? "Génération…" : "Générer une relance IA"}
+              </button>
+            </form>
 
             {reminders.length === 0 ? (
               <p className="mt-2 text-sm text-muted-foreground">
