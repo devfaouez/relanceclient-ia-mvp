@@ -50,6 +50,15 @@ type QuoteResponse = {
   preferences: Preferences;
 };
 
+type DisplayLine = {
+  id: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+  isFallback: boolean;
+};
+
 const QUOTE_STATUS_LABELS: Record<string, string> = {
   DRAFT: "Brouillon",
   SENT: "Envoyé",
@@ -101,6 +110,11 @@ export default function QuotePreviewPage({
   const [lineQuantity, setLineQuantity] = useState("1");
   const [lineUnitPrice, setLineUnitPrice] = useState("");
 
+  const [editingLineId, setEditingLineId] = useState<string | null>(null);
+  const [editLineDescription, setEditLineDescription] = useState("");
+  const [editLineQuantity, setEditLineQuantity] = useState("1");
+  const [editLineUnitPrice, setEditLineUnitPrice] = useState("");
+
   const fetchQuote = useCallback(() => {
     setLoading(true);
 
@@ -123,7 +137,7 @@ export default function QuotePreviewPage({
     fetchQuote();
   }, [fetchQuote]);
 
-  const displayLines = useMemo(() => {
+  const displayLines = useMemo<DisplayLine[]>(() => {
     if (!data) return [];
 
     if (data.quote.lines.length > 0) {
@@ -155,6 +169,53 @@ export default function QuotePreviewPage({
   }, [data]);
 
   const totalAmount = displayLines.reduce((sum, line) => sum + line.total, 0);
+
+  function startEditLine(line: DisplayLine) {
+    setActionError(null);
+    setActionSuccess(null);
+    setEditingLineId(line.id);
+    setEditLineDescription(line.description);
+    setEditLineQuantity(String(line.quantity));
+    setEditLineUnitPrice(String(line.unitPrice));
+  }
+
+  function cancelEditLine() {
+    setEditingLineId(null);
+    setEditLineDescription("");
+    setEditLineQuantity("1");
+    setEditLineUnitPrice("");
+  }
+
+  async function handleUpdateLine(lineId: string) {
+    setSaving(true);
+    setActionError(null);
+    setActionSuccess(null);
+
+    const res = await fetch(`/api/quote-lines/${lineId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        description: editLineDescription.trim(),
+        quantity: Number(editLineQuantity),
+        unitPrice: Number(editLineUnitPrice),
+      }),
+    });
+
+    setSaving(false);
+
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      setActionError(
+        (json as { error?: string }).error ??
+          "Erreur lors de la modification de ligne"
+      );
+      return;
+    }
+
+    cancelEditLine();
+    setActionSuccess("Ligne modifiée");
+    fetchQuote();
+  }
 
   async function handleUpdateTerms(e: React.FormEvent) {
     e.preventDefault();
@@ -240,6 +301,10 @@ export default function QuotePreviewPage({
           "Erreur lors de la suppression de ligne"
       );
       return;
+    }
+
+    if (editingLineId === lineId) {
+      cancelEditLine();
     }
 
     setActionSuccess("Ligne supprimée");
@@ -379,30 +444,117 @@ export default function QuotePreviewPage({
                 </tr>
               </thead>
               <tbody>
-                {displayLines.map((line) => (
-                  <tr key={line.id} className="border-b">
-                    <td className="px-4 py-4">{line.description}</td>
-                    <td className="px-4 py-4 text-right">{line.quantity}</td>
-                    <td className="px-4 py-4 text-right">
-                      {fmtAmount(line.unitPrice, quote.currency)}
-                    </td>
-                    <td className="px-4 py-4 text-right font-medium">
-                      {fmtAmount(line.total, quote.currency)}
-                    </td>
-                    <td className="px-4 py-4 text-right print:hidden">
-                      {!line.isFallback && (
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteLine(line.id)}
-                          disabled={saving}
-                          className="text-xs font-medium text-destructive hover:underline disabled:opacity-50"
-                        >
-                          Supprimer
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                {displayLines.map((line) => {
+                  const isEditing = editingLineId === line.id && !line.isFallback;
+                  const editedQuantity = Number(editLineQuantity);
+                  const editedUnitPrice = Number(editLineUnitPrice);
+                  const editedTotal =
+                    Number.isFinite(editedQuantity) && Number.isFinite(editedUnitPrice)
+                      ? editedQuantity * editedUnitPrice
+                      : 0;
+
+                  return (
+                    <tr key={line.id} className="border-b align-top">
+                      <td className="px-4 py-4">
+                        {isEditing ? (
+                          <textarea
+                            required
+                            value={editLineDescription}
+                            onChange={(e) => setEditLineDescription(e.target.value)}
+                            rows={2}
+                            className="w-full rounded-md border px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-ring"
+                          />
+                        ) : (
+                          line.description
+                        )}
+                      </td>
+
+                      <td className="px-4 py-4 text-right">
+                        {isEditing ? (
+                          <input
+                            required
+                            type="number"
+                            min="0.01"
+                            step="0.01"
+                            value={editLineQuantity}
+                            onChange={(e) => setEditLineQuantity(e.target.value)}
+                            className="w-24 rounded-md border px-2 py-1 text-right text-sm outline-none focus:ring-2 focus:ring-ring"
+                          />
+                        ) : (
+                          line.quantity
+                        )}
+                      </td>
+
+                      <td className="px-4 py-4 text-right">
+                        {isEditing ? (
+                          <input
+                            required
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={editLineUnitPrice}
+                            onChange={(e) => setEditLineUnitPrice(e.target.value)}
+                            className="w-28 rounded-md border px-2 py-1 text-right text-sm outline-none focus:ring-2 focus:ring-ring"
+                          />
+                        ) : (
+                          fmtAmount(line.unitPrice, quote.currency)
+                        )}
+                      </td>
+
+                      <td className="px-4 py-4 text-right font-medium">
+                        {fmtAmount(isEditing ? editedTotal : line.total, quote.currency)}
+                      </td>
+
+                      <td className="px-4 py-4 text-right print:hidden">
+                        {!line.isFallback && (
+                          <div className="flex justify-end gap-3">
+                            {isEditing ? (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateLine(line.id)}
+                                  disabled={saving}
+                                  className="text-xs font-medium hover:underline disabled:opacity-50"
+                                >
+                                  Enregistrer
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={cancelEditLine}
+                                  disabled={saving}
+                                  className="text-xs font-medium text-muted-foreground hover:underline disabled:opacity-50"
+                                >
+                                  Annuler
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => startEditLine(line)}
+                                  disabled={saving}
+                                  className="text-xs font-medium hover:underline disabled:opacity-50"
+                                >
+                                  Modifier
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteLine(line.id)}
+                                  disabled={saving}
+                                  className="text-xs font-medium text-destructive hover:underline disabled:opacity-50"
+                                >
+                                  Supprimer
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
 
