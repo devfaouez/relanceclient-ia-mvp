@@ -45,6 +45,17 @@ type Preferences = {
   quoteFooter: string | null;
 } | null;
 
+type Reminder = {
+  id: string;
+  quoteId: string;
+  subject: string;
+  body: string;
+  status: string;
+  approvedAt: string | null;
+  sentAt: string | null;
+  createdAt: string;
+};
+
 type QuoteResponse = {
   quote: Quote;
   preferences: Preferences;
@@ -66,6 +77,16 @@ const QUOTE_STATUS_LABELS: Record<string, string> = {
   REJECTED: "Refusé",
   EXPIRED: "Expiré",
   CANCELLED: "Annulé",
+};
+
+const REMINDER_STATUS_LABELS: Record<string, string> = {
+  DRAFT: "Brouillon",
+  PENDING_APPROVAL: "À approuver",
+  APPROVED: "Approuvée",
+  SCHEDULED: "Programmée",
+  SENT: "Envoyée",
+  CANCELLED: "Annulée",
+  FAILED: "Échec",
 };
 
 function fmtDate(date: string | null) {
@@ -96,6 +117,7 @@ export default function QuotePreviewPage({
   params: { id: string };
 }) {
   const [data, setData] = useState<QuoteResponse | null>(null);
+  const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(true);
   const [pageError, setPageError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -139,9 +161,22 @@ export default function QuotePreviewPage({
       .finally(() => setLoading(false));
   }, [params.id]);
 
+  const fetchReminders = useCallback(() => {
+    fetch("/api/reminders")
+      .then((res) => {
+        if (!res.ok) return [];
+        return res.json() as Promise<Reminder[]>;
+      })
+      .then((items) => {
+        setReminders(items.filter((item) => item.quoteId === params.id));
+      })
+      .catch(() => {});
+  }, [params.id]);
+
   useEffect(() => {
     fetchQuote();
-  }, [fetchQuote]);
+    fetchReminders();
+  }, [fetchQuote, fetchReminders]);
 
   const displayLines = useMemo<DisplayLine[]>(() => {
     if (!data) return [];
@@ -654,6 +689,38 @@ export default function QuotePreviewPage({
         </div>
 
         <aside className="quote-print-hidden space-y-4 print:hidden">
+          <div className="rounded-lg border bg-card p-4">
+            <h2 className="text-sm font-semibold">Relances liées au devis</h2>
+
+            {reminders.length === 0 ? (
+              <p className="mt-2 text-sm text-muted-foreground">
+                Aucune relance générée pour ce devis.
+              </p>
+            ) : (
+              <div className="mt-3 space-y-3">
+                {reminders.map((reminder) => (
+                  <div
+                    key={reminder.id}
+                    className="rounded-md border bg-background p-3 text-sm"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="font-medium">{reminder.subject}</p>
+                      <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
+                        {REMINDER_STATUS_LABELS[reminder.status] ??
+                          reminder.status}
+                      </span>
+                    </div>
+
+                    <div className="mt-2 space-y-1 text-xs text-muted-foreground">
+                      <p>Créée le : {fmtDate(reminder.createdAt)}</p>
+                      <p>Approuvée le : {fmtDate(reminder.approvedAt)}</p>
+                      <p>Envoyée le : {fmtDate(reminder.sentAt)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
           {actionError && (
             <p className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
               {actionError}
