@@ -148,6 +148,12 @@ export default function QuotePreviewPage({
     useState<ReminderTone>("PROFESSIONAL");
   const [generateNote, setGenerateNote] = useState("");
 
+  const [editingReminderId, setEditingReminderId] = useState<string | null>(null);
+  const [editReminderSubject, setEditReminderSubject] = useState("");
+  const [editReminderBody, setEditReminderBody] = useState("");
+  const [sendConfirmReminder, setSendConfirmReminder] =
+    useState<Reminder | null>(null);
+
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
   const [editLineDescription, setEditLineDescription] = useState("");
   const [editLineQuantity, setEditLineQuantity] = useState("1");
@@ -269,6 +275,108 @@ export default function QuotePreviewPage({
     cancelEditLine();
     setActionSuccess("Ligne modifiée");
     fetchQuote();
+  }
+
+  function startEditingReminder(reminder: Reminder) {
+    setEditingReminderId(reminder.id);
+    setEditReminderSubject(reminder.subject);
+    setEditReminderBody(reminder.body);
+    setActionError(null);
+    setActionSuccess(null);
+  }
+
+  function cancelEditingReminder() {
+    setEditingReminderId(null);
+    setEditReminderSubject("");
+    setEditReminderBody("");
+  }
+
+  async function handleUpdateReminder(reminderId: string) {
+    if (!editReminderSubject.trim() || !editReminderBody.trim()) {
+      setActionError("Le sujet et le contenu de la relance sont obligatoires");
+      return;
+    }
+
+    setSaving(true);
+    setActionError(null);
+    setActionSuccess(null);
+
+    const res = await fetch(`/api/reminders/${reminderId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        subject: editReminderSubject.trim(),
+        body: editReminderBody.trim(),
+      }),
+    });
+
+    setSaving(false);
+
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      setActionError(
+        (json as { error?: string }).error ??
+          "Erreur lors de la modification de la relance"
+      );
+      return;
+    }
+
+    cancelEditingReminder();
+    setActionSuccess("Relance modifiée");
+    fetchReminders();
+  }
+
+  async function handleApproveReminder(reminderId: string) {
+    setSaving(true);
+    setActionError(null);
+    setActionSuccess(null);
+
+    const res = await fetch(`/api/reminders/${reminderId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "APPROVED" }),
+    });
+
+    setSaving(false);
+
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      setActionError(
+        (json as { error?: string }).error ??
+          "Erreur lors de l'approbation de la relance"
+      );
+      return;
+    }
+
+    setActionSuccess("Relance approuvée");
+    fetchReminders();
+  }
+
+  async function handleSendReminder(reminderId: string) {
+    setSaving(true);
+    setActionError(null);
+    setActionSuccess(null);
+
+    const res = await fetch("/api/reminders/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reminderId }),
+    });
+
+    setSaving(false);
+
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      setActionError(
+        (json as { error?: string }).error ??
+          "Erreur lors de l'envoi de la relance"
+      );
+      return;
+    }
+
+    setSendConfirmReminder(null);
+    setActionSuccess("Relance envoyée");
+    fetchReminders();
   }
 
   async function handleGenerateReminder(e: React.FormEvent) {
@@ -791,26 +899,139 @@ export default function QuotePreviewPage({
               </p>
             ) : (
               <div className="mt-3 space-y-3">
-                {reminders.map((reminder) => (
-                  <div
-                    key={reminder.id}
-                    className="rounded-md border bg-background p-3 text-sm"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <p className="font-medium">{reminder.subject}</p>
-                      <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
-                        {REMINDER_STATUS_LABELS[reminder.status] ??
-                          reminder.status}
-                      </span>
-                    </div>
+                {reminders.map((reminder) => {
+                  const isEditing = editingReminderId === reminder.id;
+                  const canEdit =
+                    reminder.status !== "SENT" &&
+                    reminder.status !== "CANCELLED" &&
+                    reminder.status !== "FAILED";
+                  const canApprove =
+                    reminder.status !== "APPROVED" &&
+                    reminder.status !== "SENT" &&
+                    reminder.status !== "CANCELLED" &&
+                    reminder.status !== "FAILED";
+                  const canSend = reminder.status === "APPROVED";
 
-                    <div className="mt-2 space-y-1 text-xs text-muted-foreground">
-                      <p>Créée le : {fmtDate(reminder.createdAt)}</p>
-                      <p>Approuvée le : {fmtDate(reminder.approvedAt)}</p>
-                      <p>Envoyée le : {fmtDate(reminder.sentAt)}</p>
+                  return (
+                    <div
+                      key={reminder.id}
+                      className="rounded-md border bg-background p-3 text-sm"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          {isEditing ? (
+                            <div className="space-y-3">
+                              <div>
+                                <label className="block text-xs font-medium text-muted-foreground">
+                                  Sujet
+                                </label>
+                                <input
+                                  type="text"
+                                  value={editReminderSubject}
+                                  onChange={(e) =>
+                                    setEditReminderSubject(e.target.value)
+                                  }
+                                  className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-xs font-medium text-muted-foreground">
+                                  Message
+                                </label>
+                                <textarea
+                                  value={editReminderBody}
+                                  onChange={(e) =>
+                                    setEditReminderBody(e.target.value)
+                                  }
+                                  rows={8}
+                                  className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                                />
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              <p className="font-medium">{reminder.subject}</p>
+                              <p className="mt-2 line-clamp-4 whitespace-pre-line text-xs text-muted-foreground">
+                                {reminder.body}
+                              </p>
+                            </>
+                          )}
+                        </div>
+
+                        <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
+                          {REMINDER_STATUS_LABELS[reminder.status] ??
+                            reminder.status}
+                        </span>
+                      </div>
+
+                      <div className="mt-3 space-y-1 text-xs text-muted-foreground">
+                        <p>Créée le : {fmtDate(reminder.createdAt)}</p>
+                        <p>Approuvée le : {fmtDate(reminder.approvedAt)}</p>
+                        <p>Envoyée le : {fmtDate(reminder.sentAt)}</p>
+                      </div>
+
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {isEditing ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateReminder(reminder.id)}
+                              disabled={saving}
+                              className="rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                            >
+                              Enregistrer
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={cancelEditingReminder}
+                              disabled={saving}
+                              className="rounded-md border px-3 py-1 text-xs font-medium hover:bg-muted disabled:opacity-50"
+                            >
+                              Annuler
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            {canEdit && (
+                              <button
+                                type="button"
+                                onClick={() => startEditingReminder(reminder)}
+                                disabled={saving}
+                                className="rounded-md border px-3 py-1 text-xs font-medium hover:bg-muted disabled:opacity-50"
+                              >
+                                Modifier
+                              </button>
+                            )}
+
+                            {canApprove && (
+                              <button
+                                type="button"
+                                onClick={() => handleApproveReminder(reminder.id)}
+                                disabled={saving}
+                                className="rounded-md border px-3 py-1 text-xs font-medium hover:bg-muted disabled:opacity-50"
+                              >
+                                Approuver
+                              </button>
+                            )}
+
+                            {canSend && (
+                              <button
+                                type="button"
+                                onClick={() => setSendConfirmReminder(reminder)}
+                                disabled={saving}
+                                className="rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                              >
+                                Envoyer
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -988,6 +1209,55 @@ export default function QuotePreviewPage({
           </form>
         </aside>
       </div>
+
+      {sendConfirmReminder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 print:hidden">
+          <div className="w-full max-w-lg rounded-lg border bg-background p-5 shadow-lg">
+            <h2 className="text-lg font-semibold">Confirmer l’envoi</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Cette relance sera envoyée par email au client du devis.
+            </p>
+
+            <div className="mt-4 space-y-3 rounded-md bg-muted/50 p-4 text-sm">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Sujet
+                </p>
+                <p className="mt-1 font-medium">{sendConfirmReminder.subject}</p>
+              </div>
+
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Message
+                </p>
+                <p className="mt-1 max-h-64 overflow-y-auto whitespace-pre-line text-muted-foreground">
+                  {sendConfirmReminder.body}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setSendConfirmReminder(null)}
+                disabled={saving}
+                className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
+              >
+                Annuler
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleSendReminder(sendConfirmReminder.id)}
+                disabled={saving}
+                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              >
+                {saving ? "Envoi…" : "Confirmer l’envoi"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
