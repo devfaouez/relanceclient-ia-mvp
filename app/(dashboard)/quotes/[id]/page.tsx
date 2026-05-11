@@ -102,6 +102,9 @@ export default function QuotePreviewPage({
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
+  const [quoteTitle, setQuoteTitle] = useState("");
+  const [quoteNumber, setQuoteNumber] = useState("");
+  const [quoteStatus, setQuoteStatus] = useState("DRAFT");
   const [validUntil, setValidUntil] = useState("");
   const [paymentTerms, setPaymentTerms] = useState("");
   const [legalNotice, setLegalNotice] = useState("");
@@ -125,6 +128,9 @@ export default function QuotePreviewPage({
       })
       .then((quoteData) => {
         setData(quoteData);
+        setQuoteTitle(quoteData.quote.title);
+        setQuoteNumber(quoteData.quote.quoteNumber ?? "");
+        setQuoteStatus(quoteData.quote.status);
         setValidUntil(inputDateValue(quoteData.quote.validUntil));
         setPaymentTerms(quoteData.quote.paymentTerms ?? "");
         setLegalNotice(quoteData.quote.legalNotice ?? "");
@@ -228,6 +234,9 @@ export default function QuotePreviewPage({
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        title: quoteTitle.trim(),
+        quoteNumber: quoteNumber.trim() || null,
+        status: quoteStatus,
         validUntil: validUntil ? `${validUntil}T00:00:00.000Z` : null,
         paymentTerms: paymentTerms.trim() || null,
         legalNotice: legalNotice.trim() || null,
@@ -244,7 +253,7 @@ export default function QuotePreviewPage({
       return;
     }
 
-    setActionSuccess("Conditions du devis enregistrées");
+    setActionSuccess("Informations du devis enregistrées");
     fetchQuote();
   }
 
@@ -682,9 +691,53 @@ export default function QuotePreviewPage({
             onSubmit={handleUpdateTerms}
             className="rounded-lg border bg-card p-4"
           >
-            <h2 className="text-sm font-semibold">Conditions du devis</h2>
+            <h2 className="text-sm font-semibold">Informations du devis</h2>
 
             <div className="mt-3 space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground">
+                  Titre du devis
+                </label>
+                <input
+                  required
+                  type="text"
+                  value={quoteTitle}
+                  onChange={(e) => setQuoteTitle(e.target.value)}
+                  className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground">
+                  Numéro du devis
+                </label>
+                <input
+                  type="text"
+                  value={quoteNumber}
+                  onChange={(e) => setQuoteNumber(e.target.value)}
+                  placeholder={quote.id.slice(0, 8)}
+                  className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground">
+                  Statut
+                </label>
+                <select
+                  value={quoteStatus}
+                  onChange={(e) => setQuoteStatus(e.target.value)}
+                  className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="DRAFT">Brouillon</option>
+                  <option value="SENT">Envoyé</option>
+                  <option value="ACCEPTED">Accepté</option>
+                  <option value="REJECTED">Refusé</option>
+                  <option value="EXPIRED">Expiré</option>
+                  <option value="CANCELLED">Annulé</option>
+                </select>
+              </div>
+
               <div>
                 <label className="block text-xs font-medium text-muted-foreground">
                   Date de validité
@@ -728,7 +781,7 @@ export default function QuotePreviewPage({
                 disabled={saving}
                 className="w-full rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
               >
-                {saving ? "Enregistrement…" : "Enregistrer les conditions"}
+                {saving ? "Enregistrement…" : "Enregistrer les informations"}
               </button>
             </div>
           </form>
