@@ -68,6 +68,11 @@ function statusLabel(status: string) {
   return REMINDER_STATUS_LABELS[status] ?? status;
 }
 
+function compareText(a: unknown, b: unknown) {
+  return String(a ?? "").localeCompare(String(b ?? ""), "fr");
+}
+
+
 function quoteDisplayName(row: ReminderRow) {
   if (!row.quote) return "";
   return row.quote.quoteNumber
@@ -212,7 +217,7 @@ export default function RemindersPage() {
   const statuses = useMemo(
     () =>
       Array.from(new Set(rows.map((row) => row.status))).sort((a, b) =>
-        statusLabel(a).localeCompare(statusLabel(b), "fr")
+        compareText(statusLabel(a), statusLabel(b))
       ),
     [rows]
   );
@@ -237,18 +242,15 @@ export default function RemindersPage() {
       }
 
       if (sortKey === "status") {
-        result = statusLabel(a.status).localeCompare(statusLabel(b.status), "fr");
+        result = compareText(statusLabel(a.status), statusLabel(b.status));
       }
 
       if (sortKey === "prospect") {
-        result = prospectDisplayName(a).localeCompare(
-          prospectDisplayName(b),
-          "fr"
-        );
+        result = compareText(prospectDisplayName(a), prospectDisplayName(b));
       }
 
       if (sortKey === "quote") {
-        result = quoteDisplayName(a).localeCompare(quoteDisplayName(b), "fr");
+        result = compareText(quoteDisplayName(a), quoteDisplayName(b));
       }
 
       return sortDirection === "asc" ? result : -result;
