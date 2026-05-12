@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Check, RefreshCw, Send } from "lucide-react";
+import { Check, RefreshCw, Search, Send } from "lucide-react";
 
 type Reminder = {
   id: string;
@@ -34,6 +34,19 @@ type ReminderRow = Reminder & {
   prospect: Prospect | null;
 };
 
+type SortKey = "createdAt" | "status" | "prospect" | "quote";
+type SortDirection = "asc" | "desc";
+
+const REMINDER_STATUS_LABELS: Record<string, string> = {
+  DRAFT: "Brouillon",
+  PENDING_APPROVAL: "À approuver",
+  APPROVED: "Approuvée",
+  SCHEDULED: "Programmée",
+  SENT: "Envoyée",
+  CANCELLED: "Annulée",
+  FAILED: "Échec",
+};
+
 const dateFormatter = new Intl.DateTimeFormat("fr-FR", {
   day: "2-digit",
   month: "short",
@@ -51,11 +64,47 @@ async function fetchJson<T>(url: string): Promise<T | null> {
   return res.json() as Promise<T>;
 }
 
+function statusLabel(status: string) {
+  return REMINDER_STATUS_LABELS[status] ?? status;
+}
+
+function quoteDisplayName(row: ReminderRow) {
+  if (!row.quote) return "";
+  return row.quote.quoteNumber
+    ? `${row.quote.title} #${row.quote.quoteNumber}`
+    : row.quote.title;
+}
+
+function prospectDisplayName(row: ReminderRow) {
+  if (!row.prospect) return "";
+  return row.prospect.company ?? row.prospect.name;
+}
+
+function reminderSearchText(row: ReminderRow) {
+  return [
+    row.subject,
+    row.body,
+    row.status,
+    statusLabel(row.status),
+    row.prospect?.name,
+    row.prospect?.company,
+    row.quote?.title,
+    row.quote?.quoteNumber,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
 export default function RemindersPage() {
   const [rows, setRows] = useState<ReminderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionId, setActionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [sortKey, setSortKey] = useState<SortKey>("createdAt");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
   const loadReminders = useCallback(async () => {
     setLoading(true);
@@ -160,6 +209,67 @@ export default function RemindersPage() {
     [rows]
   );
 
+  const statuses = useMemo(
+    () =>
+      Array.from(new Set(rows.map((row) => row.status))).sort((a, b) =>
+        statusLabel(a).localeCompare(statusLabel(b), "fr")
+      ),
+    [rows]
+  );
+
+  const filteredRows = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+
+    const filtered = rows.filter((row) => {
+      const matchesStatus =
+        statusFilter === "ALL" || row.status === statusFilter;
+      const matchesSearch = !query || reminderSearchText(row).includes(query);
+
+      return matchesStatus && matchesSearch;
+    });
+
+    return [...filtered].sort((a, b) => {
+      let result = 0;
+
+      if (sortKey === "createdAt") {
+        result =
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      }
+
+      if (sortKey === "status") {
+        result = statusLabel(a.status).localeCompare(statusLabel(b.status), "fr");
+      }
+
+      if (sortKey === "prospect") {
+        result = prospectDisplayName(a).localeCompare(
+          prospectDisplayName(b),
+          "fr"
+        );
+      }
+
+      if (sortKey === "quote") {
+        result = quoteDisplayName(a).localeCompare(quoteDisplayName(b), "fr");
+      }
+
+      return sortDirection === "asc" ? result : -result;
+    });
+  }, [rows, searchQuery, sortDirection, sortKey, statusFilter]);
+
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
+      return;
+    }
+
+    setSortKey(key);
+    setSortDirection(key === "createdAt" ? "desc" : "asc");
+  }
+
+  function sortLabel(key: SortKey) {
+    if (sortKey !== key) return "";
+    return sortDirection === "asc" ? " ↑" : " ↓";
+  }
+
   return (
     <section className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -187,6 +297,72 @@ export default function RemindersPage() {
           <span className="font-medium text-foreground">{pendingCount}</span> à
           approuver.
         </p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          <span className="font-medium text-foreground">
+            {filteredRows.length}
+          </span>{" "}
+          relance{filteredRows.length > 1 ? "s" : ""} affichée
+          {filteredRows.length > 1 ? "s" : ""}.
+        </p>
+      </div>
+
+      <div className="grid gap-4 rounded-lg border bg-card p-5 lg:grid-cols-[1fr_220px_220px_180px]">
+        <div>
+          <label className="text-sm font-medium">Recherche</label>
+          <div className="mt-2 flex items-center gap-2 rounded-md border bg-background px-3">
+            <Search className="h-4 w-4 text-muted-foreground" />
+            <input
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Sujet, message, statut, prospect, société, devis..."
+              className="w-full bg-transparent py-2 text-sm outline-none"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="text-sm font-medium">Statut</label>
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+            className="mt-2 w-full rounded-md border bg-background px-3 py-2 text-sm"
+          >
+            <option value="ALL">Tous les statuts</option>
+            {statuses.map((status) => (
+              <option key={status} value={status}>
+                {statusLabel(status)}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="text-sm font-medium">Trier par</label>
+          <select
+            value={sortKey}
+            onChange={(event) => setSortKey(event.target.value as SortKey)}
+            className="mt-2 w-full rounded-md border bg-background px-3 py-2 text-sm"
+          >
+            <option value="createdAt">Date de création</option>
+            <option value="status">Statut</option>
+            <option value="prospect">Prospect</option>
+            <option value="quote">Devis</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="text-sm font-medium">Ordre</label>
+          <select
+            value={sortDirection}
+            onChange={(event) =>
+              setSortDirection(event.target.value as SortDirection)
+            }
+            className="mt-2 w-full rounded-md border bg-background px-3 py-2 text-sm"
+          >
+            <option value="desc">Décroissant</option>
+            <option value="asc">Croissant</option>
+          </select>
+        </div>
       </div>
 
       {error && <p className="text-sm text-destructive">{error}</p>}
@@ -197,18 +373,55 @@ export default function RemindersPage() {
         <p className="rounded-lg border bg-card px-5 py-8 text-sm text-muted-foreground">
           Aucune relance pour l&apos;instant.
         </p>
+      ) : filteredRows.length === 0 ? (
+        <p className="rounded-lg border bg-card px-5 py-8 text-sm text-muted-foreground">
+          Aucune relance ne correspond aux filtres.
+        </p>
       ) : (
         <div className="space-y-4">
-          {rows.map((row) => (
+          {filteredRows.map((row) => (
             <article key={row.id} className="rounded-lg border bg-card">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b bg-muted/50 text-left">
                       <th className="px-4 py-3 font-medium">Sujet</th>
-                      <th className="px-4 py-3 font-medium">Prospect</th>
-                      <th className="px-4 py-3 font-medium">Devis</th>
-                      <th className="px-4 py-3 font-medium">Statut</th>
+                      <th className="px-4 py-3 font-medium">
+                        <button
+                          type="button"
+                          onClick={() => toggleSort("prospect")}
+                          className="hover:underline"
+                        >
+                          Prospect{sortLabel("prospect")}
+                        </button>
+                      </th>
+                      <th className="px-4 py-3 font-medium">
+                        <button
+                          type="button"
+                          onClick={() => toggleSort("quote")}
+                          className="hover:underline"
+                        >
+                          Devis{sortLabel("quote")}
+                        </button>
+                      </th>
+                      <th className="px-4 py-3 font-medium">
+                        <button
+                          type="button"
+                          onClick={() => toggleSort("status")}
+                          className="hover:underline"
+                        >
+                          Statut{sortLabel("status")}
+                        </button>
+                      </th>
+                      <th className="px-4 py-3 font-medium">
+                        <button
+                          type="button"
+                          onClick={() => toggleSort("createdAt")}
+                          className="hover:underline"
+                        >
+                          Créée le{sortLabel("createdAt")}
+                        </button>
+                      </th>
                       <th className="px-4 py-3 font-medium">approvedAt</th>
                       <th className="px-4 py-3 font-medium">sentAt</th>
                       <th className="px-4 py-3"></th>
@@ -233,20 +446,26 @@ export default function RemindersPage() {
                       </td>
                       <td className="min-w-40 px-4 py-3 text-muted-foreground">
                         {row.quote ? (
-                          <>
+                          <Link
+                            href={`/quotes/${row.quote.id}`}
+                            className="font-medium text-foreground hover:underline"
+                          >
                             {row.quote.title}
                             {row.quote.quoteNumber
                               ? ` #${row.quote.quoteNumber}`
                               : ""}
-                          </>
+                          </Link>
                         ) : (
                           "—"
                         )}
                       </td>
                       <td className="px-4 py-3">
                         <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
-                          {row.status}
+                          {statusLabel(row.status)}
                         </span>
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {formatDate(row.createdAt)}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">
                         {formatDate(row.approvedAt)}
