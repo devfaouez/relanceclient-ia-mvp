@@ -60,6 +60,11 @@ function statusLabel(status: string) {
   return STATUS_LABELS[status] ?? status;
 }
 
+function compareText(a: unknown, b: unknown) {
+  return String(a ?? "").localeCompare(String(b ?? ""), "fr");
+}
+
+
 function quoteSearchText(quote: Quote) {
   return [
     quote.quoteNumber,
@@ -128,15 +133,15 @@ export default function QuotesPage() {
       }
 
       if (sortKey === "status") {
-        result = statusLabel(a.status).localeCompare(statusLabel(b.status));
+        result = compareText(statusLabel(a.status), statusLabel(b.status));
       }
 
       if (sortKey === "prospect") {
-        result = prospectDisplayName(a).localeCompare(prospectDisplayName(b));
+        result = compareText(prospectDisplayName(a), prospectDisplayName(b));
       }
 
       if (sortKey === "title") {
-        result = a.title.localeCompare(b.title);
+        result = compareText(a.title, b.title);
       }
 
       return sortDirection === "asc" ? result : -result;

@@ -36,6 +36,11 @@ function statusLabel(status: string) {
   return STATUS_LABELS[status] ?? status;
 }
 
+function compareText(a: unknown, b: unknown) {
+  return String(a ?? "").localeCompare(String(b ?? ""), "fr");
+}
+
+
 function formatDate(date: string) {
   return dateFormatter.format(new Date(date));
 }
@@ -90,15 +95,15 @@ export default function ProspectsPage() {
       let result = 0;
 
       if (sortKey === "name") {
-        result = a.name.localeCompare(b.name);
+        result = compareText(a.name, b.name);
       }
 
       if (sortKey === "company") {
-        result = (a.company ?? "").localeCompare(b.company ?? "");
+        result = compareText(a.company, b.company);
       }
 
       if (sortKey === "status") {
-        result = statusLabel(a.status).localeCompare(statusLabel(b.status));
+        result = compareText(statusLabel(a.status), statusLabel(b.status));
       }
 
       if (sortKey === "createdAt") {
