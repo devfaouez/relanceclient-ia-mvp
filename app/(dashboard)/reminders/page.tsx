@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Check, RefreshCw, Search, Send } from "lucide-react";
+import { compareText, formatDate } from "@/lib/formatters";
+import { reminderStatusLabel } from "@/lib/status-labels";
 
 type Reminder = {
   id: string;
@@ -37,41 +39,11 @@ type ReminderRow = Reminder & {
 type SortKey = "createdAt" | "status" | "prospect" | "quote";
 type SortDirection = "asc" | "desc";
 
-const REMINDER_STATUS_LABELS: Record<string, string> = {
-  DRAFT: "Brouillon",
-  PENDING_APPROVAL: "À approuver",
-  APPROVED: "Approuvée",
-  SCHEDULED: "Programmée",
-  SENT: "Envoyée",
-  CANCELLED: "Annulée",
-  FAILED: "Échec",
-};
-
-const dateFormatter = new Intl.DateTimeFormat("fr-FR", {
-  day: "2-digit",
-  month: "short",
-  year: "numeric",
-});
-
-function formatDate(date: string | null) {
-  if (!date) return "—";
-  return dateFormatter.format(new Date(date));
-}
-
 async function fetchJson<T>(url: string): Promise<T | null> {
   const res = await fetch(url);
   if (!res.ok) return null;
   return res.json() as Promise<T>;
 }
-
-function statusLabel(status: string) {
-  return REMINDER_STATUS_LABELS[status] ?? status;
-}
-
-function compareText(a: unknown, b: unknown) {
-  return String(a ?? "").localeCompare(String(b ?? ""), "fr");
-}
-
 
 function quoteDisplayName(row: ReminderRow) {
   if (!row.quote) return "";
@@ -90,7 +62,7 @@ function reminderSearchText(row: ReminderRow) {
     row.subject,
     row.body,
     row.status,
-    statusLabel(row.status),
+    reminderStatusLabel(row.status),
     row.prospect?.name,
     row.prospect?.company,
     row.quote?.title,
@@ -217,7 +189,7 @@ export default function RemindersPage() {
   const statuses = useMemo(
     () =>
       Array.from(new Set(rows.map((row) => row.status))).sort((a, b) =>
-        compareText(statusLabel(a), statusLabel(b))
+        compareText(reminderStatusLabel(a), reminderStatusLabel(b))
       ),
     [rows]
   );
@@ -242,7 +214,10 @@ export default function RemindersPage() {
       }
 
       if (sortKey === "status") {
-        result = compareText(statusLabel(a.status), statusLabel(b.status));
+        result = compareText(
+          reminderStatusLabel(a.status),
+          reminderStatusLabel(b.status)
+        );
       }
 
       if (sortKey === "prospect") {
@@ -332,7 +307,7 @@ export default function RemindersPage() {
             <option value="ALL">Tous les statuts</option>
             {statuses.map((status) => (
               <option key={status} value={status}>
-                {statusLabel(status)}
+                {reminderStatusLabel(status)}
               </option>
             ))}
           </select>
@@ -463,7 +438,7 @@ export default function RemindersPage() {
                       </td>
                       <td className="px-4 py-3">
                         <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
-                          {statusLabel(row.status)}
+                          {reminderStatusLabel(row.status)}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">

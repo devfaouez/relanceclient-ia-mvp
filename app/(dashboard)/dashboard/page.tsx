@@ -14,6 +14,12 @@ import {
   Users,
   XCircle,
 } from "lucide-react";
+import { formatAmount, formatDate } from "@/lib/formatters";
+import {
+  prospectStatusLabel,
+  quoteStatusLabel,
+  reminderStatusLabel,
+} from "@/lib/status-labels";
 
 type LatestProspect = {
   id: string;
@@ -74,23 +80,6 @@ type DashboardStats = {
   latestReminders: LatestReminder[];
 };
 
-const dateFormatter = new Intl.DateTimeFormat("fr-FR", {
-  day: "2-digit",
-  month: "short",
-  year: "numeric",
-});
-
-function formatDate(date: string) {
-  return dateFormatter.format(new Date(date));
-}
-
-function formatAmount(amount: number, currency = "EUR") {
-  return new Intl.NumberFormat("fr-FR", {
-    style: "currency",
-    currency,
-  }).format(amount);
-}
-
 function StatCard({
   label,
   value,
@@ -115,10 +104,10 @@ function StatCard({
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
+function StatusBadge({ label }: { label: string }) {
   return (
     <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
-      {status}
+      {label}
     </span>
   );
 }
@@ -262,7 +251,7 @@ export default function DashboardPage() {
                       </p>
                     </div>
                     <div className="shrink-0 text-right">
-                      <StatusBadge status={prospect.status} />
+                      <StatusBadge label={prospectStatusLabel(prospect.status)} />
                       <p className="mt-2 text-xs text-muted-foreground">
                         {formatDate(prospect.createdAt)}
                       </p>
@@ -303,7 +292,7 @@ export default function DashboardPage() {
                       </p>
                     </div>
                     <div className="shrink-0 text-right">
-                      <StatusBadge status={quote.status} />
+                      <StatusBadge label={quoteStatusLabel(quote.status)} />
                       <p className="mt-2 text-sm font-medium">
                         {formatAmount(quote.totalAmount, quote.currency)}
                       </p>
@@ -390,7 +379,9 @@ export default function DashboardPage() {
                     </p>
                   </div>
                   <div className="shrink-0 text-right">
-                    <StatusBadge status={reminder.status} />
+                    <StatusBadge
+                      label={reminderStatusLabel(reminder.status)}
+                    />
                     <p className="mt-2 text-xs text-muted-foreground">
                       {reminder.sentAt
                         ? `Envoyée le ${formatDate(reminder.sentAt)}`

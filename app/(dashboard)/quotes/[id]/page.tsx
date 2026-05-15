@@ -2,6 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { formatAmount, formatDate } from "@/lib/formatters";
+import {
+  QUOTE_STATUS_LABELS,
+  quoteStatusLabel,
+  reminderStatusLabel,
+} from "@/lib/status-labels";
 
 type Prospect = {
   id: string;
@@ -70,25 +76,6 @@ type DisplayLine = {
   isFallback: boolean;
 };
 
-const QUOTE_STATUS_LABELS: Record<string, string> = {
-  DRAFT: "Brouillon",
-  SENT: "Envoyé",
-  ACCEPTED: "Accepté",
-  REJECTED: "Refusé",
-  EXPIRED: "Expiré",
-  CANCELLED: "Annulé",
-};
-
-const REMINDER_STATUS_LABELS: Record<string, string> = {
-  DRAFT: "Brouillon",
-  PENDING_APPROVAL: "À approuver",
-  APPROVED: "Approuvée",
-  SCHEDULED: "Programmée",
-  SENT: "Envoyée",
-  CANCELLED: "Annulée",
-  FAILED: "Échec",
-};
-
 const REMINDER_TONES = [
   { value: "PROFESSIONAL", label: "Professionnel" },
   { value: "FORMAL", label: "Formel" },
@@ -98,21 +85,9 @@ const REMINDER_TONES = [
 
 type ReminderTone = (typeof REMINDER_TONES)[number]["value"];
 
-function fmtDate(date: string | null) {
-  if (!date) return "—";
-  return new Date(date).toLocaleDateString("fr-FR");
-}
-
 function inputDateValue(date: string | null) {
   if (!date) return "";
   return new Date(date).toISOString().slice(0, 10);
-}
-
-function fmtAmount(amount: number, currency: string) {
-  return new Intl.NumberFormat("fr-FR", {
-    style: "currency",
-    currency,
-  }).format(amount);
 }
 
 function toNumber(value: string | null | undefined) {
@@ -640,13 +615,13 @@ export default function QuotePreviewPage({
                 N° {quote.quoteNumber ?? quote.id.slice(0, 8)}
               </p>
               <p className="mt-1 text-sm text-slate-600">
-                Date : {fmtDate(quote.createdAt)}
+                Date : {formatDate(quote.createdAt)}
               </p>
               <p className="mt-1 text-sm text-slate-600">
-                Valable jusqu’au : {fmtDate(quote.validUntil)}
+                Valable jusqu’au : {formatDate(quote.validUntil)}
               </p>
               <p className="mt-3 inline-block rounded-full bg-slate-100 px-3 py-1 text-xs font-medium">
-                {QUOTE_STATUS_LABELS[quote.status] ?? quote.status}
+                {quoteStatusLabel(quote.status)}
               </p>
             </div>
           </div>
@@ -737,12 +712,15 @@ export default function QuotePreviewPage({
                             className="w-28 rounded-md border px-2 py-1 text-right text-sm outline-none focus:ring-2 focus:ring-ring"
                           />
                         ) : (
-                          fmtAmount(line.unitPrice, quote.currency)
+                          formatAmount(line.unitPrice, quote.currency)
                         )}
                       </td>
 
                       <td className="px-4 py-4 text-right font-medium">
-                        {fmtAmount(isEditing ? editedTotal : line.total, quote.currency)}
+                        {formatAmount(
+                          isEditing ? editedTotal : line.total,
+                          quote.currency
+                        )}
                       </td>
 
                       <td className="px-4 py-4 text-right print:hidden">
@@ -803,7 +781,7 @@ export default function QuotePreviewPage({
                 <div className="flex justify-between text-sm">
                   <span>Total</span>
                   <span className="font-bold">
-                    {fmtAmount(totalAmount, quote.currency)}
+                    {formatAmount(totalAmount, quote.currency)}
                   </span>
                 </div>
               </div>
@@ -960,15 +938,14 @@ export default function QuotePreviewPage({
                         </div>
 
                         <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
-                          {REMINDER_STATUS_LABELS[reminder.status] ??
-                            reminder.status}
+                          {reminderStatusLabel(reminder.status)}
                         </span>
                       </div>
 
                       <div className="mt-3 space-y-1 text-xs text-muted-foreground">
-                        <p>Créée le : {fmtDate(reminder.createdAt)}</p>
-                        <p>Approuvée le : {fmtDate(reminder.approvedAt)}</p>
-                        <p>Envoyée le : {fmtDate(reminder.sentAt)}</p>
+                        <p>Créée le : {formatDate(reminder.createdAt)}</p>
+                        <p>Approuvée le : {formatDate(reminder.approvedAt)}</p>
+                        <p>Envoyée le : {formatDate(reminder.sentAt)}</p>
                       </div>
 
                       <div className="mt-3 flex flex-wrap gap-2">
@@ -1151,12 +1128,13 @@ export default function QuotePreviewPage({
                   onChange={(e) => setQuoteStatus(e.target.value)}
                   className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
                 >
-                  <option value="DRAFT">Brouillon</option>
-                  <option value="SENT">Envoyé</option>
-                  <option value="ACCEPTED">Accepté</option>
-                  <option value="REJECTED">Refusé</option>
-                  <option value="EXPIRED">Expiré</option>
-                  <option value="CANCELLED">Annulé</option>
+                  {Object.entries(QUOTE_STATUS_LABELS).map(
+                    ([status, label]) => (
+                      <option key={status} value={status}>
+                        {label}
+                      </option>
+                    )
+                  )}
                 </select>
               </div>
 

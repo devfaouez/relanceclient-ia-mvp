@@ -3,6 +3,12 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { formatAmount, formatDate } from "@/lib/formatters";
+import {
+  prospectStatusLabel,
+  quoteStatusLabel,
+  reminderStatusLabel,
+} from "@/lib/status-labels";
 
 type Prospect = {
   id: string;
@@ -59,25 +65,6 @@ const REMINDER_TONES = [
   { value: "DIRECT", label: "Direct" },
 ] as const;
 
-const QUOTE_STATUS_LABELS: Record<string, string> = {
-  DRAFT: "Brouillon",
-  SENT: "Envoyé",
-  ACCEPTED: "Accepté",
-  REJECTED: "Refusé",
-  EXPIRED: "Expiré",
-  CANCELLED: "Annulé",
-};
-
-const REMINDER_STATUS_LABELS: Record<string, string> = {
-  DRAFT: "Brouillon",
-  PENDING_APPROVAL: "À approuver",
-  APPROVED: "Approuvée",
-  SCHEDULED: "Programmée",
-  SENT: "Envoyée",
-  CANCELLED: "Annulée",
-  FAILED: "Échec",
-};
-
 type ReminderTone = (typeof REMINDER_TONES)[number]["value"];
 
 type GenerateReminderModalState = {
@@ -85,21 +72,9 @@ type GenerateReminderModalState = {
   quoteTitle: string;
 } | null;
 
-function fmt(date: string | null) {
-  if (!date) return "—";
-  return new Date(date).toLocaleDateString("fr-FR");
-}
-
 function toNumber(value: string | null | undefined) {
   if (!value) return 0;
   return Number(value);
-}
-
-function fmtAmount(amount: number, currency: string) {
-  return new Intl.NumberFormat("fr-FR", {
-    style: "currency",
-    currency,
-  }).format(amount);
 }
 
 function quoteTotal(quote: Quote) {
@@ -440,7 +415,7 @@ export default function ProspectDetailPage({
               <dt className="text-muted-foreground">Statut</dt>
               <dd>
                 <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
-                  {prospect.status}
+                  {prospectStatusLabel(prospect.status)}
                 </span>
               </dd>
             </div>
@@ -489,16 +464,16 @@ export default function ProspectDetailPage({
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {quoteTotal(q) > 0
-                        ? fmtAmount(quoteTotal(q), q.currency)
+                        ? formatAmount(quoteTotal(q), q.currency)
                         : "—"}
                     </td>
                     <td className="px-4 py-3">
                       <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
-                        {QUOTE_STATUS_LABELS[q.status] ?? q.status}
+                        {quoteStatusLabel(q.status)}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
-                      {fmt(q.createdAt)}
+                      {formatDate(q.createdAt)}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex justify-end gap-3">
@@ -641,12 +616,14 @@ export default function ProspectDetailPage({
                             <span>
                               Approuvé le :{" "}
                               <span className="font-medium">
-                                {fmt(r.approvedAt)}
+                                {formatDate(r.approvedAt)}
                               </span>
                             </span>
                             <span>
                               Envoyé le :{" "}
-                              <span className="font-medium">{fmt(r.sentAt)}</span>
+                              <span className="font-medium">
+                                {formatDate(r.sentAt)}
+                              </span>
                             </span>
                           </div>
                         </>
@@ -655,7 +632,7 @@ export default function ProspectDetailPage({
 
                     <div className="flex shrink-0 flex-col items-end gap-2">
                       <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
-                        {REMINDER_STATUS_LABELS[r.status] ?? r.status}
+                        {reminderStatusLabel(r.status)}
                       </span>
 
                       {editingReminderId === r.id ? (
@@ -914,7 +891,7 @@ export default function ProspectDetailPage({
             >
               {QUOTE_STATUSES.map((s) => (
                 <option key={s} value={s}>
-                  {QUOTE_STATUS_LABELS[s] ?? s}
+                  {quoteStatusLabel(s)}
                 </option>
               ))}
             </select>
