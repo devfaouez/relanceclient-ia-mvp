@@ -1,5 +1,11 @@
 import { z } from "zod";
-import { ProspectStatus, QuoteStatus, ReminderStatus, ReminderTone } from "@prisma/client";
+import {
+  ProspectStatus,
+  QuoteStatus,
+  ReminderStatus,
+  ReminderTone,
+  Trade,
+} from "@prisma/client";
 
 export const envSchema = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),
@@ -58,6 +64,19 @@ export const updateReminderSchema = z.object({
 
 export const sendReminderSchema = z.object({
   reminderId: z.string().min(1),
+});
+
+export const updateCompanySettingsSchema = z.object({
+  businessName: z.string().trim().max(200).nullish(),
+  logoUrl: z.string().trim().max(1000).nullish(),
+  companyAddress: z.string().trim().max(1000).nullish(),
+  companyPhone: z.string().trim().max(100).nullish(),
+  companyEmail: z.string().trim().email().max(255).nullish().or(z.literal("")),
+  companyWebsite: z.string().trim().max(500).nullish(),
+  trade: z.nativeEnum(Trade).nullish().or(z.literal("")),
+  defaultTone: z.nativeEnum(ReminderTone).optional(),
+  signatureBlock: z.string().trim().max(2000).nullish(),
+  quoteFooter: z.string().trim().max(2000).nullish(),
 });
 
 export const createQuoteLineSchema = z.object({
