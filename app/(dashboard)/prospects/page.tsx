@@ -3,6 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Search } from "lucide-react";
+import { compareText, formatDate } from "@/lib/formatters";
+import {
+  PROSPECT_STATUS_LABELS,
+  prospectStatusLabel,
+} from "@/lib/status-labels";
 
 type Prospect = {
   id: string;
@@ -17,34 +22,6 @@ type Prospect = {
 type SortKey = "name" | "company" | "status" | "createdAt";
 type SortDirection = "asc" | "desc";
 
-const STATUS_LABELS: Record<string, string> = {
-  NEW: "Nouveau",
-  CONTACTED: "Contacté",
-  QUALIFIED: "Qualifié",
-  WON: "Gagné",
-  LOST: "Perdu",
-  ARCHIVED: "Archivé",
-};
-
-const dateFormatter = new Intl.DateTimeFormat("fr-FR", {
-  day: "2-digit",
-  month: "short",
-  year: "numeric",
-});
-
-function statusLabel(status: string) {
-  return STATUS_LABELS[status] ?? status;
-}
-
-function compareText(a: unknown, b: unknown) {
-  return String(a ?? "").localeCompare(String(b ?? ""), "fr");
-}
-
-
-function formatDate(date: string) {
-  return dateFormatter.format(new Date(date));
-}
-
 function prospectSearchText(prospect: Prospect) {
   return [
     prospect.name,
@@ -52,7 +29,7 @@ function prospectSearchText(prospect: Prospect) {
     prospect.email,
     prospect.phone,
     prospect.status,
-    statusLabel(prospect.status),
+    prospectStatusLabel(prospect.status),
   ]
     .filter(Boolean)
     .join(" ")
@@ -103,7 +80,10 @@ export default function ProspectsPage() {
       }
 
       if (sortKey === "status") {
-        result = compareText(statusLabel(a.status), statusLabel(b.status));
+        result = compareText(
+          prospectStatusLabel(a.status),
+          prospectStatusLabel(b.status)
+        );
       }
 
       if (sortKey === "createdAt") {
@@ -179,7 +159,7 @@ export default function ProspectsPage() {
             className="mt-2 w-full rounded-md border bg-background px-3 py-2 text-sm"
           >
             <option value="ALL">Tous les statuts</option>
-            {Object.entries(STATUS_LABELS).map(([status, label]) => (
+            {Object.entries(PROSPECT_STATUS_LABELS).map(([status, label]) => (
               <option key={status} value={status}>
                 {label}
               </option>
@@ -303,7 +283,7 @@ export default function ProspectsPage() {
                   </td>
                   <td className="px-4 py-3">
                     <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
-                      {statusLabel(p.status)}
+                      {prospectStatusLabel(p.status)}
                     </span>
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">

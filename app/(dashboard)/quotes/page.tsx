@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { FileText, Plus, Search } from "lucide-react";
+import { compareText, formatAmount, formatDate } from "@/lib/formatters";
+import { QUOTE_STATUS_LABELS, quoteStatusLabel } from "@/lib/status-labels";
 
 type Quote = {
   id: string;
@@ -29,48 +31,12 @@ type Quote = {
 type SortKey = "createdAt" | "amount" | "status" | "prospect" | "title";
 type SortDirection = "asc" | "desc";
 
-const STATUS_LABELS: Record<string, string> = {
-  DRAFT: "Brouillon",
-  SENT: "Envoyé",
-  ACCEPTED: "Accepté",
-  REJECTED: "Refusé",
-  EXPIRED: "Expiré",
-  CANCELLED: "Annulé",
-};
-
-const dateFormatter = new Intl.DateTimeFormat("fr-FR", {
-  day: "2-digit",
-  month: "short",
-  year: "numeric",
-});
-
-function formatDate(date: string | null) {
-  if (!date) return "—";
-  return dateFormatter.format(new Date(date));
-}
-
-function formatAmount(amount: number, currency = "EUR") {
-  return new Intl.NumberFormat("fr-FR", {
-    style: "currency",
-    currency,
-  }).format(amount);
-}
-
-function statusLabel(status: string) {
-  return STATUS_LABELS[status] ?? status;
-}
-
-function compareText(a: unknown, b: unknown) {
-  return String(a ?? "").localeCompare(String(b ?? ""), "fr");
-}
-
-
 function quoteSearchText(quote: Quote) {
   return [
     quote.quoteNumber,
     quote.title,
     quote.status,
-    statusLabel(quote.status),
+    quoteStatusLabel(quote.status),
     quote.prospect.name,
     quote.prospect.company,
     quote.prospect.email,
@@ -133,7 +99,10 @@ export default function QuotesPage() {
       }
 
       if (sortKey === "status") {
-        result = compareText(statusLabel(a.status), statusLabel(b.status));
+        result = compareText(
+          quoteStatusLabel(a.status),
+          quoteStatusLabel(b.status)
+        );
       }
 
       if (sortKey === "prospect") {
@@ -216,12 +185,11 @@ export default function QuotesPage() {
             className="mt-2 w-full rounded-md border bg-background px-3 py-2 text-sm"
           >
             <option value="ALL">Tous les statuts</option>
-            <option value="DRAFT">Brouillon</option>
-            <option value="SENT">Envoyé</option>
-            <option value="ACCEPTED">Accepté</option>
-            <option value="REJECTED">Refusé</option>
-            <option value="EXPIRED">Expiré</option>
-            <option value="CANCELLED">Annulé</option>
+            {Object.entries(QUOTE_STATUS_LABELS).map(([status, label]) => (
+              <option key={status} value={status}>
+                {label}
+              </option>
+            ))}
           </select>
         </div>
       </div>
@@ -375,7 +343,7 @@ export default function QuotesPage() {
 
                   <td className="px-4 py-3">
                     <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
-                      {statusLabel(quote.status)}
+                      {quoteStatusLabel(quote.status)}
                     </span>
                   </td>
 
