@@ -267,10 +267,12 @@ function fmtDate(date: Date | null) {
 }
 
 function fmtAmount(amount: number, currency: string) {
-  return new Intl.NumberFormat("fr-FR", {
-    style: "currency",
-    currency,
-  }).format(amount);
+  const sign = amount < 0 ? "-" : "";
+  const [integerPart, decimalPart] = Math.abs(amount).toFixed(2).split(".");
+  const groupedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  const currencyLabel = currency === "EUR" ? "€" : currency;
+
+  return `${sign}${groupedInteger},${decimalPart} ${currencyLabel}`;
 }
 
 function cleanText(value: string | null | undefined) {
@@ -420,7 +422,7 @@ export function QuotePdfDocument({
             </Text>
             <Text style={[styles.cellSmall, styles.tableHeaderText]}>Qté</Text>
             <Text style={[styles.cellSmall, styles.tableHeaderText]}>
-              Prix unitaire
+              P.U.
             </Text>
             <Text style={[styles.cellSmall, styles.tableHeaderText]}>Total</Text>
           </View>
