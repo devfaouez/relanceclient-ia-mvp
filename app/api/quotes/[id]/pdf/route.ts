@@ -46,12 +46,29 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
       },
     });
 
-    const buffer = await pdf(
-      React.createElement(QuotePdfDocument, {
-        quote,
-        preferences,
-      }) as React.ReactElement
-    ).toBuffer();
+    let buffer: NodeJS.ReadableStream | Buffer;
+
+    try {
+      buffer = await pdf(
+        React.createElement(QuotePdfDocument, {
+          quote,
+          preferences,
+        }) as React.ReactElement
+      ).toBuffer();
+    } catch (error) {
+      if (!preferences?.logoUrl) {
+        throw error;
+      }
+
+      console.warn("QUOTE_PDF_LOGO_ERROR:", error);
+
+      buffer = await pdf(
+        React.createElement(QuotePdfDocument, {
+          quote,
+          preferences: { ...preferences, logoUrl: null },
+        }) as React.ReactElement
+      ).toBuffer();
+    }
 
     const filename = `devis-${quote.quoteNumber ?? quote.id.slice(0, 8)}.pdf`;
 
