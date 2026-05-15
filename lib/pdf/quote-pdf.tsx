@@ -55,52 +55,97 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: "#0f172a",
     fontFamily: "Helvetica",
+    lineHeight: 1.35,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
+    gap: 28,
     borderBottomWidth: 1,
     borderBottomColor: "#e2e8f0",
-    paddingBottom: 20,
-    marginBottom: 24,
+    paddingBottom: 22,
+    marginBottom: 22,
+  },
+  companyBlock: {
+    flex: 1.1,
+  },
+  quoteBlock: {
+    width: 190,
+    alignItems: "flex-end",
   },
   logo: {
-    maxWidth: 140,
-    maxHeight: 60,
-    marginBottom: 10,
+    width: 120,
+    height: 54,
+    objectFit: "contain",
+    marginBottom: 12,
   },
   companyName: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: "bold",
     marginBottom: 8,
   },
   muted: {
     color: "#475569",
-    lineHeight: 1.4,
+  },
+  detailLine: {
+    color: "#475569",
+    marginTop: 2,
   },
   quoteTitle: {
-    fontSize: 30,
+    fontSize: 32,
     fontWeight: "bold",
     textAlign: "right",
-    marginBottom: 8,
+    letterSpacing: 1,
+    marginBottom: 10,
+    textTransform: "uppercase",
+  },
+  metaRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    marginTop: 4,
+  },
+  metaLabel: {
+    color: "#64748b",
+    fontSize: 9,
+  },
+  metaValue: {
+    color: "#0f172a",
+    fontSize: 9,
+    fontWeight: "bold",
+    textAlign: "right",
   },
   status: {
-    marginTop: 8,
-    padding: 6,
+    marginTop: 10,
+    paddingTop: 5,
+    paddingBottom: 5,
+    paddingLeft: 9,
+    paddingRight: 9,
     backgroundColor: "#f1f5f9",
+    borderRadius: 10,
     fontSize: 9,
     textAlign: "center",
+    color: "#334155",
+    fontWeight: "bold",
   },
   sectionRow: {
     flexDirection: "row",
-    gap: 24,
+    gap: 18,
     borderBottomWidth: 1,
     borderBottomColor: "#e2e8f0",
     paddingBottom: 20,
-    marginBottom: 24,
+    marginBottom: 22,
   },
   half: {
     flex: 1,
+  },
+  infoCard: {
+    flex: 1,
+    padding: 14,
+    backgroundColor: "#f8fafc",
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    borderRadius: 6,
   },
   sectionLabel: {
     fontSize: 9,
@@ -116,47 +161,80 @@ const styles = StyleSheet.create({
     marginTop: 8,
     borderWidth: 1,
     borderColor: "#e2e8f0",
+    borderRadius: 6,
   },
   tableHeader: {
     flexDirection: "row",
-    backgroundColor: "#f8fafc",
+    backgroundColor: "#eef2f7",
     borderBottomWidth: 1,
     borderBottomColor: "#e2e8f0",
+  },
+  tableHeaderText: {
+    fontSize: 9,
+    fontWeight: "bold",
+    color: "#334155",
+    textTransform: "uppercase",
   },
   tableRow: {
     flexDirection: "row",
     borderBottomWidth: 1,
     borderBottomColor: "#e2e8f0",
   },
+  tableRowLast: {
+    flexDirection: "row",
+  },
   cellDescription: {
     flex: 4,
-    padding: 8,
+    padding: 10,
   },
   cellSmall: {
     flex: 1,
-    padding: 8,
+    padding: 10,
     textAlign: "right",
+  },
+  emptyText: {
+    padding: 12,
+    color: "#64748b",
+    fontStyle: "italic",
   },
   totalBox: {
     marginTop: 18,
     marginLeft: "auto",
-    width: 180,
-    padding: 12,
-    backgroundColor: "#f8fafc",
+    width: 210,
+    paddingTop: 12,
+    paddingBottom: 12,
+    paddingLeft: 14,
+    paddingRight: 14,
+    backgroundColor: "#0f172a",
+    color: "#ffffff",
+    borderRadius: 6,
   },
   totalRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    fontSize: 12,
+    alignItems: "center",
+    fontSize: 13,
     fontWeight: "bold",
+  },
+  totalLabel: {
+    color: "#cbd5e1",
+    fontSize: 10,
+    textTransform: "uppercase",
   },
   terms: {
     flexDirection: "row",
-    gap: 24,
+    gap: 18,
     borderTopWidth: 1,
     borderTopColor: "#e2e8f0",
     paddingTop: 18,
     marginTop: 24,
+  },
+  termsBlock: {
+    flex: 1,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    borderRadius: 6,
   },
   footer: {
     borderTopWidth: 1,
@@ -193,6 +271,31 @@ function fmtAmount(amount: number, currency: string) {
     style: "currency",
     currency,
   }).format(amount);
+}
+
+function cleanText(value: string | null | undefined) {
+  const text = value?.trim();
+  return text ? text : null;
+}
+
+function isPdfCompatibleLogoUrl(value: string | null | undefined) {
+  const logoUrl = cleanText(value);
+  if (!logoUrl) return false;
+
+  if (/^data:image\/(png|jpe?g|webp);base64,/i.test(logoUrl)) {
+    return true;
+  }
+
+  if (!/^https?:\/\//i.test(logoUrl)) {
+    return false;
+  }
+
+  try {
+    const url = new URL(logoUrl);
+    return !/\.(svg|gif|avif)$/i.test(url.pathname);
+  } catch {
+    return false;
+  }
 }
 
 function getLines(quote: Quote) {
@@ -233,43 +336,62 @@ export function QuotePdfDocument({
 }) {
   const lines = getLines(quote);
   const total = lines.reduce((sum, line) => sum + line.total, 0);
+  const logoUrl = isPdfCompatibleLogoUrl(preferences?.logoUrl)
+    ? cleanText(preferences?.logoUrl)
+    : null;
+  const businessName = cleanText(preferences?.businessName) ?? "Entreprise";
+  const companyAddress = cleanText(preferences?.companyAddress);
+  const companyPhone = cleanText(preferences?.companyPhone);
+  const companyEmail = cleanText(preferences?.companyEmail);
+  const companyWebsite = cleanText(preferences?.companyWebsite);
+  const quoteFooter = cleanText(preferences?.quoteFooter);
+  const prospectCompany = cleanText(quote.prospect.company);
+  const prospectEmail = cleanText(quote.prospect.email);
+  const prospectPhone = cleanText(quote.prospect.phone);
+  const paymentTerms = cleanText(quote.paymentTerms);
+  const legalNotice = cleanText(quote.legalNotice);
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
-          <View>
-            {preferences?.logoUrl ? (
-              <Image src={preferences.logoUrl} style={styles.logo} />
+          <View style={styles.companyBlock}>
+            {logoUrl ? (
+              <Image src={logoUrl} style={styles.logo} />
             ) : null}
 
-            <Text style={styles.companyName}>
-              {preferences?.businessName ?? "Entreprise"}
-            </Text>
+            <Text style={styles.companyName}>{businessName}</Text>
 
-            {preferences?.companyAddress && (
-              <Text style={styles.muted}>{preferences.companyAddress}</Text>
+            {companyAddress && (
+              <Text style={styles.detailLine}>{companyAddress}</Text>
             )}
-            {preferences?.companyPhone && (
-              <Text style={styles.muted}>Tél. : {preferences.companyPhone}</Text>
+            {companyPhone && (
+              <Text style={styles.detailLine}>Tél. : {companyPhone}</Text>
             )}
-            {preferences?.companyEmail && (
-              <Text style={styles.muted}>Email : {preferences.companyEmail}</Text>
+            {companyEmail && (
+              <Text style={styles.detailLine}>Email : {companyEmail}</Text>
             )}
-            {preferences?.companyWebsite && (
-              <Text style={styles.muted}>Site : {preferences.companyWebsite}</Text>
+            {companyWebsite && (
+              <Text style={styles.detailLine}>Site : {companyWebsite}</Text>
             )}
           </View>
 
-          <View>
+          <View style={styles.quoteBlock}>
             <Text style={styles.quoteTitle}>DEVIS</Text>
-            <Text style={styles.muted}>
-              N° {quote.quoteNumber ?? quote.id.slice(0, 8)}
-            </Text>
-            <Text style={styles.muted}>Date : {fmtDate(quote.createdAt)}</Text>
-            <Text style={styles.muted}>
-              Valable jusqu’au : {fmtDate(quote.validUntil)}
-            </Text>
+            <View style={styles.metaRow}>
+              <Text style={styles.metaLabel}>Numéro</Text>
+              <Text style={styles.metaValue}>
+                {quote.quoteNumber ?? quote.id.slice(0, 8)}
+              </Text>
+            </View>
+            <View style={styles.metaRow}>
+              <Text style={styles.metaLabel}>Créé le</Text>
+              <Text style={styles.metaValue}>{fmtDate(quote.createdAt)}</Text>
+            </View>
+            <View style={styles.metaRow}>
+              <Text style={styles.metaLabel}>Validité</Text>
+              <Text style={styles.metaValue}>{fmtDate(quote.validUntil)}</Text>
+            </View>
             <Text style={styles.status}>
               {STATUS_LABELS[quote.status] ?? quote.status}
             </Text>
@@ -277,15 +399,15 @@ export function QuotePdfDocument({
         </View>
 
         <View style={styles.sectionRow}>
-          <View style={styles.half}>
+          <View style={styles.infoCard}>
             <Text style={styles.sectionLabel}>Client</Text>
             <Text style={styles.bold}>{quote.prospect.name}</Text>
-            {quote.prospect.company && <Text>{quote.prospect.company}</Text>}
-            {quote.prospect.email && <Text>{quote.prospect.email}</Text>}
-            {quote.prospect.phone && <Text>{quote.prospect.phone}</Text>}
+            {prospectCompany && <Text style={styles.detailLine}>{prospectCompany}</Text>}
+            {prospectEmail && <Text style={styles.detailLine}>{prospectEmail}</Text>}
+            {prospectPhone && <Text style={styles.detailLine}>{prospectPhone}</Text>}
           </View>
 
-          <View style={styles.half}>
+          <View style={styles.infoCard}>
             <Text style={styles.sectionLabel}>Objet du devis</Text>
             <Text style={styles.bold}>{quote.title}</Text>
           </View>
@@ -293,54 +415,67 @@ export function QuotePdfDocument({
 
         <View style={styles.table}>
           <View style={styles.tableHeader}>
-            <Text style={styles.cellDescription}>Désignation</Text>
-            <Text style={styles.cellSmall}>Qté</Text>
-            <Text style={styles.cellSmall}>Prix unitaire</Text>
-            <Text style={styles.cellSmall}>Total</Text>
+            <Text style={[styles.cellDescription, styles.tableHeaderText]}>
+              Désignation
+            </Text>
+            <Text style={[styles.cellSmall, styles.tableHeaderText]}>Qté</Text>
+            <Text style={[styles.cellSmall, styles.tableHeaderText]}>
+              Prix unitaire
+            </Text>
+            <Text style={[styles.cellSmall, styles.tableHeaderText]}>Total</Text>
           </View>
 
-          {lines.map((line) => (
-            <View key={line.id} style={styles.tableRow}>
-              <Text style={styles.cellDescription}>{line.description}</Text>
-              <Text style={styles.cellSmall}>{line.quantity}</Text>
-              <Text style={styles.cellSmall}>
-                {fmtAmount(line.unitPrice, quote.currency)}
-              </Text>
-              <Text style={styles.cellSmall}>
-                {fmtAmount(line.total, quote.currency)}
-              </Text>
-            </View>
-          ))}
+          {lines.length > 0 ? (
+            lines.map((line, index) => (
+              <View
+                key={line.id}
+                style={
+                  index === lines.length - 1
+                    ? styles.tableRowLast
+                    : styles.tableRow
+                }
+              >
+                <Text style={styles.cellDescription}>{line.description}</Text>
+                <Text style={styles.cellSmall}>{line.quantity}</Text>
+                <Text style={styles.cellSmall}>
+                  {fmtAmount(line.unitPrice, quote.currency)}
+                </Text>
+                <Text style={styles.cellSmall}>
+                  {fmtAmount(line.total, quote.currency)}
+                </Text>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.emptyText}>Aucune ligne renseignée.</Text>
+          )}
         </View>
 
         <View style={styles.totalBox}>
           <View style={styles.totalRow}>
-            <Text>Total</Text>
+            <Text style={styles.totalLabel}>Total</Text>
             <Text>{fmtAmount(total, quote.currency)}</Text>
           </View>
         </View>
 
-        {(quote.paymentTerms || quote.legalNotice) && (
+        {(paymentTerms || legalNotice) && (
           <View style={styles.terms}>
-            {quote.paymentTerms && (
-              <View style={styles.half}>
+            {paymentTerms && (
+              <View style={styles.termsBlock}>
                 <Text style={styles.sectionLabel}>Conditions de paiement</Text>
-                <Text style={styles.muted}>{quote.paymentTerms}</Text>
+                <Text style={styles.muted}>{paymentTerms}</Text>
               </View>
             )}
 
-            {quote.legalNotice && (
-              <View style={styles.half}>
+            {legalNotice && (
+              <View style={styles.termsBlock}>
                 <Text style={styles.sectionLabel}>Mentions légales</Text>
-                <Text style={styles.muted}>{quote.legalNotice}</Text>
+                <Text style={styles.muted}>{legalNotice}</Text>
               </View>
             )}
           </View>
         )}
 
-        {preferences?.quoteFooter && (
-          <Text style={styles.footer}>{preferences.quoteFooter}</Text>
-        )}
+        {quoteFooter && <Text style={styles.footer}>{quoteFooter}</Text>}
       </Page>
     </Document>
   );
