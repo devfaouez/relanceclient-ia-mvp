@@ -1,7 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertTriangle, CheckCircle2, Mail, XCircle } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Loader2,
+  Mail,
+  Save,
+  XCircle,
+} from "lucide-react";
+import {
+  reminderToneLabel,
+  tradeLabel,
+  REMINDER_TONE_LABELS,
+  TRADE_LABELS,
+} from "@/lib/status-labels";
 
 type SettingsStatus = {
   userEmail: string | null;
@@ -20,9 +33,14 @@ type CompanySettings = {
   companyPhone: string;
   companyEmail: string;
   companyWebsite: string;
+  trade: string;
+  defaultTone: string;
   signatureBlock: string;
   quoteFooter: string;
 };
+
+const TRADE_OPTIONS = Object.keys(TRADE_LABELS);
+const TONE_OPTIONS = Object.keys(REMINDER_TONE_LABELS);
 
 function StatusBadge({ ok }: { ok: boolean }) {
   return (
@@ -58,6 +76,75 @@ function ChecklistItem({
       <StatusBadge ok={ok} />
     </li>
   );
+}
+
+function Message({
+  children,
+  type,
+}: {
+  children: React.ReactNode;
+  type: "success" | "error";
+}) {
+  return (
+    <p
+      className={
+        type === "success"
+          ? "rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700"
+          : "rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+      }
+    >
+      {children}
+    </p>
+  );
+}
+
+function SettingsLoadingState() {
+  return (
+    <section className="space-y-6" aria-busy="true">
+      <div>
+        <h1 className="text-2xl font-semibold">Paramètres</h1>
+        <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Chargement des paramètres...
+        </p>
+      </div>
+
+      <div className="rounded-lg border bg-card p-5">
+        <div className="h-5 w-48 rounded bg-muted" />
+        <div className="mt-2 h-4 w-full max-w-xl rounded bg-muted" />
+        <div className="mt-5 grid gap-4 md:grid-cols-2">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div key={index} className="space-y-2">
+              <div className="h-4 w-28 rounded bg-muted" />
+              <div className="h-10 rounded-md bg-muted" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function formatApiError(json: unknown, fallback: string) {
+  if (!json || typeof json !== "object") return fallback;
+
+  const error = "error" in json && typeof json.error === "string"
+    ? json.error
+    : fallback;
+
+  if (!("details" in json) || !json.details || typeof json.details !== "object") {
+    return error;
+  }
+
+  const details = json.details as {
+    fieldErrors?: Record<string, string[] | undefined>;
+  };
+  const fieldMessages = Object.entries(details.fieldErrors ?? {})
+    .flatMap(([field, messages]) =>
+      (messages ?? []).map((message) => `${field} : ${message}`)
+    );
+
+  return fieldMessages.length > 0 ? `${error} - ${fieldMessages.join(", ")}` : error;
 }
 
 export default function SettingsPage() {
@@ -120,44 +207,48 @@ export default function SettingsPage() {
     setCompanyMessage(null);
     setCompanyError(null);
 
-    const res = await fetch("/api/settings/company", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(companySettings),
-    });
+    try {
+      const res = await fetch("/api/settings/company", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(companySettings),
+      });
 
-    setSavingCompany(false);
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        setCompanyError(
+          formatApiError(json, "Erreur lors de l’enregistrement")
+        );
+        return;
+      }
 
-    if (!res.ok) {
-      const json = await res.json().catch(() => ({}));
+      const saved = (await res.json()) as Partial<CompanySettings>;
+      setCompanySettings((prev) => ({
+        businessName: saved.businessName ?? prev?.businessName ?? "",
+        logoUrl: saved.logoUrl ?? prev?.logoUrl ?? "",
+        companyAddress: saved.companyAddress ?? prev?.companyAddress ?? "",
+        companyPhone: saved.companyPhone ?? prev?.companyPhone ?? "",
+        companyEmail: saved.companyEmail ?? prev?.companyEmail ?? "",
+        companyWebsite: saved.companyWebsite ?? prev?.companyWebsite ?? "",
+        trade: saved.trade ?? prev?.trade ?? "",
+        defaultTone: saved.defaultTone ?? prev?.defaultTone ?? "PROFESSIONAL",
+        signatureBlock: saved.signatureBlock ?? prev?.signatureBlock ?? "",
+        quoteFooter: saved.quoteFooter ?? prev?.quoteFooter ?? "",
+      }));
+      setCompanyMessage("Paramètres entreprise enregistrés.");
+    } catch (e) {
       setCompanyError(
-        (json as { error?: string }).error ??
-          "Erreur lors de l’enregistrement"
+        e instanceof Error
+          ? e.message
+          : "Erreur lors de l’enregistrement"
       );
-      return;
+    } finally {
+      setSavingCompany(false);
     }
-
-    const saved = (await res.json()) as CompanySettings;
-    setCompanySettings({
-      businessName: saved.businessName ?? "",
-      logoUrl: saved.logoUrl ?? "",
-      companyAddress: saved.companyAddress ?? "",
-      companyPhone: saved.companyPhone ?? "",
-      companyEmail: saved.companyEmail ?? "",
-      companyWebsite: saved.companyWebsite ?? "",
-      signatureBlock: saved.signatureBlock ?? "",
-      quoteFooter: saved.quoteFooter ?? "",
-    });
-    setCompanyMessage("Paramètres entreprise enregistrés");
   }
 
   if (loading) {
-    return (
-      <section>
-        <h1 className="text-2xl font-semibold">Paramètres</h1>
-        <p className="mt-6 text-sm text-muted-foreground">Chargement…</p>
-      </section>
-    );
+    return <SettingsLoadingState />;
   }
 
   if (error || !status) {
@@ -196,15 +287,11 @@ export default function SettingsPage() {
             className="mt-5 space-y-5"
           >
             {companyMessage && (
-              <p className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-                {companyMessage}
-              </p>
+              <Message type="success">{companyMessage}</Message>
             )}
 
             {companyError && (
-              <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
-                {companyError}
-              </p>
+              <Message type="error">{companyError}</Message>
             )}
 
             <div className="grid gap-4 md:grid-cols-2">
@@ -224,19 +311,44 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <label htmlFor="logoUrl" className="block text-sm font-medium">
-                  URL du logo
+                <label htmlFor="trade" className="block text-sm font-medium">
+                  Métier
                 </label>
-                <input
-                  id="logoUrl"
-                  type="url"
-                  value={companySettings.logoUrl}
+                <select
+                  id="trade"
+                  value={companySettings.trade}
                   onChange={(e) =>
-                    updateCompanyField("logoUrl", e.target.value)
+                    updateCompanyField("trade", e.target.value)
                   }
-                  placeholder="https://..."
                   className={inputClass}
-                />
+                >
+                  <option value="">Non renseigné</option>
+                  {TRADE_OPTIONS.map((trade) => (
+                    <option key={trade} value={trade}>
+                      {tradeLabel(trade)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="defaultTone" className="block text-sm font-medium">
+                  Ton par défaut des relances
+                </label>
+                <select
+                  id="defaultTone"
+                  value={companySettings.defaultTone}
+                  onChange={(e) =>
+                    updateCompanyField("defaultTone", e.target.value)
+                  }
+                  className={inputClass}
+                >
+                  {TONE_OPTIONS.map((tone) => (
+                    <option key={tone} value={tone}>
+                      {reminderToneLabel(tone)}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -279,6 +391,22 @@ export default function SettingsPage() {
                   value={companySettings.companyWebsite}
                   onChange={(e) =>
                     updateCompanyField("companyWebsite", e.target.value)
+                  }
+                  placeholder="https://..."
+                  className={inputClass}
+                />
+              </div>
+
+              <div>
+                <label htmlFor="logoUrl" className="block text-sm font-medium">
+                  URL du logo
+                </label>
+                <input
+                  id="logoUrl"
+                  type="url"
+                  value={companySettings.logoUrl}
+                  onChange={(e) =>
+                    updateCompanyField("logoUrl", e.target.value)
                   }
                   placeholder="https://..."
                   className={inputClass}
@@ -350,9 +478,14 @@ export default function SettingsPage() {
             <button
               type="submit"
               disabled={savingCompany}
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
             >
-              {savingCompany ? "Enregistrement…" : "Enregistrer les paramètres"}
+              {savingCompany ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              {savingCompany ? "Enregistrement..." : "Enregistrer les paramètres"}
             </button>
           </form>
         </div>
