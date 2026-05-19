@@ -1,37 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { resend } from "@/lib/resend";
 import {
   requireCurrentUserWithDb,
   UnauthorizedError,
 } from "@/lib/auth";
 import { sendReminderSchema } from "@/lib/validations";
 import { ReminderStatus } from "@prisma/client";
+import {
+  ReminderEmailConfigurationError,
+  sendReminderEmail,
+} from "@/lib/email/reminders";
 
 export const dynamic = "force-dynamic";
-
-function normalizeText(value: string) {
-  return value
-    .trim()
-    .replace(/\r\n/g, "\n")
-    .replace(/[ \t]+/g, " ")
-    .toLowerCase();
-}
-
-function buildEmailBody(reminderBody: string, signatureBlock?: string | null) {
-  const body = reminderBody.trim();
-  const signature = signatureBlock?.trim();
-
-  if (!signature) {
-    return body;
-  }
-
-  if (normalizeText(body).includes(normalizeText(signature))) {
-    return body;
-  }
-
-  return `${body}\n\n--\n${signature}`;
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -94,7 +74,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const prospectEmail = reminder.quote.prospect.email;
+    const prospectEmail = reminder.quote.prospect.email?.trim();
     if (!prospectEmail) {
       return NextResponse.json(
         { error: "Prospect does not have an email address" },
@@ -102,42 +82,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const fromEmail = process.env.RESEND_FROM_EMAIL ?? process.env.EMAIL_FROM;
-    if (!fromEmail) {
-      console.error(
-        "REMINDER_SEND_ERROR: RESEND_FROM_EMAIL/EMAIL_FROM not configured"
-      );
-      return NextResponse.json(
-        { error: "Email sender not configured" },
-        { status: 500 }
-      );
-    }
+    try {
+      await sendReminderEmail(reminder, dbUser.id);
+    } catch (error) {
+      if (error instanceof ReminderEmailConfigurationError) {
+        console.error("REMINDER_SEND_ERROR: Resend email configuration missing");
+        return NextResponse.json(
+          { error: "Email sender not configured" },
+          { status: 500 }
+        );
+      }
 
-    const preferences = await prisma.userPreferences.findUnique({
-      where: { userId: dbUser.id },
-      select: { signatureBlock: true },
-    });
-
-    const emailBody = buildEmailBody(
-      reminder.body,
-      preferences?.signatureBlock
-    );
-
-    const { error: sendError } = await resend.emails.send({
-      from: fromEmail,
-      to: prospectEmail,
-      subject: reminder.subject,
-      text: emailBody,
-    });
-
-    if (sendError) {
       // Marquer FAILED pour traçabilité
       await prisma.reminder.update({
         where: { id: reminder.id },
         data: { status: ReminderStatus.FAILED },
       });
 
-      console.error("REMINDER_SEND_ERROR:", sendError);
+      console.error("REMINDER_SEND_ERROR:", error);
       return NextResponse.json(
         { error: "Failed to send email" },
         { status: 502 }
