@@ -11,6 +11,30 @@ export const dynamic = "force-dynamic";
 
 type RouteContext = { params: { id: string } };
 
+function getScheduledAtInput(body: unknown) {
+  if (!body || typeof body !== "object" || !("scheduledAt" in body)) {
+    return undefined;
+  }
+
+  return (body as { scheduledAt?: unknown }).scheduledAt;
+}
+
+function isInvalidDateInput(value: unknown) {
+  if (value === undefined || value === null) return false;
+  if (typeof value === "string" && value.trim() === "") return true;
+
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime());
+  }
+
+  if (typeof value !== "string" && typeof value !== "number") {
+    return true;
+  }
+
+  const date = new Date(value);
+  return Number.isNaN(date.getTime());
+}
+
 export async function GET(_request: NextRequest, { params }: RouteContext) {
   try {
     const { dbUser } = await requireCurrentUserWithDb();
@@ -50,10 +74,27 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
     }
 
+    if (isInvalidDateInput(getScheduledAtInput(body))) {
+      return NextResponse.json(
+        { error: "Date de programmation invalide" },
+        { status: 422 }
+      );
+    }
+
     const parsed = updateReminderSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Validation error", details: parsed.error.flatten() },
+        { status: 422 }
+      );
+    }
+
+    if (
+      parsed.data.status === ReminderStatus.SCHEDULED &&
+      !parsed.data.scheduledAt
+    ) {
+      return NextResponse.json(
+        { error: "La date de programmation est obligatoire" },
         { status: 422 }
       );
     }

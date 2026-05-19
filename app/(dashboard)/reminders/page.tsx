@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Check, RefreshCw, Search, Send } from "lucide-react";
-import { compareText, formatDate } from "@/lib/formatters";
+import { compareText, formatDate, formatDateTime } from "@/lib/formatters";
 import { reminderStatusLabel } from "@/lib/status-labels";
 
 type Reminder = {
@@ -13,6 +13,7 @@ type Reminder = {
   body: string;
   status: string;
   approvedAt: string | null;
+  scheduledAt: string | null;
   sentAt: string | null;
   createdAt: string;
 };
@@ -400,6 +401,7 @@ export default function RemindersPage() {
                         </button>
                       </th>
                       <th className="px-4 py-3 font-medium">approvedAt</th>
+                      <th className="px-4 py-3 font-medium">scheduledAt</th>
                       <th className="px-4 py-3 font-medium">sentAt</th>
                       <th className="px-4 py-3"></th>
                     </tr>
@@ -446,6 +448,9 @@ export default function RemindersPage() {
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">
                         {formatDate(row.approvedAt)}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {formatDateTime(row.scheduledAt)}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">
                         {formatDate(row.sentAt)}

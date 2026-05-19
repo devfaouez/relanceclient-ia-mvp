@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { formatAmount, formatDate } from "@/lib/formatters";
+import { formatAmount, formatDate, formatDateTime } from "@/lib/formatters";
 import {
   QUOTE_STATUS_LABELS,
   quoteStatusLabel,
@@ -59,6 +59,7 @@ type Reminder = {
   body: string;
   status: string;
   approvedAt: string | null;
+  scheduledAt: string | null;
   sentAt: string | null;
   createdAt: string;
 };
@@ -89,6 +90,15 @@ type ReminderTone = (typeof REMINDER_TONES)[number]["value"];
 function inputDateValue(date: string | null) {
   if (!date) return "";
   return new Date(date).toISOString().slice(0, 10);
+}
+
+function inputDateTimeValue(date: string | null) {
+  if (!date) return "";
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return "";
+
+  const offsetMs = parsed.getTimezoneOffset() * 60 * 1000;
+  return new Date(parsed.getTime() - offsetMs).toISOString().slice(0, 16);
 }
 
 function toNumber(value: string | null | undefined) {
@@ -128,6 +138,10 @@ export default function QuotePreviewPage({
   const [editingReminderId, setEditingReminderId] = useState<string | null>(null);
   const [editReminderSubject, setEditReminderSubject] = useState("");
   const [editReminderBody, setEditReminderBody] = useState("");
+  const [schedulingReminderId, setSchedulingReminderId] = useState<
+    string | null
+  >(null);
+  const [scheduleReminderDate, setScheduleReminderDate] = useState("");
   const [sendConfirmReminder, setSendConfirmReminder] =
     useState<Reminder | null>(null);
   const [sendConfirmQuote, setSendConfirmQuote] = useState(false);
@@ -257,6 +271,8 @@ export default function QuotePreviewPage({
 
   function startEditingReminder(reminder: Reminder) {
     setEditingReminderId(reminder.id);
+    setSchedulingReminderId(null);
+    setScheduleReminderDate("");
     setEditReminderSubject(reminder.subject);
     setEditReminderBody(reminder.body);
     setActionError(null);
@@ -267,6 +283,62 @@ export default function QuotePreviewPage({
     setEditingReminderId(null);
     setEditReminderSubject("");
     setEditReminderBody("");
+  }
+
+  function startSchedulingReminder(reminder: Reminder) {
+    setSchedulingReminderId(reminder.id);
+    setEditingReminderId(null);
+    setEditReminderSubject("");
+    setEditReminderBody("");
+    setScheduleReminderDate(inputDateTimeValue(reminder.scheduledAt));
+    setActionError(null);
+    setActionSuccess(null);
+  }
+
+  function cancelSchedulingReminder() {
+    setSchedulingReminderId(null);
+    setScheduleReminderDate("");
+  }
+
+  async function handleScheduleReminder(reminderId: string) {
+    if (!scheduleReminderDate) {
+      setActionError("Choisissez une date et une heure de programmation.");
+      return;
+    }
+
+    const scheduledAt = new Date(scheduleReminderDate);
+    if (Number.isNaN(scheduledAt.getTime())) {
+      setActionError("La date de programmation est invalide.");
+      return;
+    }
+
+    setSaving(true);
+    setActionError(null);
+    setActionSuccess(null);
+
+    const res = await fetch(`/api/reminders/${reminderId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        status: "SCHEDULED",
+        scheduledAt: scheduledAt.toISOString(),
+      }),
+    });
+
+    setSaving(false);
+
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      setActionError(
+        (json as { error?: string }).error ??
+          "Erreur lors de la programmation de la relance"
+      );
+      return;
+    }
+
+    cancelSchedulingReminder();
+    setActionSuccess("Relance programmée");
+    fetchReminders();
   }
 
   async function handleUpdateReminder(reminderId: string) {
@@ -934,12 +1006,17 @@ export default function QuotePreviewPage({
               <div className="mt-3 space-y-3">
                 {reminders.map((reminder) => {
                   const isEditing = editingReminderId === reminder.id;
+                  const isScheduling = schedulingReminderId === reminder.id;
                   const canEdit =
                     reminder.status !== "SENT" &&
                     reminder.status !== "CANCELLED" &&
                     reminder.status !== "FAILED";
                   const canApprove =
                     reminder.status !== "APPROVED" &&
+                    reminder.status !== "SENT" &&
+                    reminder.status !== "CANCELLED" &&
+                    reminder.status !== "FAILED";
+                  const canSchedule =
                     reminder.status !== "SENT" &&
                     reminder.status !== "CANCELLED" &&
                     reminder.status !== "FAILED";
@@ -1000,8 +1077,27 @@ export default function QuotePreviewPage({
                       <div className="mt-3 space-y-1 text-xs text-muted-foreground">
                         <p>Créée le : {formatDate(reminder.createdAt)}</p>
                         <p>Approuvée le : {formatDate(reminder.approvedAt)}</p>
+                        <p>
+                          Programmée le : {formatDateTime(reminder.scheduledAt)}
+                        </p>
                         <p>Envoyée le : {formatDate(reminder.sentAt)}</p>
                       </div>
+
+                      {isScheduling && (
+                        <div className="mt-3 rounded-md border bg-muted/30 p-3">
+                          <label className="block text-xs font-medium text-muted-foreground">
+                            Date et heure de programmation
+                          </label>
+                          <input
+                            type="datetime-local"
+                            value={scheduleReminderDate}
+                            onChange={(e) =>
+                              setScheduleReminderDate(e.target.value)
+                            }
+                            className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                          />
+                        </div>
+                      )}
 
                       <div className="mt-3 flex flex-wrap gap-2">
                         {isEditing ? (
@@ -1024,6 +1120,26 @@ export default function QuotePreviewPage({
                               Annuler
                             </button>
                           </>
+                        ) : isScheduling ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => handleScheduleReminder(reminder.id)}
+                              disabled={saving}
+                              className="rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                            >
+                              Enregistrer
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={cancelSchedulingReminder}
+                              disabled={saving}
+                              className="rounded-md border px-3 py-1 text-xs font-medium hover:bg-muted disabled:opacity-50"
+                            >
+                              Annuler
+                            </button>
+                          </>
                         ) : (
                           <>
                             {canEdit && (
@@ -1034,6 +1150,17 @@ export default function QuotePreviewPage({
                                 className="rounded-md border px-3 py-1 text-xs font-medium hover:bg-muted disabled:opacity-50"
                               >
                                 Modifier
+                              </button>
+                            )}
+
+                            {canSchedule && (
+                              <button
+                                type="button"
+                                onClick={() => startSchedulingReminder(reminder)}
+                                disabled={saving}
+                                className="rounded-md border px-3 py-1 text-xs font-medium hover:bg-muted disabled:opacity-50"
+                              >
+                                Programmer
                               </button>
                             )}
 
