@@ -36,6 +36,7 @@ type Quote = {
   validUntil: string | null;
   legalNotice: string | null;
   paymentTerms: string | null;
+  sentAt: string | null;
   createdAt: string;
   prospect: Prospect;
   lines: QuoteLine[];
@@ -107,6 +108,7 @@ export default function QuotePreviewPage({
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [quoteSending, setQuoteSending] = useState(false);
 
   const [quoteTitle, setQuoteTitle] = useState("");
   const [quoteNumber, setQuoteNumber] = useState("");
@@ -128,6 +130,7 @@ export default function QuotePreviewPage({
   const [editReminderBody, setEditReminderBody] = useState("");
   const [sendConfirmReminder, setSendConfirmReminder] =
     useState<Reminder | null>(null);
+  const [sendConfirmQuote, setSendConfirmQuote] = useState(false);
 
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
   const [editLineDescription, setEditLineDescription] = useState("");
@@ -418,6 +421,31 @@ export default function QuotePreviewPage({
     fetchQuote();
   }
 
+  async function handleSendQuote() {
+    setQuoteSending(true);
+    setActionError(null);
+    setActionSuccess(null);
+
+    const res = await fetch(`/api/quotes/${params.id}/send`, {
+      method: "POST",
+    });
+
+    setQuoteSending(false);
+
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      setActionError(
+        (json as { error?: string }).error ??
+          "Erreur lors de l'envoi du devis"
+      );
+      return;
+    }
+
+    setSendConfirmQuote(false);
+    setActionSuccess("Devis envoyé par email");
+    fetchQuote();
+  }
+
   async function handleUpdateTerms(e: React.FormEvent) {
     e.preventDefault();
 
@@ -556,11 +584,32 @@ export default function QuotePreviewPage({
         </div>
 
         <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setActionError(null);
+              setActionSuccess(null);
+
+              if (!prospect.email) {
+                setActionError(
+                  "Impossible d'envoyer le devis : le prospect n'a pas d'adresse email."
+                );
+                return;
+              }
+
+              setSendConfirmQuote(true);
+            }}
+            disabled={saving || quoteSending}
+            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          >
+            {quoteSending ? "Envoi…" : "Envoyer le devis"}
+          </button>
+
           {quote.status !== "SENT" && (
             <button
               type="button"
               onClick={handleMarkAsSent}
-              disabled={saving}
+              disabled={saving || quoteSending}
               className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
             >
               Marquer comme envoyé
@@ -570,6 +619,7 @@ export default function QuotePreviewPage({
           <button
             type="button"
             onClick={() => window.print()}
+            disabled={quoteSending}
             className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
           >
             Imprimer
@@ -620,6 +670,11 @@ export default function QuotePreviewPage({
               <p className="mt-1 text-sm text-slate-600">
                 Valable jusqu’au : {formatDate(quote.validUntil)}
               </p>
+              {quote.sentAt && (
+                <p className="mt-1 text-sm text-slate-600">
+                  Envoyé le : {formatDate(quote.sentAt)}
+                </p>
+              )}
               <p className="mt-3 inline-block rounded-full bg-slate-100 px-3 py-1 text-xs font-medium">
                 {quoteStatusLabel(quote.status)}
               </p>
@@ -1187,6 +1242,56 @@ export default function QuotePreviewPage({
           </form>
         </aside>
       </div>
+
+      {sendConfirmQuote && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 print:hidden">
+          <div className="w-full max-w-lg rounded-lg border bg-background p-5 shadow-lg">
+            <h2 className="text-lg font-semibold">Confirmer l’envoi du devis</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Le devis PDF sera envoyé par email au prospect.
+            </p>
+
+            <div className="mt-4 space-y-3 rounded-md bg-muted/50 p-4 text-sm">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Destinataire
+                </p>
+                <p className="mt-1 font-medium">{prospect.name}</p>
+                <p className="text-muted-foreground">{prospect.email}</p>
+              </div>
+
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Sujet
+                </p>
+                <p className="mt-1 font-medium">
+                  Devis {quote.quoteNumber ?? quote.title}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setSendConfirmQuote(false)}
+                disabled={quoteSending}
+                className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
+              >
+                Annuler
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSendQuote}
+                disabled={quoteSending}
+                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+              >
+                {quoteSending ? "Envoi…" : "Confirmer l’envoi"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {sendConfirmReminder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 print:hidden">
