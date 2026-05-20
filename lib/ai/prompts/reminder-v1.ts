@@ -45,6 +45,7 @@ export interface ReminderPromptContext {
   daysSinceLastContact: number | null;
   previousReminders: Array<{ subject: string; sentAt: Date }>;
 
+  template: { name: string; subject: string; body: string } | null;
   userNote: string | null;
 }
 
@@ -111,6 +112,7 @@ ${ctx.daysSinceLastContact !== null ? `Dernier contact il y a ${ctx.daysSinceLas
 
 Historique des relances précédentes :
 ${previousRemindersText}
+${ctx.template ? `\nModèle de relance sélectionné par l'utilisateur :\n  Nom : ${ctx.template.name}\n  Sujet de référence : ${ctx.template.subject}\n  Corps de référence :\n${ctx.template.body}\n\nUtilise ce modèle comme base éditoriale, en l'adaptant au contexte du devis et aux règles strictes ci-dessus.` : ""}
 ${ctx.userNote ? `\nNote ajoutée par l'utilisateur (à intégrer naturellement) :\n  ${ctx.userNote}` : ""}
 
 Génère le JSON.`;

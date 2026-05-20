@@ -4,6 +4,7 @@ import {
   QuoteStatus,
   ReminderStatus,
   ReminderTone,
+  TemplateStatus,
   Trade,
 } from "@prisma/client";
 
@@ -61,6 +62,15 @@ export const updateReminderSchema = z.object({
   scheduledAt: z.coerce.date().nullish(),
   templateId: z.string().nullish(),
 });
+
+export const createTemplateSchema = z.object({
+  name: z.string().trim().min(1).max(255),
+  subject: z.string().trim().min(1).max(500),
+  body: z.string().trim().min(1).max(5000),
+  status: z.nativeEnum(TemplateStatus).optional(),
+});
+
+export const updateTemplateSchema = createTemplateSchema.partial();
 
 export const sendReminderSchema = z.object({
   reminderId: z.string().min(1),

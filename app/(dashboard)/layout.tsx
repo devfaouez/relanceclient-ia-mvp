@@ -8,6 +8,7 @@ const navigation = [
   { href: "/prospects", label: "Prospects" },
   { href: "/quotes", label: "Devis" },
   { href: "/reminders", label: "Relances" },
+  { href: "/templates", label: "Modèles" },
   { href: "/settings", label: "Paramètres" },
 ];
 

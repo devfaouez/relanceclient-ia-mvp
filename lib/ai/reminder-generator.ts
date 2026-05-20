@@ -1,4 +1,4 @@
-import { Prisma, ReminderStatus } from "@prisma/client";
+import { Prisma, ReminderStatus, TemplateStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getOpenAIClient, computeCostEur } from "./openai";
 import {
@@ -72,6 +72,21 @@ export async function generateReminderWithAi(input: GenerateReminderInput) {
     where: { userId: input.userId },
   });
 
+  const template = input.templateId
+    ? await prisma.reminderTemplate.findFirst({
+        where: {
+          id: input.templateId,
+          userId: input.userId,
+          status: TemplateStatus.ACTIVE,
+        },
+        select: { id: true, name: true, subject: true, body: true },
+      })
+    : null;
+
+  if (input.templateId && !template) {
+    throw new AiGenerationError("Template not found");
+  }
+
   const previousSentReminders = quote.reminders.filter(
     (r): r is { subject: string; sentAt: Date } => r.sentAt !== null
   );
@@ -98,6 +113,7 @@ export async function generateReminderWithAi(input: GenerateReminderInput) {
     iteration: previousSentReminders.length + 1,
     daysSinceLastContact,
     previousReminders: previousSentReminders,
+    template,
     userNote: input.userNote ?? null,
   };
 
@@ -168,17 +184,6 @@ export async function generateReminderWithAi(input: GenerateReminderInput) {
   const finalBody = prefs?.signatureBlock
     ? `${parsed.body}\n\n${prefs.signatureBlock}`
     : parsed.body;
-
-  if (input.templateId) {
-    const template = await prisma.reminderTemplate.findFirst({
-      where: { id: input.templateId, userId: input.userId },
-      select: { id: true },
-    });
-
-    if (!template) {
-      throw new AiGenerationError("Template not found");
-    }
-  }
 
   const cost = computeCostEur(inputTokens, outputTokens);
 
