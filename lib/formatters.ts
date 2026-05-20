@@ -22,6 +22,13 @@ export function formatDateTime(date: string | Date | null | undefined) {
   return dateTimeFormatter.format(new Date(date));
 }
 
+export function formatScheduledDateTime(
+  date: string | Date | null | undefined
+) {
+  if (!date) return "Non programmée";
+  return `Programmée pour le ${formatDateTime(date)}`;
+}
+
 export function formatAmount(amount: number, currency = "EUR") {
   return new Intl.NumberFormat("fr-FR", {
     style: "currency",

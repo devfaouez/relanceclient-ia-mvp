@@ -2,7 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { formatAmount, formatDate, formatDateTime } from "@/lib/formatters";
+import {
+  formatAmount,
+  formatDate,
+  formatScheduledDateTime,
+} from "@/lib/formatters";
 import {
   QUOTE_STATUS_LABELS,
   quoteStatusLabel,
@@ -338,6 +342,39 @@ export default function QuotePreviewPage({
 
     cancelSchedulingReminder();
     setActionSuccess("Relance programmée");
+    fetchReminders();
+  }
+
+  async function handleCancelScheduledReminder(reminderId: string) {
+    setSaving(true);
+    setActionError(null);
+    setActionSuccess(null);
+
+    const res = await fetch(`/api/reminders/${reminderId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        status: "DRAFT",
+        scheduledAt: null,
+      }),
+    });
+
+    setSaving(false);
+
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      setActionError(
+        (json as { error?: string }).error ??
+          "Erreur lors de l'annulation de la programmation"
+      );
+      return;
+    }
+
+    if (schedulingReminderId === reminderId) {
+      cancelSchedulingReminder();
+    }
+
+    setActionSuccess("Programmation annulée");
     fetchReminders();
   }
 
@@ -1011,16 +1048,13 @@ export default function QuotePreviewPage({
                     reminder.status !== "SENT" &&
                     reminder.status !== "CANCELLED" &&
                     reminder.status !== "FAILED";
-                  const canApprove =
-                    reminder.status !== "APPROVED" &&
-                    reminder.status !== "SENT" &&
-                    reminder.status !== "CANCELLED" &&
-                    reminder.status !== "FAILED";
+                  const canApprove = reminder.status === "PENDING_APPROVAL";
                   const canSchedule =
                     reminder.status !== "SENT" &&
                     reminder.status !== "CANCELLED" &&
                     reminder.status !== "FAILED";
                   const canSend = reminder.status === "APPROVED";
+                  const isScheduled = reminder.status === "SCHEDULED";
 
                   return (
                     <div
@@ -1077,9 +1111,7 @@ export default function QuotePreviewPage({
                       <div className="mt-3 space-y-1 text-xs text-muted-foreground">
                         <p>Créée le : {formatDate(reminder.createdAt)}</p>
                         <p>Approuvée le : {formatDate(reminder.approvedAt)}</p>
-                        <p>
-                          Programmée le : {formatDateTime(reminder.scheduledAt)}
-                        </p>
+                        <p>{formatScheduledDateTime(reminder.scheduledAt)}</p>
                         <p>Envoyée le : {formatDate(reminder.sentAt)}</p>
                       </div>
 
@@ -1160,7 +1192,22 @@ export default function QuotePreviewPage({
                                 disabled={saving}
                                 className="rounded-md border px-3 py-1 text-xs font-medium hover:bg-muted disabled:opacity-50"
                               >
-                                Programmer
+                                {isScheduled
+                                  ? "Modifier la programmation"
+                                  : "Programmer"}
+                              </button>
+                            )}
+
+                            {isScheduled && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleCancelScheduledReminder(reminder.id)
+                                }
+                                disabled={saving}
+                                className="rounded-md border px-3 py-1 text-xs font-medium text-destructive hover:bg-muted disabled:opacity-50"
+                              >
+                                Annuler la programmation
                               </button>
                             )}
 
