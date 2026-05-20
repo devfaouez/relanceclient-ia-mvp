@@ -19,6 +19,14 @@ function getScheduledAtInput(body: unknown) {
   return (body as { scheduledAt?: unknown }).scheduledAt;
 }
 
+function getStatusInput(body: unknown) {
+  if (!body || typeof body !== "object" || !("status" in body)) {
+    return undefined;
+  }
+
+  return (body as { status?: unknown }).status;
+}
+
 function isInvalidDateInput(value: unknown) {
   if (value === undefined || value === null) return false;
   if (typeof value === "string" && value.trim() === "") return true;
@@ -77,6 +85,13 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     if (isInvalidDateInput(getScheduledAtInput(body))) {
       return NextResponse.json(
         { error: "Date de programmation invalide" },
+        { status: 422 }
+      );
+    }
+
+    if (getStatusInput(body) === ReminderStatus.SENT) {
+      return NextResponse.json(
+        { error: "Le statut SENT ne peut pas être défini manuellement" },
         { status: 422 }
       );
     }
