@@ -26,6 +26,12 @@ export const REMINDER_STATUS_LABELS: Record<string, string> = {
   FAILED: "Échec",
 };
 
+export const TEMPLATE_STATUS_LABELS: Record<string, string> = {
+  ACTIVE: "Actif",
+  INACTIVE: "Inactif",
+  ARCHIVED: "Archivé",
+};
+
 export const TRADE_LABELS: Record<string, string> = {
   PLOMBIER: "Plombier",
   ELECTRICIEN: "Électricien",
@@ -56,6 +62,10 @@ export function quoteStatusLabel(status: string) {
 
 export function reminderStatusLabel(status: string) {
   return REMINDER_STATUS_LABELS[status] ?? status;
+}
+
+export function templateStatusLabel(status: string) {
+  return TEMPLATE_STATUS_LABELS[status] ?? status;
 }
 
 export function tradeLabel(trade: string) {

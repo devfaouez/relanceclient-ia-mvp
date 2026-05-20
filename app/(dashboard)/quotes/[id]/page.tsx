@@ -68,6 +68,13 @@ type Reminder = {
   createdAt: string;
 };
 
+type Template = {
+  id: string;
+  name: string;
+  subject: string;
+  status: string;
+};
+
 type QuoteResponse = {
   quote: Quote;
   preferences: Preferences;
@@ -117,7 +124,9 @@ export default function QuotePreviewPage({
 }) {
   const [data, setData] = useState<QuoteResponse | null>(null);
   const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
+  const [templatesLoading, setTemplatesLoading] = useState(true);
   const [pageError, setPageError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
@@ -138,6 +147,7 @@ export default function QuotePreviewPage({
   const [generateTone, setGenerateTone] =
     useState<ReminderTone>("PROFESSIONAL");
   const [generateNote, setGenerateNote] = useState("");
+  const [generateTemplateId, setGenerateTemplateId] = useState("");
 
   const [editingReminderId, setEditingReminderId] = useState<string | null>(null);
   const [editReminderSubject, setEditReminderSubject] = useState("");
@@ -188,10 +198,26 @@ export default function QuotePreviewPage({
       .catch(() => {});
   }, [params.id]);
 
+  const fetchTemplates = useCallback(() => {
+    setTemplatesLoading(true);
+
+    fetch("/api/templates")
+      .then((res) => {
+        if (!res.ok) return [];
+        return res.json() as Promise<Template[]>;
+      })
+      .then((items) => {
+        setTemplates(items.filter((item) => item.status === "ACTIVE"));
+      })
+      .catch(() => {})
+      .finally(() => setTemplatesLoading(false));
+  }, []);
+
   useEffect(() => {
     fetchQuote();
     fetchReminders();
-  }, [fetchQuote, fetchReminders]);
+    fetchTemplates();
+  }, [fetchQuote, fetchReminders, fetchTemplates]);
 
   const displayLines = useMemo<DisplayLine[]>(() => {
     if (!data) return [];
@@ -479,6 +505,7 @@ export default function QuotePreviewPage({
       body: JSON.stringify({
         quoteId: params.id,
         tone: generateTone,
+        templateId: generateTemplateId || null,
         userNote: generateNote.trim() || null,
       }),
     });
@@ -495,6 +522,7 @@ export default function QuotePreviewPage({
     }
 
     setGenerateTone("PROFESSIONAL");
+    setGenerateTemplateId("");
     setGenerateNote("");
     setActionSuccess("Relance IA générée");
     fetchReminders();
@@ -990,6 +1018,29 @@ export default function QuotePreviewPage({
             <h2 className="text-sm font-semibold">Relances liées au devis</h2>
 
             <form onSubmit={handleGenerateReminder} className="mt-3 space-y-3 border-b pb-4">
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground">
+                  Modèle de relance
+                </label>
+                <select
+                  value={generateTemplateId}
+                  onChange={(e) => setGenerateTemplateId(e.target.value)}
+                  disabled={templatesLoading}
+                  className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+                >
+                  <option value="">
+                    {templatesLoading
+                      ? "Chargement des modèles..."
+                      : "Sans modèle"}
+                  </option>
+                  {templates.map((template) => (
+                    <option key={template.id} value={template.id}>
+                      {template.name} - {template.subject}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div>
                 <label className="block text-xs font-medium text-muted-foreground">
                   Ton de la relance
