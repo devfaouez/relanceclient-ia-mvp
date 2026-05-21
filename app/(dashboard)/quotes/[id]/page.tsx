@@ -41,6 +41,8 @@ type Quote = {
   legalNotice: string | null;
   paymentTerms: string | null;
   sentAt: string | null;
+  acceptedAt: string | null;
+  rejectedAt: string | null;
   createdAt: string;
   prospect: Prospect;
   lines: QuoteLine[];
@@ -88,6 +90,8 @@ type DisplayLine = {
   total: number;
   isFallback: boolean;
 };
+
+const CLOSED_QUOTE_STATUSES = ["ACCEPTED", "REJECTED", "CANCELLED"];
 
 const REMINDER_TONES = [
   { value: "PROFESSIONAL", label: "Professionnel" },
@@ -558,6 +562,71 @@ export default function QuotePreviewPage({
     fetchQuote();
   }
 
+  async function handleUpdateQuoteStatus(
+    status: "ACCEPTED" | "REJECTED" | "EXPIRED" | "CANCELLED"
+  ) {
+    if (
+      status === "REJECTED" &&
+      !window.confirm("Confirmer le refus de ce devis ?")
+    ) {
+      return;
+    }
+
+    if (
+      status === "CANCELLED" &&
+      !window.confirm("Confirmer l’annulation de ce devis ?")
+    ) {
+      return;
+    }
+
+    setSaving(true);
+    setActionError(null);
+    setActionSuccess(null);
+
+    const payload: {
+      status: "ACCEPTED" | "REJECTED" | "EXPIRED" | "CANCELLED";
+      acceptedAt?: string | null;
+      rejectedAt?: string | null;
+    } = { status };
+
+    if (status === "ACCEPTED") {
+      payload.acceptedAt = new Date().toISOString();
+      payload.rejectedAt = null;
+    }
+
+    if (status === "REJECTED") {
+      payload.rejectedAt = new Date().toISOString();
+      payload.acceptedAt = null;
+    }
+
+    try {
+      const res = await fetch(`/api/quotes/${params.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        setActionError(
+          (json as { error?: string }).error ??
+            "Erreur lors du changement de statut du devis"
+        );
+        return;
+      }
+
+      setQuoteStatus(status);
+      setActionSuccess(
+        `Devis marqué comme ${quoteStatusLabel(status).toLowerCase()}`
+      );
+      fetchQuote();
+    } catch {
+      setActionError("Impossible de mettre à jour le statut du devis.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function handleSendQuote() {
     setQuoteSending(true);
     setActionError(null);
@@ -706,6 +775,7 @@ export default function QuotePreviewPage({
 
   const { quote, preferences } = data;
   const prospect = quote.prospect;
+  const isClosedQuote = CLOSED_QUOTE_STATUSES.includes(quote.status);
 
   return (
     <section className="space-y-6">
@@ -742,7 +812,7 @@ export default function QuotePreviewPage({
             {quoteSending ? "Envoi…" : "Envoyer le devis"}
           </button>
 
-          {quote.status !== "SENT" && (
+          {!isClosedQuote && quote.status !== "SENT" && (
             <button
               type="button"
               onClick={handleMarkAsSent}
@@ -751,6 +821,54 @@ export default function QuotePreviewPage({
             >
               Marquer comme envoyé
             </button>
+          )}
+
+          {!isClosedQuote && (
+            <>
+              {quote.status !== "ACCEPTED" && (
+                <button
+                  type="button"
+                  onClick={() => handleUpdateQuoteStatus("ACCEPTED")}
+                  disabled={saving || quoteSending}
+                  className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
+                >
+                  Marquer comme accepté
+                </button>
+              )}
+
+              {quote.status !== "REJECTED" && (
+                <button
+                  type="button"
+                  onClick={() => handleUpdateQuoteStatus("REJECTED")}
+                  disabled={saving || quoteSending}
+                  className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
+                >
+                  Marquer comme refusé
+                </button>
+              )}
+
+              {quote.status !== "EXPIRED" && (
+                <button
+                  type="button"
+                  onClick={() => handleUpdateQuoteStatus("EXPIRED")}
+                  disabled={saving || quoteSending}
+                  className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
+                >
+                  Marquer comme expiré
+                </button>
+              )}
+
+              {quote.status !== "CANCELLED" && (
+                <button
+                  type="button"
+                  onClick={() => handleUpdateQuoteStatus("CANCELLED")}
+                  disabled={saving || quoteSending}
+                  className="rounded-md border px-4 py-2 text-sm font-medium text-destructive hover:bg-muted disabled:opacity-50"
+                >
+                  Annuler le devis
+                </button>
+              )}
+            </>
           )}
 
           <button
@@ -810,6 +928,16 @@ export default function QuotePreviewPage({
               {quote.sentAt && (
                 <p className="mt-1 text-sm text-slate-600">
                   Envoyé le : {formatDate(quote.sentAt)}
+                </p>
+              )}
+              {quote.acceptedAt && (
+                <p className="mt-1 text-sm text-slate-600">
+                  Accepté le : {formatDate(quote.acceptedAt)}
+                </p>
+              )}
+              {quote.rejectedAt && (
+                <p className="mt-1 text-sm text-slate-600">
+                  Refusé le : {formatDate(quote.rejectedAt)}
                 </p>
               )}
               <p className="mt-3 inline-block rounded-full bg-slate-100 px-3 py-1 text-xs font-medium">
