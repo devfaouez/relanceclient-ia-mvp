@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Archive, Edit, Plus, Search } from "lucide-react";
+import { Archive, Edit, Plus, Search, Sparkles } from "lucide-react";
 import { compareText, formatDate } from "@/lib/formatters";
 import {
   TEMPLATE_STATUS_LABELS,
@@ -45,6 +45,7 @@ export default function TemplatesPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [creatingDefaults, setCreatingDefaults] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
@@ -231,6 +232,46 @@ export default function TemplatesPage() {
     await loadTemplates();
   }
 
+  async function createDefaultTemplates() {
+    setCreatingDefaults(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const res = await fetch("/api/templates/defaults", {
+        method: "POST",
+      });
+
+      const json = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        setError(
+          (json as { error?: string }).error ??
+            "Erreur lors de la création des modèles par défaut"
+        );
+        return;
+      }
+
+      const created = (json as { created?: number }).created ?? 0;
+      setSuccess(
+        created > 0
+          ? `${created} modèle${created > 1 ? "s" : ""} par défaut créé${
+              created > 1 ? "s" : ""
+            }`
+          : "Tous les modèles par défaut existent déjà"
+      );
+      await loadTemplates();
+    } catch (e) {
+      setError(
+        e instanceof Error
+          ? e.message
+          : "Erreur lors de la création des modèles par défaut"
+      );
+    } finally {
+      setCreatingDefaults(false);
+    }
+  }
+
   async function archiveTemplate(template: Template) {
     setSaving(true);
     setError(null);
@@ -282,14 +323,29 @@ export default function TemplatesPage() {
           )}
         </div>
 
-        <button
-          type="button"
-          onClick={startNewTemplate}
-          className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-        >
-          <Plus className="h-4 w-4" />
-          Nouveau modèle
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={createDefaultTemplates}
+            disabled={creatingDefaults || saving}
+            className="inline-flex items-center justify-center gap-2 rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
+          >
+            <Sparkles className="h-4 w-4" />
+            {creatingDefaults
+              ? "Création..."
+              : "Créer les modèles par défaut"}
+          </button>
+
+          <button
+            type="button"
+            onClick={startNewTemplate}
+            disabled={creatingDefaults}
+            className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          >
+            <Plus className="h-4 w-4" />
+            Nouveau modèle
+          </button>
+        </div>
       </div>
 
       {error && (
