@@ -1,26 +1,28 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { ComponentType } from "react";
+import type { ComponentType, ReactNode } from "react";
 import Link from "next/link";
 import {
-  AlertCircle,
-  CheckCircle,
-  Clock,
   Euro,
   FileText,
-  MailCheck,
   Percent,
   Plus,
-  Send,
   Users,
-  XCircle,
 } from "lucide-react";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import { formatAmount, formatDate } from "@/lib/formatters";
 import {
   prospectStatusLabel,
   quoteStatusLabel,
-  reminderStatusLabel,
 } from "@/lib/status-labels";
 
 type LatestProspect = {
@@ -123,6 +125,51 @@ function StatusBadge({ label }: { label: string }) {
   );
 }
 
+function ChartCard({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="rounded-lg border bg-card p-5">
+      <div>
+        <h3 className="font-semibold">{title}</h3>
+        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+      </div>
+      <div className="mt-5 h-64">{children}</div>
+    </div>
+  );
+}
+
+function EmptyChartMessage() {
+  return (
+    <div className="flex h-full items-center justify-center rounded-md bg-muted/40 text-sm text-muted-foreground">
+      Aucune donnée à afficher.
+    </div>
+  );
+}
+
+const chartGridColor = "hsl(var(--border))";
+const chartTextColor = "hsl(var(--muted-foreground))";
+const chartTooltipStyle = {
+  border: "1px solid hsl(var(--border))",
+  borderRadius: "0.5rem",
+  background: "hsl(var(--card))",
+  color: "hsl(var(--card-foreground))",
+};
+
+function compactAmount(value: number) {
+  if (value >= 1000) {
+    return `${Math.round(value / 1000)} k€`;
+  }
+
+  return `${value} €`;
+}
+
 export default function DashboardPage() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -161,6 +208,31 @@ export default function DashboardPage() {
       </section>
     );
   }
+
+  const quoteStatusData = [
+    { name: "Envoyés", value: stats.sentQuotes },
+    { name: "Acceptés", value: stats.acceptedQuotes },
+    { name: "Refusés", value: stats.rejectedQuotes },
+    { name: "Expirés", value: stats.expiredQuotes },
+    { name: "Annulés", value: stats.cancelledQuotes },
+  ];
+
+  const quoteAmountData = [
+    { name: "Envoyé", value: stats.totalSentQuoteAmount },
+    { name: "Accepté", value: stats.totalAcceptedQuoteAmount },
+    { name: "Refusé", value: stats.totalRejectedQuoteAmount },
+  ];
+
+  const reminderData = [
+    { name: "À approuver", value: stats.pendingReminders },
+    { name: "Programmées", value: stats.scheduledReminders },
+    { name: "Envoyées", value: stats.sentReminders },
+    { name: "En échec", value: stats.failedReminders },
+  ];
+
+  const hasQuoteStatusData = quoteStatusData.some((item) => item.value > 0);
+  const hasQuoteAmountData = quoteAmountData.some((item) => item.value > 0);
+  const hasReminderData = reminderData.some((item) => item.value > 0);
 
   return (
     <section className="space-y-8">
@@ -204,8 +276,8 @@ export default function DashboardPage() {
           icon={Euro}
         />
         <StatCard
-          label="Conversion"
-          value={`${stats.conversionRate} %`}
+          label="Taux d'acceptation"
+          value={`${stats.acceptanceRate} %`}
           icon={Percent}
         />
       </div>
@@ -218,58 +290,95 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard
-            label="Devis envoyés"
-            value={stats.sentQuotes}
-            icon={Send}
-          />
-          <StatCard
-            label="Devis acceptés"
-            value={stats.acceptedQuotes}
-            icon={CheckCircle}
-          />
-          <StatCard
-            label="Devis refusés"
-            value={stats.rejectedQuotes}
-            icon={XCircle}
-          />
-          <StatCard
-            label="Taux d'acceptation"
-            value={`${stats.acceptanceRate} %`}
-            icon={Percent}
-          />
-        </div>
+        <div className="grid gap-4 xl:grid-cols-2">
+          <ChartCard
+            title="Devis par statut"
+            description="Répartition des devis sortis du brouillon."
+          >
+            {hasQuoteStatusData ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={quoteStatusData} margin={{ left: -20, right: 8 }}>
+                  <CartesianGrid
+                    stroke={chartGridColor}
+                    strokeDasharray="3 3"
+                    vertical={false}
+                  />
+                  <XAxis
+                    dataKey="name"
+                    axisLine={false}
+                    tickLine={false}
+                    tickMargin={10}
+                    tick={{ fill: chartTextColor, fontSize: 12 }}
+                    interval={0}
+                  />
+                  <YAxis
+                    allowDecimals={false}
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: chartTextColor, fontSize: 12 }}
+                  />
+                  <Tooltip
+                    cursor={{ fill: "hsl(var(--muted))", opacity: 0.45 }}
+                    contentStyle={chartTooltipStyle}
+                    formatter={(value) => [Number(value), "Devis"]}
+                  />
+                  <Bar
+                    dataKey="value"
+                    fill="hsl(var(--primary))"
+                    radius={[6, 6, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <EmptyChartMessage />
+            )}
+          </ChartCard>
 
-        <div className="grid gap-4 sm:grid-cols-3">
-          <StatCard
-            label="Montant envoyé"
-            value={formatAmount(stats.totalSentQuoteAmount)}
-            icon={Euro}
-          />
-          <StatCard
-            label="Montant accepté"
-            value={formatAmount(stats.totalAcceptedQuoteAmount)}
-            icon={Euro}
-          />
-          <StatCard
-            label="Montant refusé"
-            value={formatAmount(stats.totalRejectedQuoteAmount)}
-            icon={Euro}
-          />
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <StatCard
-            label="Devis expirés"
-            value={stats.expiredQuotes}
-            icon={Clock}
-          />
-          <StatCard
-            label="Devis annulés"
-            value={stats.cancelledQuotes}
-            icon={XCircle}
-          />
+          <ChartCard
+            title="Montants des devis"
+            description="Volume financier envoyé, accepté et refusé."
+          >
+            {hasQuoteAmountData ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={quoteAmountData} margin={{ left: 8, right: 8 }}>
+                  <CartesianGrid
+                    stroke={chartGridColor}
+                    strokeDasharray="3 3"
+                    vertical={false}
+                  />
+                  <XAxis
+                    dataKey="name"
+                    axisLine={false}
+                    tickLine={false}
+                    tickMargin={10}
+                    tick={{ fill: chartTextColor, fontSize: 12 }}
+                    interval={0}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickFormatter={compactAmount}
+                    tickLine={false}
+                    tick={{ fill: chartTextColor, fontSize: 12 }}
+                  />
+                  <Tooltip
+                    cursor={{ fill: "hsl(var(--muted))", opacity: 0.45 }}
+                    contentStyle={chartTooltipStyle}
+                    formatter={(value) => [
+                      formatAmount(Number(value)),
+                      "Montant",
+                    ]}
+                  />
+                  <Bar
+                    dataKey="value"
+                    fill="hsl(var(--primary) / 0.82)"
+                    radius={[6, 6, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <EmptyChartMessage />
+            )}
+          </ChartCard>
         </div>
       </div>
 
@@ -281,28 +390,48 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard
-            label="À approuver"
-            value={stats.pendingReminders}
-            icon={MailCheck}
-          />
-          <StatCard
-            label="Programmées"
-            value={stats.scheduledReminders}
-            icon={Clock}
-          />
-          <StatCard
-            label="Envoyées"
-            value={stats.sentReminders}
-            icon={Send}
-          />
-          <StatCard
-            label="En échec"
-            value={stats.failedReminders}
-            icon={AlertCircle}
-          />
-        </div>
+        <ChartCard
+          title="Relances par statut"
+          description="Vue d'ensemble des relances à traiter et déjà envoyées."
+        >
+          {hasReminderData ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={reminderData} margin={{ left: -20, right: 8 }}>
+                <CartesianGrid
+                  stroke={chartGridColor}
+                  strokeDasharray="3 3"
+                  vertical={false}
+                />
+                <XAxis
+                  dataKey="name"
+                  axisLine={false}
+                  tickLine={false}
+                  tickMargin={10}
+                  tick={{ fill: chartTextColor, fontSize: 12 }}
+                  interval={0}
+                />
+                <YAxis
+                  allowDecimals={false}
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: chartTextColor, fontSize: 12 }}
+                />
+                <Tooltip
+                  cursor={{ fill: "hsl(var(--muted))", opacity: 0.45 }}
+                  contentStyle={chartTooltipStyle}
+                  formatter={(value) => [Number(value), "Relances"]}
+                />
+                <Bar
+                  dataKey="value"
+                  fill="hsl(var(--primary) / 0.72)"
+                  radius={[6, 6, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <EmptyChartMessage />
+          )}
+        </ChartCard>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-3">
@@ -428,54 +557,6 @@ export default function DashboardPage() {
             </div>
           )}
         </div>
-      </div>
-
-      <div className="rounded-lg border bg-card">
-        <div className="border-b px-5 py-4">
-          <h2 className="font-semibold">5 dernières relances</h2>
-        </div>
-
-        {stats.latestReminders.length === 0 ? (
-          <p className="px-5 py-8 text-sm text-muted-foreground">
-            Aucune relance pour l&apos;instant.
-          </p>
-        ) : (
-          <div className="divide-y">
-            {stats.latestReminders.map((reminder) => (
-              <Link
-                key={reminder.id}
-                href={`/quotes/${reminder.quote.id}`}
-                className="block px-5 py-4 hover:bg-muted/40"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0">
-                    <p className="truncate font-medium">{reminder.subject}</p>
-                    <p className="mt-1 truncate text-sm text-muted-foreground">
-                      {reminder.quote.prospect.company ??
-                        reminder.quote.prospect.name}
-                    </p>
-                    <p className="mt-1 truncate text-xs text-muted-foreground">
-                      Devis : {reminder.quote.title}
-                      {reminder.quote.quoteNumber
-                        ? ` #${reminder.quote.quoteNumber}`
-                        : ""}
-                    </p>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <StatusBadge
-                      label={reminderStatusLabel(reminder.status)}
-                    />
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      {reminder.sentAt
-                        ? `Envoyée le ${formatDate(reminder.sentAt)}`
-                        : `Créée le ${formatDate(reminder.createdAt)}`}
-                    </p>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
       </div>
     </section>
   );
