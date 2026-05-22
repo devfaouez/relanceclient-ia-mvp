@@ -470,6 +470,9 @@ export default function QuotePreviewPage({
   }
 
   async function handleSendReminder(reminderId: string) {
+    const reminder = reminders.find((item) => item.id === reminderId);
+    const isRetry = reminder?.status === "FAILED";
+
     setSaving(true);
     setActionError(null);
     setActionSuccess(null);
@@ -492,7 +495,7 @@ export default function QuotePreviewPage({
     }
 
     setSendConfirmReminder(null);
-    setActionSuccess("Relance envoyée");
+    setActionSuccess(isRetry ? "Relance renvoyée" : "Relance envoyée");
     fetchReminders();
   }
 
@@ -1233,6 +1236,7 @@ export default function QuotePreviewPage({
                     reminder.status !== "CANCELLED" &&
                     reminder.status !== "FAILED";
                   const canSend = reminder.status === "APPROVED";
+                  const canRetry = reminder.status === "FAILED";
                   const isScheduled = reminder.status === "SCHEDULED";
 
                   return (
@@ -1286,6 +1290,12 @@ export default function QuotePreviewPage({
                           {reminderStatusLabel(reminder.status)}
                         </span>
                       </div>
+
+                      {canRetry && (
+                        <p className="mt-3 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive">
+                          Échec
+                        </p>
+                      )}
 
                       <div className="mt-3 space-y-1 text-xs text-muted-foreground">
                         <p>Créée le : {formatDate(reminder.createdAt)}</p>
@@ -1409,6 +1419,19 @@ export default function QuotePreviewPage({
                                 className="rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                               >
                                 Envoyer
+                              </button>
+                            )}
+
+                            {canRetry && (
+                              <button
+                                type="button"
+                                onClick={() => handleSendReminder(reminder.id)}
+                                disabled={saving}
+                                className="rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                              >
+                                {saving
+                                  ? "Réessai…"
+                                  : "Réessayer l’envoi"}
                               </button>
                             )}
                           </>

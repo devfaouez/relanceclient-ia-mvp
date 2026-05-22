@@ -46,7 +46,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Reminder not found" }, { status: 404 });
     }
 
-    if (reminder.status !== ReminderStatus.APPROVED) {
+    const isRetry = reminder.status === ReminderStatus.FAILED;
+
+    if (!isRetry && reminder.status !== ReminderStatus.APPROVED) {
       return NextResponse.json(
         { error: "Reminder must be in APPROVED status before sending" },
         { status: 422 }
@@ -60,7 +62,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!reminder.approvedAt || !reminder.approvedById) {
+    if (!isRetry && (!reminder.approvedAt || !reminder.approvedById)) {
       return NextResponse.json(
         { error: "Reminder has not been approved yet" },
         { status: 422 }
@@ -85,23 +87,22 @@ export async function POST(request: NextRequest) {
     try {
       await sendReminderEmail(reminder, dbUser.id);
     } catch (error) {
-      if (error instanceof ReminderEmailConfigurationError) {
-        console.error("REMINDER_SEND_ERROR: Resend email configuration missing");
-        return NextResponse.json(
-          { error: "Email sender not configured" },
-          { status: 500 }
-        );
-      }
-
-      // Marquer FAILED pour traçabilité
       await prisma.reminder.update({
         where: { id: reminder.id },
         data: { status: ReminderStatus.FAILED },
       });
 
+      if (error instanceof ReminderEmailConfigurationError) {
+        console.error("REMINDER_SEND_ERROR: Resend email configuration missing");
+        return NextResponse.json(
+          { error: "Configuration Resend manquante" },
+          { status: 500 }
+        );
+      }
+
       console.error("REMINDER_SEND_ERROR:", error);
       return NextResponse.json(
-        { error: "Failed to send email" },
+        { error: "Erreur lors de l'envoi de la relance" },
         { status: 502 }
       );
     }
