@@ -1,6 +1,10 @@
 import { Prisma } from "@prisma/client";
 import { Resend } from "resend";
 import { prisma } from "@/lib/prisma";
+import {
+  buildReminderEmailHtml,
+  buildReminderEmailText,
+} from "@/lib/email/templates/reminder";
 
 export class ReminderEmailConfigurationError extends Error {
   constructor() {
@@ -26,29 +30,6 @@ type ReminderWithProspect = Prisma.ReminderGetPayload<{
     };
   };
 }>;
-
-function normalizeText(value: string) {
-  return value
-    .trim()
-    .replace(/\r\n/g, "\n")
-    .replace(/[ \t]+/g, " ")
-    .toLowerCase();
-}
-
-function buildEmailBody(reminderBody: string, signatureBlock?: string | null) {
-  const body = reminderBody.trim();
-  const signature = signatureBlock?.trim();
-
-  if (!signature) {
-    return body;
-  }
-
-  if (normalizeText(body).includes(normalizeText(signature))) {
-    return body;
-  }
-
-  return `${body}\n\n--\n${signature}`;
-}
 
 export function getReminderEmailConfig() {
   const resendApiKey = process.env.RESEND_API_KEY;
@@ -82,7 +63,16 @@ export async function sendReminderEmail(
     from: fromEmail,
     to: prospectEmail,
     subject: reminder.subject,
-    text: buildEmailBody(reminder.body, preferences?.signatureBlock),
+    text: buildReminderEmailText({
+      subject: reminder.subject,
+      body: reminder.body,
+      signatureBlock: preferences?.signatureBlock,
+    }),
+    html: buildReminderEmailHtml({
+      subject: reminder.subject,
+      body: reminder.body,
+      signatureBlock: preferences?.signatureBlock,
+    }),
   });
 
   if (error) {
