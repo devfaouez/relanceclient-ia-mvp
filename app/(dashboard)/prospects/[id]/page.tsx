@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { formatAmount, formatDate, formatDateTime } from "@/lib/formatters";
 import {
+  PROSPECT_STATUS_LABELS,
   prospectStatusLabel,
   quoteStatusLabel,
   reminderStatusLabel,
@@ -74,6 +75,14 @@ type GenerateReminderModalState = {
   quoteTitle: string;
 } | null;
 
+type ProspectFormState = {
+  name: string;
+  email: string;
+  phone: string;
+  company: string;
+  status: string;
+};
+
 function toNumber(value: string | null | undefined) {
   if (!value) return 0;
   return Number(value);
@@ -94,6 +103,58 @@ function quoteDisplayName(quote: Quote | undefined) {
   return quote.quoteNumber ? `${quote.title} (${quote.quoteNumber})` : quote.title;
 }
 
+function prospectToFormState(prospect: Prospect): ProspectFormState {
+  return {
+    name: prospect.name,
+    email: prospect.email ?? "",
+    phone: prospect.phone ?? "",
+    company: prospect.company ?? "",
+    status: prospect.status,
+  };
+}
+
+function formatProspectApiError(payload: unknown) {
+  const json = payload as {
+    error?: string;
+    details?: {
+      fieldErrors?: Record<string, string[] | undefined>;
+      formErrors?: string[];
+    };
+  };
+
+  const fieldErrors = json.details?.fieldErrors;
+  const fieldLabels: Record<string, string> = {
+    name: "Nom",
+    email: "Email",
+    phone: "Téléphone",
+    company: "Société",
+    status: "Statut",
+  };
+  const fieldMessages: Record<string, string> = {
+    name: "le nom est obligatoire.",
+    email: "l'adresse email est invalide.",
+    phone: "le téléphone est trop long.",
+    company: "la société est trop longue.",
+    status: "le statut est invalide.",
+  };
+  const firstFieldName = fieldErrors
+    ? Object.keys(fieldErrors).find((field) => fieldErrors[field]?.length)
+    : null;
+  const firstFieldError = firstFieldName
+    ? `${fieldLabels[firstFieldName] ?? firstFieldName} : ${
+        fieldMessages[firstFieldName] ?? fieldErrors?.[firstFieldName]?.[0]
+      }`
+    : null;
+  const firstFormError = json.details?.formErrors?.find(Boolean);
+
+  return (
+    firstFieldError ??
+    firstFormError ??
+    json.error ??
+    "Erreur lors de la modification"
+  );
+}
+
 export default function ProspectDetailPage({
   params,
 }: {
@@ -103,6 +164,21 @@ export default function ProspectDetailPage({
 
   const [prospect, setProspect] = useState<Prospect | null>(null);
   const [loadingProspect, setLoadingProspect] = useState(true);
+  const [isEditingProspect, setIsEditingProspect] = useState(false);
+  const [prospectForm, setProspectForm] = useState<ProspectFormState>({
+    name: "",
+    email: "",
+    phone: "",
+    company: "",
+    status: "NEW",
+  });
+  const [prospectEditError, setProspectEditError] = useState<string | null>(
+    null
+  );
+  const [prospectEditSuccess, setProspectEditSuccess] = useState<string | null>(
+    null
+  );
+  const [savingProspect, setSavingProspect] = useState(false);
 
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loadingQuotes, setLoadingQuotes] = useState(true);
@@ -158,6 +234,25 @@ export default function ProspectDetailPage({
       .catch(() => {});
   }, []);
 
+  const fetchProspect = useCallback(() => {
+    setLoadingProspect(true);
+    return fetch(`/api/prospects/${params.id}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Prospect introuvable");
+        return res.json() as Promise<Prospect>;
+      })
+      .then((data) => {
+        setProspect(data);
+        setProspectForm(prospectToFormState(data));
+        return data;
+      })
+      .catch((e: Error) => {
+        setPageError(e.message);
+        throw e;
+      })
+      .finally(() => setLoadingProspect(false));
+  }, [params.id]);
+
   const fetchQuotes = useCallback(() => {
     setLoadingQuotes(true);
     fetch(`/api/prospects/${params.id}/quotes`)
@@ -171,18 +266,62 @@ export default function ProspectDetailPage({
   }, [params.id]);
 
   useEffect(() => {
-    fetch(`/api/prospects/${params.id}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Prospect introuvable");
-        return res.json() as Promise<Prospect>;
-      })
-      .then(setProspect)
-      .catch((e: Error) => setPageError(e.message))
-      .finally(() => setLoadingProspect(false));
-
+    fetchProspect().catch(() => {});
     fetchQuotes();
     fetchReminders();
-  }, [params.id, fetchQuotes, fetchReminders]);
+  }, [fetchProspect, fetchQuotes, fetchReminders]);
+
+  function startEditingProspect() {
+    if (!prospect) return;
+    setProspectForm(prospectToFormState(prospect));
+    setProspectEditError(null);
+    setProspectEditSuccess(null);
+    setIsEditingProspect(true);
+  }
+
+  function cancelEditingProspect() {
+    if (prospect) {
+      setProspectForm(prospectToFormState(prospect));
+    }
+    setProspectEditError(null);
+    setIsEditingProspect(false);
+  }
+
+  async function handleUpdateProspect(e: React.FormEvent) {
+    e.preventDefault();
+    setProspectEditError(null);
+    setProspectEditSuccess(null);
+    setSavingProspect(true);
+
+    const body = {
+      name: prospectForm.name.trim(),
+      email: prospectForm.email.trim() || null,
+      phone: prospectForm.phone.trim() || null,
+      company: prospectForm.company.trim() || null,
+      status: prospectForm.status,
+    };
+
+    const res = await fetch(`/api/prospects/${params.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      const json = await res.json().catch(() => ({}));
+      setProspectEditError(formatProspectApiError(json));
+      setSavingProspect(false);
+      return;
+    }
+
+    try {
+      await fetchProspect();
+      setIsEditingProspect(false);
+      setProspectEditSuccess("Prospect modifié avec succès.");
+    } finally {
+      setSavingProspect(false);
+    }
+  }
 
   async function handleCreateQuote(e: React.FormEvent) {
     e.preventDefault();
@@ -438,10 +577,27 @@ export default function ProspectDetailPage({
                 Coordonnées et statut commercial.
               </p>
             </div>
-            <span className="rounded-full bg-secondary px-3 py-1 text-xs font-medium">
-              {prospectStatusLabel(prospect.status)}
-            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-secondary px-3 py-1 text-xs font-medium">
+                {prospectStatusLabel(prospect.status)}
+              </span>
+              {!isEditingProspect && (
+                <button
+                  type="button"
+                  onClick={startEditingProspect}
+                  className="rounded-md border px-3 py-1 text-xs font-medium hover:bg-muted"
+                >
+                  Modifier le prospect
+                </button>
+              )}
+            </div>
           </div>
+
+          {prospectEditSuccess && (
+            <p className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
+              {prospectEditSuccess}
+            </p>
+          )}
 
           <dl className="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-3">
             <div className="rounded-md border bg-background p-3">
@@ -457,6 +613,157 @@ export default function ProspectDetailPage({
               <dd className="mt-1 font-medium">{prospect.company ?? "—"}</dd>
             </div>
           </dl>
+
+          {isEditingProspect && (
+            <form
+              onSubmit={handleUpdateProspect}
+              className="mt-5 space-y-4 rounded-md border bg-background p-4"
+            >
+              {prospectEditError && (
+                <p className="text-sm text-destructive">
+                  {prospectEditError}
+                </p>
+              )}
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <label
+                    htmlFor="prospect-name"
+                    className="block text-sm font-medium"
+                  >
+                    Nom <span className="text-destructive">*</span>
+                  </label>
+                  <input
+                    id="prospect-name"
+                    type="text"
+                    required
+                    value={prospectForm.name}
+                    onChange={(e) =>
+                      setProspectForm((current) => ({
+                        ...current,
+                        name: e.target.value,
+                      }))
+                    }
+                    disabled={savingProspect}
+                    className={inputClass}
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="prospect-email"
+                    className="block text-sm font-medium"
+                  >
+                    Email
+                  </label>
+                  <input
+                    id="prospect-email"
+                    type="email"
+                    value={prospectForm.email}
+                    onChange={(e) =>
+                      setProspectForm((current) => ({
+                        ...current,
+                        email: e.target.value,
+                      }))
+                    }
+                    disabled={savingProspect}
+                    className={inputClass}
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="prospect-phone"
+                    className="block text-sm font-medium"
+                  >
+                    Téléphone
+                  </label>
+                  <input
+                    id="prospect-phone"
+                    type="tel"
+                    value={prospectForm.phone}
+                    onChange={(e) =>
+                      setProspectForm((current) => ({
+                        ...current,
+                        phone: e.target.value,
+                      }))
+                    }
+                    disabled={savingProspect}
+                    className={inputClass}
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="prospect-company"
+                    className="block text-sm font-medium"
+                  >
+                    Société
+                  </label>
+                  <input
+                    id="prospect-company"
+                    type="text"
+                    value={prospectForm.company}
+                    onChange={(e) =>
+                      setProspectForm((current) => ({
+                        ...current,
+                        company: e.target.value,
+                      }))
+                    }
+                    disabled={savingProspect}
+                    className={inputClass}
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="prospect-status"
+                    className="block text-sm font-medium"
+                  >
+                    Statut
+                  </label>
+                  <select
+                    id="prospect-status"
+                    value={prospectForm.status}
+                    onChange={(e) =>
+                      setProspectForm((current) => ({
+                        ...current,
+                        status: e.target.value,
+                      }))
+                    }
+                    disabled={savingProspect}
+                    className={inputClass}
+                  >
+                    {Object.entries(PROSPECT_STATUS_LABELS).map(
+                      ([status, label]) => (
+                        <option key={status} value={status}>
+                          {label}
+                        </option>
+                      )
+                    )}
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-3 pt-1">
+                <button
+                  type="submit"
+                  disabled={savingProspect}
+                  className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                >
+                  {savingProspect ? "Enregistrement…" : "Enregistrer"}
+                </button>
+                <button
+                  type="button"
+                  onClick={cancelEditingProspect}
+                  disabled={savingProspect}
+                  className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
+                >
+                  Annuler
+                </button>
+              </div>
+            </form>
+          )}
         </section>
       )}
 
