@@ -10,6 +10,7 @@ export const dynamic = "force-dynamic";
 
 function quoteTotalAmount(quote: {
   amount: unknown;
+  status?: QuoteStatus;
   lines: {
     quantity: unknown;
     unitPrice: unknown;
@@ -31,15 +32,20 @@ export async function GET() {
     const [
       totalProspects,
       totalQuotes,
+      sentQuotes,
       acceptedQuotes,
       rejectedQuotes,
+      expiredQuotes,
+      cancelledQuotes,
       pendingReminders,
       sentReminders,
+      scheduledReminders,
+      failedReminders,
       latestProspects,
       latestQuotesRaw,
       latestPendingReminders,
       latestReminders,
-      quotesForTotal,
+      quotesForAmounts,
     ] = await Promise.all([
       prisma.prospect.count({
         where: { userId: dbUser.id },
@@ -47,6 +53,13 @@ export async function GET() {
 
       prisma.quote.count({
         where: { prospect: { userId: dbUser.id } },
+      }),
+
+      prisma.quote.count({
+        where: {
+          status: QuoteStatus.SENT,
+          prospect: { userId: dbUser.id },
+        },
       }),
 
       prisma.quote.count({
@@ -63,6 +76,20 @@ export async function GET() {
         },
       }),
 
+      prisma.quote.count({
+        where: {
+          status: QuoteStatus.EXPIRED,
+          prospect: { userId: dbUser.id },
+        },
+      }),
+
+      prisma.quote.count({
+        where: {
+          status: QuoteStatus.CANCELLED,
+          prospect: { userId: dbUser.id },
+        },
+      }),
+
       prisma.reminder.count({
         where: {
           status: ReminderStatus.PENDING_APPROVAL,
@@ -73,6 +100,20 @@ export async function GET() {
       prisma.reminder.count({
         where: {
           status: ReminderStatus.SENT,
+          quote: { prospect: { userId: dbUser.id } },
+        },
+      }),
+
+      prisma.reminder.count({
+        where: {
+          status: ReminderStatus.SCHEDULED,
+          quote: { prospect: { userId: dbUser.id } },
+        },
+      }),
+
+      prisma.reminder.count({
+        where: {
+          status: ReminderStatus.FAILED,
           quote: { prospect: { userId: dbUser.id } },
         },
       }),
@@ -183,6 +224,7 @@ export async function GET() {
         where: { prospect: { userId: dbUser.id } },
         select: {
           amount: true,
+          status: true,
           lines: {
             select: {
               quantity: true,
@@ -193,9 +235,24 @@ export async function GET() {
       }),
     ]);
 
-    const totalQuoteAmount = quotesForTotal.reduce((sum, quote) => {
+    const totalQuoteAmount = quotesForAmounts.reduce((sum, quote) => {
       return sum + quoteTotalAmount(quote);
     }, 0);
+
+    const quoteAmountsByStatus = quotesForAmounts.reduce(
+      (amounts, quote) => {
+        amounts[quote.status] += quoteTotalAmount(quote);
+        return amounts;
+      },
+      {
+        [QuoteStatus.DRAFT]: 0,
+        [QuoteStatus.SENT]: 0,
+        [QuoteStatus.ACCEPTED]: 0,
+        [QuoteStatus.REJECTED]: 0,
+        [QuoteStatus.EXPIRED]: 0,
+        [QuoteStatus.CANCELLED]: 0,
+      }
+    );
 
     const latestQuotes = latestQuotesRaw.map((quote) => ({
       id: quote.id,
@@ -210,16 +267,35 @@ export async function GET() {
 
     const conversionRate =
       totalQuotes > 0 ? Math.round((acceptedQuotes / totalQuotes) * 100) : 0;
+    const submittedQuotes =
+      sentQuotes +
+      acceptedQuotes +
+      rejectedQuotes +
+      expiredQuotes +
+      cancelledQuotes;
+    const acceptanceRate =
+      submittedQuotes > 0
+        ? Math.round((acceptedQuotes / submittedQuotes) * 100)
+        : 0;
 
     return NextResponse.json({
       totalProspects,
       totalQuotes,
       totalQuoteAmount,
+      sentQuotes,
       acceptedQuotes,
       rejectedQuotes,
+      expiredQuotes,
+      cancelledQuotes,
+      totalSentQuoteAmount: quoteAmountsByStatus[QuoteStatus.SENT],
+      totalAcceptedQuoteAmount: quoteAmountsByStatus[QuoteStatus.ACCEPTED],
+      totalRejectedQuoteAmount: quoteAmountsByStatus[QuoteStatus.REJECTED],
       conversionRate,
+      acceptanceRate,
       pendingReminders,
       sentReminders,
+      scheduledReminders,
+      failedReminders,
       latestProspects,
       latestQuotes,
       latestPendingReminders,
