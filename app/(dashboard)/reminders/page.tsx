@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Check, RefreshCw, Search, Send } from "lucide-react";
+import { Check, RefreshCw, Search, Send, RotateCw } from "lucide-react";
 import {
   compareText,
   formatDate,
@@ -78,11 +78,16 @@ function reminderSearchText(row: ReminderRow) {
     .toLowerCase();
 }
 
+function reminderDisplayStatus(status: string) {
+  return status === "FAILED" ? "Échec d’envoi" : reminderStatusLabel(status);
+}
+
 export default function RemindersPage() {
   const [rows, setRows] = useState<ReminderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionId, setActionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [sortKey, setSortKey] = useState<SortKey>("createdAt");
@@ -145,6 +150,7 @@ export default function RemindersPage() {
   async function approveReminder(reminderId: string) {
     setActionId(reminderId);
     setError(null);
+    setSuccess(null);
 
     const res = await fetch(`/api/reminders/${reminderId}`, {
       method: "PATCH",
@@ -166,8 +172,12 @@ export default function RemindersPage() {
   }
 
   async function sendReminder(reminderId: string) {
+    const reminder = rows.find((row) => row.id === reminderId);
+    const isRetry = reminder?.status === "FAILED";
+
     setActionId(reminderId);
     setError(null);
+    setSuccess(null);
 
     const res = await fetch("/api/reminders/send", {
       method: "POST",
@@ -184,6 +194,7 @@ export default function RemindersPage() {
     }
 
     await loadReminders();
+    setSuccess(isRetry ? "Relance renvoyée" : "Relance envoyée");
   }
 
   const pendingCount = useMemo(
@@ -348,6 +359,7 @@ export default function RemindersPage() {
       </div>
 
       {error && <p className="text-sm text-destructive">{error}</p>}
+      {success && <p className="text-sm text-muted-foreground">{success}</p>}
 
       {loading ? (
         <p className="text-sm text-muted-foreground">Chargement…</p>
@@ -444,7 +456,7 @@ export default function RemindersPage() {
                       </td>
                       <td className="px-4 py-3">
                         <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
-                          {reminderStatusLabel(row.status)}
+                          {reminderDisplayStatus(row.status)}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">
@@ -484,6 +496,20 @@ export default function RemindersPage() {
                               Envoyer
                             </button>
                           )}
+
+                          {row.status === "FAILED" && (
+                            <button
+                              type="button"
+                              onClick={() => sendReminder(row.id)}
+                              disabled={actionId === row.id}
+                              className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                            >
+                              <RotateCw className="h-3.5 w-3.5" />
+                              {actionId === row.id
+                                ? "Réessai…"
+                                : "Réessayer"}
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -492,6 +518,11 @@ export default function RemindersPage() {
               </div>
 
               <div className="border-t px-4 py-4">
+                {row.status === "FAILED" && (
+                  <p className="mb-3 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">
+                    Échec d’envoi
+                  </p>
+                )}
                 <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Contenu de la relance
                 </p>
