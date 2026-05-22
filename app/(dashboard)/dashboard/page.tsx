@@ -14,6 +14,10 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -140,7 +144,7 @@ function ChartCard({
         <h3 className="font-semibold">{title}</h3>
         <p className="mt-1 text-sm text-muted-foreground">{description}</p>
       </div>
-      <div className="mt-5 h-64">{children}</div>
+      <div className="mt-4 h-52">{children}</div>
     </div>
   );
 }
@@ -160,6 +164,17 @@ const chartTooltipStyle = {
   borderRadius: "0.5rem",
   background: "hsl(var(--card))",
   color: "hsl(var(--card-foreground))",
+};
+const chartGreenPalette = [
+  "hsl(var(--primary))",
+  "hsl(167 56% 36%)",
+  "hsl(158 48% 42%)",
+  "hsl(149 38% 50%)",
+  "hsl(168 28% 62%)",
+];
+const chartLegendStyle = {
+  color: chartTextColor,
+  fontSize: "0.75rem",
 };
 
 function compactAmount(value: number) {
@@ -297,37 +312,39 @@ export default function DashboardPage() {
           >
             {hasQuoteStatusData ? (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={quoteStatusData} margin={{ left: -20, right: 8 }}>
-                  <CartesianGrid
-                    stroke={chartGridColor}
-                    strokeDasharray="3 3"
-                    vertical={false}
-                  />
-                  <XAxis
-                    dataKey="name"
-                    axisLine={false}
-                    tickLine={false}
-                    tickMargin={10}
-                    tick={{ fill: chartTextColor, fontSize: 12 }}
-                    interval={0}
-                  />
-                  <YAxis
-                    allowDecimals={false}
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: chartTextColor, fontSize: 12 }}
-                  />
+                <PieChart margin={{ top: 0, right: 8, bottom: 0, left: 8 }}>
                   <Tooltip
-                    cursor={{ fill: "hsl(var(--muted))", opacity: 0.45 }}
                     contentStyle={chartTooltipStyle}
                     formatter={(value) => [Number(value), "Devis"]}
                   />
-                  <Bar
+                  <Pie
                     dataKey="value"
-                    fill="hsl(var(--primary))"
-                    radius={[6, 6, 0, 0]}
+                    data={quoteStatusData}
+                    cx="50%"
+                    cy="43%"
+                    innerRadius={42}
+                    outerRadius={66}
+                    paddingAngle={2}
+                    nameKey="name"
+                    stroke="hsl(var(--card))"
+                    strokeWidth={3}
+                  >
+                    {quoteStatusData.map((entry, index) => (
+                      <Cell
+                        key={entry.name}
+                        fill={
+                          chartGreenPalette[index % chartGreenPalette.length]
+                        }
+                      />
+                    ))}
+                  </Pie>
+                  <Legend
+                    iconSize={8}
+                    iconType="circle"
+                    verticalAlign="bottom"
+                    wrapperStyle={chartLegendStyle}
                   />
-                </BarChart>
+                </PieChart>
               </ResponsiveContainer>
             ) : (
               <EmptyChartMessage />
@@ -340,7 +357,11 @@ export default function DashboardPage() {
           >
             {hasQuoteAmountData ? (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={quoteAmountData} margin={{ left: 8, right: 8 }}>
+                <BarChart
+                  data={quoteAmountData}
+                  margin={{ top: 8, right: 8, bottom: 0, left: 4 }}
+                  barSize={28}
+                >
                   <CartesianGrid
                     stroke={chartGridColor}
                     strokeDasharray="3 3"
@@ -370,7 +391,7 @@ export default function DashboardPage() {
                   />
                   <Bar
                     dataKey="value"
-                    fill="hsl(var(--primary) / 0.82)"
+                    fill="hsl(167 56% 36%)"
                     radius={[6, 6, 0, 0]}
                   />
                 </BarChart>
@@ -396,37 +417,39 @@ export default function DashboardPage() {
         >
           {hasReminderData ? (
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={reminderData} margin={{ left: -20, right: 8 }}>
-                <CartesianGrid
-                  stroke={chartGridColor}
-                  strokeDasharray="3 3"
-                  vertical={false}
-                />
-                <XAxis
-                  dataKey="name"
-                  axisLine={false}
-                  tickLine={false}
-                  tickMargin={10}
-                  tick={{ fill: chartTextColor, fontSize: 12 }}
-                  interval={0}
-                />
-                <YAxis
-                  allowDecimals={false}
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: chartTextColor, fontSize: 12 }}
-                />
+              <PieChart margin={{ top: 0, right: 8, bottom: 0, left: 8 }}>
                 <Tooltip
-                  cursor={{ fill: "hsl(var(--muted))", opacity: 0.45 }}
                   contentStyle={chartTooltipStyle}
                   formatter={(value) => [Number(value), "Relances"]}
                 />
-                <Bar
+                <Pie
                   dataKey="value"
-                  fill="hsl(var(--primary) / 0.72)"
-                  radius={[6, 6, 0, 0]}
+                  data={reminderData}
+                  cx="50%"
+                  cy="43%"
+                  innerRadius={42}
+                  outerRadius={66}
+                  paddingAngle={2}
+                  nameKey="name"
+                  stroke="hsl(var(--card))"
+                  strokeWidth={3}
+                >
+                  {reminderData.map((entry, index) => (
+                    <Cell
+                      key={entry.name}
+                      fill={
+                        chartGreenPalette[index % chartGreenPalette.length]
+                      }
+                    />
+                  ))}
+                </Pie>
+                <Legend
+                  iconSize={8}
+                  iconType="circle"
+                  verticalAlign="bottom"
+                  wrapperStyle={chartLegendStyle}
                 />
-              </BarChart>
+              </PieChart>
             </ResponsiveContainer>
           ) : (
             <EmptyChartMessage />
