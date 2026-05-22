@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import type { ComponentType } from "react";
 import Link from "next/link";
 import {
+  AlertCircle,
   CheckCircle,
+  Clock,
   Euro,
   FileText,
   MailCheck,
@@ -69,11 +71,20 @@ type DashboardStats = {
   totalProspects: number;
   totalQuotes: number;
   totalQuoteAmount: number;
+  sentQuotes: number;
   acceptedQuotes: number;
   rejectedQuotes: number;
+  expiredQuotes: number;
+  cancelledQuotes: number;
+  totalSentQuoteAmount: number;
+  totalAcceptedQuoteAmount: number;
+  totalRejectedQuoteAmount: number;
   conversionRate: number;
+  acceptanceRate: number;
   pendingReminders: number;
   sentReminders: number;
+  scheduledReminders: number;
+  failedReminders: number;
   latestProspects: LatestProspect[];
   latestQuotes: LatestQuote[];
   latestPendingReminders: LatestReminder[];
@@ -199,27 +210,99 @@ export default function DashboardPage() {
         />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          label="Devis acceptés"
-          value={stats.acceptedQuotes}
-          icon={CheckCircle}
-        />
-        <StatCard
-          label="Devis refusés"
-          value={stats.rejectedQuotes}
-          icon={XCircle}
-        />
-        <StatCard
-          label="Relances à approuver"
-          value={stats.pendingReminders}
-          icon={MailCheck}
-        />
-        <StatCard
-          label="Relances envoyées"
-          value={stats.sentReminders}
-          icon={Send}
-        />
+      <div className="space-y-4">
+        <div>
+          <h2 className="text-lg font-semibold">Performance commerciale</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Suivi des devis envoyés, acceptés et refusés.
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCard
+            label="Devis envoyés"
+            value={stats.sentQuotes}
+            icon={Send}
+          />
+          <StatCard
+            label="Devis acceptés"
+            value={stats.acceptedQuotes}
+            icon={CheckCircle}
+          />
+          <StatCard
+            label="Devis refusés"
+            value={stats.rejectedQuotes}
+            icon={XCircle}
+          />
+          <StatCard
+            label="Taux d'acceptation"
+            value={`${stats.acceptanceRate} %`}
+            icon={Percent}
+          />
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          <StatCard
+            label="Montant envoyé"
+            value={formatAmount(stats.totalSentQuoteAmount)}
+            icon={Euro}
+          />
+          <StatCard
+            label="Montant accepté"
+            value={formatAmount(stats.totalAcceptedQuoteAmount)}
+            icon={Euro}
+          />
+          <StatCard
+            label="Montant refusé"
+            value={formatAmount(stats.totalRejectedQuoteAmount)}
+            icon={Euro}
+          />
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <StatCard
+            label="Devis expirés"
+            value={stats.expiredQuotes}
+            icon={Clock}
+          />
+          <StatCard
+            label="Devis annulés"
+            value={stats.cancelledQuotes}
+            icon={XCircle}
+          />
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <div>
+          <h2 className="text-lg font-semibold">Relances</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            État des relances à valider, planifiées, envoyées ou en échec.
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCard
+            label="À approuver"
+            value={stats.pendingReminders}
+            icon={MailCheck}
+          />
+          <StatCard
+            label="Programmées"
+            value={stats.scheduledReminders}
+            icon={Clock}
+          />
+          <StatCard
+            label="Envoyées"
+            value={stats.sentReminders}
+            icon={Send}
+          />
+          <StatCard
+            label="En échec"
+            value={stats.failedReminders}
+            icon={AlertCircle}
+          />
+        </div>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-3">
