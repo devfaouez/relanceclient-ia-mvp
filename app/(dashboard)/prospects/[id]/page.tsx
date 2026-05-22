@@ -113,7 +113,10 @@ function prospectToFormState(prospect: Prospect): ProspectFormState {
   };
 }
 
-function formatProspectApiError(payload: unknown) {
+function formatProspectApiError(
+  payload: unknown,
+  fallback = "Erreur lors de la modification"
+) {
   const json = payload as {
     error?: string;
     details?: {
@@ -151,7 +154,7 @@ function formatProspectApiError(payload: unknown) {
     firstFieldError ??
     firstFormError ??
     json.error ??
-    "Erreur lors de la modification"
+    fallback
   );
 }
 
@@ -179,6 +182,10 @@ export default function ProspectDetailPage({
     null
   );
   const [savingProspect, setSavingProspect] = useState(false);
+  const [archivingProspect, setArchivingProspect] = useState(false);
+  const [prospectArchiveError, setProspectArchiveError] = useState<
+    string | null
+  >(null);
 
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loadingQuotes, setLoadingQuotes] = useState(true);
@@ -320,6 +327,51 @@ export default function ProspectDetailPage({
       setProspectEditSuccess("Prospect modifié avec succès.");
     } finally {
       setSavingProspect(false);
+    }
+  }
+
+  async function handleArchiveProspect() {
+    if (!prospect || prospect.status === "ARCHIVED") return;
+
+    const confirmed = window.confirm(
+      "Archiver ce prospect ? Il sera masqué/archivé mais ne sera pas supprimé définitivement."
+    );
+
+    if (!confirmed) return;
+
+    setProspectArchiveError(null);
+    setProspectEditError(null);
+    setProspectEditSuccess(null);
+    setArchivingProspect(true);
+
+    try {
+      const res = await fetch(`/api/prospects/${params.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "ARCHIVED" }),
+      });
+
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        setProspectArchiveError(
+          formatProspectApiError(
+            json,
+            "Erreur lors de l'archivage du prospect"
+          )
+        );
+        setArchivingProspect(false);
+        return;
+      }
+
+      setProspectEditSuccess("Prospect archivé.");
+      setTimeout(() => {
+        router.push("/prospects");
+      }, 800);
+    } catch {
+      setProspectArchiveError(
+        "Erreur réseau lors de l'archivage du prospect. Réessayez dans quelques instants."
+      );
+      setArchivingProspect(false);
     }
   }
 
@@ -585,13 +637,32 @@ export default function ProspectDetailPage({
                 <button
                   type="button"
                   onClick={startEditingProspect}
-                  className="rounded-md border px-3 py-1 text-xs font-medium hover:bg-muted"
+                  disabled={archivingProspect}
+                  className="rounded-md border px-3 py-1 text-xs font-medium hover:bg-muted disabled:opacity-50"
                 >
                   Modifier le prospect
                 </button>
               )}
+              {prospect.status !== "ARCHIVED" && (
+                <button
+                  type="button"
+                  onClick={handleArchiveProspect}
+                  disabled={archivingProspect || savingProspect}
+                  className="rounded-md border px-3 py-1 text-xs font-medium text-destructive hover:bg-muted disabled:opacity-50"
+                >
+                  {archivingProspect
+                    ? "Archivage…"
+                    : "Archiver le prospect"}
+                </button>
+              )}
             </div>
           </div>
+
+          {prospectArchiveError && (
+            <p className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+              {prospectArchiveError}
+            </p>
+          )}
 
           {prospectEditSuccess && (
             <p className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
