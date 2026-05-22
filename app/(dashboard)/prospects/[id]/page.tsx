@@ -183,6 +183,7 @@ export default function ProspectDetailPage({
   );
   const [savingProspect, setSavingProspect] = useState(false);
   const [archivingProspect, setArchivingProspect] = useState(false);
+  const [restoringProspect, setRestoringProspect] = useState(false);
   const [prospectArchiveError, setProspectArchiveError] = useState<
     string | null
   >(null);
@@ -372,6 +373,47 @@ export default function ProspectDetailPage({
         "Erreur réseau lors de l'archivage du prospect. Réessayez dans quelques instants."
       );
       setArchivingProspect(false);
+    }
+  }
+
+  async function handleRestoreProspect() {
+    if (!prospect || prospect.status !== "ARCHIVED") return;
+
+    const confirmed = window.confirm("Restaurer ce prospect ?");
+
+    if (!confirmed) return;
+
+    setProspectArchiveError(null);
+    setProspectEditError(null);
+    setProspectEditSuccess(null);
+    setRestoringProspect(true);
+
+    try {
+      const res = await fetch(`/api/prospects/${params.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "NEW" }),
+      });
+
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        setProspectArchiveError(
+          formatProspectApiError(
+            json,
+            "Erreur lors de la restauration du prospect"
+          )
+        );
+        return;
+      }
+
+      await fetchProspect();
+      setProspectEditSuccess("Prospect restauré");
+    } catch {
+      setProspectArchiveError(
+        "Erreur réseau lors de la restauration du prospect. Réessayez dans quelques instants."
+      );
+    } finally {
+      setRestoringProspect(false);
     }
   }
 
@@ -637,17 +679,30 @@ export default function ProspectDetailPage({
                 <button
                   type="button"
                   onClick={startEditingProspect}
-                  disabled={archivingProspect}
+                  disabled={archivingProspect || restoringProspect}
                   className="rounded-md border px-3 py-1 text-xs font-medium hover:bg-muted disabled:opacity-50"
                 >
                   Modifier le prospect
                 </button>
               )}
-              {prospect.status !== "ARCHIVED" && (
+              {prospect.status === "ARCHIVED" ? (
+                <button
+                  type="button"
+                  onClick={handleRestoreProspect}
+                  disabled={restoringProspect || savingProspect}
+                  className="rounded-md border px-3 py-1 text-xs font-medium hover:bg-muted disabled:opacity-50"
+                >
+                  {restoringProspect
+                    ? "Restauration…"
+                    : "Restaurer le prospect"}
+                </button>
+              ) : (
                 <button
                   type="button"
                   onClick={handleArchiveProspect}
-                  disabled={archivingProspect || savingProspect}
+                  disabled={
+                    archivingProspect || restoringProspect || savingProspect
+                  }
                   className="rounded-md border px-3 py-1 text-xs font-medium text-destructive hover:bg-muted disabled:opacity-50"
                 >
                   {archivingProspect
