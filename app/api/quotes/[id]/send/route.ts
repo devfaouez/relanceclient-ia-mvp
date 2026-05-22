@@ -9,6 +9,10 @@ import {
   UnauthorizedError,
 } from "@/lib/auth";
 import { QuotePdfDocument } from "@/lib/pdf/quote-pdf";
+import {
+  buildQuoteEmailHtml,
+  buildQuoteEmailText,
+} from "@/lib/email/templates/quote";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -22,24 +26,6 @@ function cleanText(value: string | null | undefined) {
 
 function pdfFilenameLabel(value: string) {
   return value.replace(/[^\w.-]+/g, "-").replace(/^-+|-+$/g, "") || "devis";
-}
-
-function buildEmailBody({
-  prospectName,
-  businessName,
-  quoteLabel,
-}: {
-  prospectName: string;
-  businessName: string | null;
-  quoteLabel: string;
-}) {
-  const signature = businessName ? `\n\nCordialement,\n${businessName}` : "";
-
-  return `Bonjour ${prospectName},
-
-Veuillez trouver ci-joint le devis ${quoteLabel}.
-
-Nous restons à votre disposition pour toute question.${signature}`;
 }
 
 async function readableToBuffer(stream: NodeJS.ReadableStream) {
@@ -151,7 +137,12 @@ export async function POST(_request: NextRequest, { params }: RouteContext) {
       from: fromEmail,
       to: prospectEmail,
       subject: `Devis ${quoteLabel}`,
-      text: buildEmailBody({
+      text: buildQuoteEmailText({
+        prospectName: quote.prospect.name,
+        businessName,
+        quoteLabel,
+      }),
+      html: buildQuoteEmailHtml({
         prospectName: quote.prospect.name,
         businessName,
         quoteLabel,
