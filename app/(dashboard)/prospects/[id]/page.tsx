@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { formatAmount, formatDate } from "@/lib/formatters";
+import { formatAmount, formatDate, formatDateTime } from "@/lib/formatters";
 import {
   prospectStatusLabel,
   quoteStatusLabel,
@@ -44,6 +44,8 @@ type Reminder = {
   subject: string;
   body: string;
   status: string;
+  createdAt: string;
+  scheduledAt: string | null;
   requiresHumanApproval: boolean;
   approvedAt: string | null;
   sentAt: string | null;
@@ -85,6 +87,11 @@ function quoteTotal(quote: Quote) {
   }
 
   return toNumber(quote.amount);
+}
+
+function quoteDisplayName(quote: Quote | undefined) {
+  if (!quote) return "Devis introuvable";
+  return quote.quoteNumber ? `${quote.title} (${quote.quoteNumber})` : quote.title;
 }
 
 export default function ProspectDetailPage({
@@ -358,6 +365,28 @@ export default function ProspectDetailPage({
   const quoteIds = new Set(quotes.map((q) => q.id));
   const prospectReminders = reminders.filter((r) => quoteIds.has(r.quoteId));
   const quoteById = Object.fromEntries(quotes.map((q) => [q.id, q]));
+  const stats = [
+    { label: "Devis au total", value: quotes.length },
+    {
+      label: "Devis envoyés",
+      value: quotes.filter((quote) => quote.status === "SENT").length,
+    },
+    {
+      label: "Devis acceptés",
+      value: quotes.filter((quote) => quote.status === "ACCEPTED").length,
+    },
+    {
+      label: "Relances envoyées",
+      value: prospectReminders.filter((reminder) => reminder.status === "SENT")
+        .length,
+    },
+    {
+      label: "Relances programmées",
+      value: prospectReminders.filter(
+        (reminder) => reminder.status === "SCHEDULED"
+      ).length,
+    },
+  ];
 
   if (pageError) {
     return (
@@ -378,8 +407,7 @@ export default function ProspectDetailPage({
 
   return (
     <section className="space-y-8">
-      {/* En-tête */}
-      <div className="flex items-center gap-3">
+      <div className="space-y-2">
         <Link
           href="/prospects"
           className="text-sm text-muted-foreground hover:text-foreground"
@@ -390,57 +418,88 @@ export default function ProspectDetailPage({
           <span className="text-sm text-muted-foreground">Chargement…</span>
         ) : (
           prospect && (
-            <h1 className="text-2xl font-semibold">{prospect.name}</h1>
+            <div>
+              <h1 className="text-2xl font-semibold">{prospect.name}</h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Vue CRM légère pour suivre le prospect, ses devis et ses
+                relances.
+              </p>
+            </div>
           )
         )}
       </div>
 
-      {/* Fiche prospect */}
       {prospect && (
-        <div className="rounded-lg border bg-card p-5">
-          <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-4">
+        <section className="rounded-lg border bg-card p-5">
+          <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
             <div>
+              <h2 className="text-lg font-semibold">Résumé du prospect</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Coordonnées et statut commercial.
+              </p>
+            </div>
+            <span className="rounded-full bg-secondary px-3 py-1 text-xs font-medium">
+              {prospectStatusLabel(prospect.status)}
+            </span>
+          </div>
+
+          <dl className="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-3">
+            <div className="rounded-md border bg-background p-3">
               <dt className="text-muted-foreground">Email</dt>
-              <dd className="font-medium">{prospect.email ?? "—"}</dd>
+              <dd className="mt-1 font-medium">{prospect.email ?? "—"}</dd>
             </div>
-            <div>
+            <div className="rounded-md border bg-background p-3">
               <dt className="text-muted-foreground">Téléphone</dt>
-              <dd className="font-medium">{prospect.phone ?? "—"}</dd>
+              <dd className="mt-1 font-medium">{prospect.phone ?? "—"}</dd>
             </div>
-            <div>
+            <div className="rounded-md border bg-background p-3">
               <dt className="text-muted-foreground">Société</dt>
-              <dd className="font-medium">{prospect.company ?? "—"}</dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">Statut</dt>
-              <dd>
-                <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
-                  {prospectStatusLabel(prospect.status)}
-                </span>
-              </dd>
+              <dd className="mt-1 font-medium">{prospect.company ?? "—"}</dd>
             </div>
           </dl>
-        </div>
+        </section>
       )}
 
-      {/* Liste des devis */}
-      <div>
-        <h2 className="text-lg font-semibold">Devis</h2>
+      <section className="space-y-3">
+        <div>
+          <h2 className="text-lg font-semibold">Statistiques rapides</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Indicateurs clés liés à ce prospect.
+          </p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          {stats.map((item) => (
+            <div key={item.label} className="rounded-lg border bg-card p-4">
+              <p className="text-xs text-muted-foreground">{item.label}</p>
+              <p className="mt-2 text-2xl font-semibold">{item.value}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <div>
+          <h2 className="text-lg font-semibold">Devis du prospect</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Liste des devis, montants, statuts et accès rapides.
+          </p>
+        </div>
 
         {loadingQuotes && (
-          <p className="mt-2 text-sm text-muted-foreground">
+          <p className="rounded-lg border bg-card p-4 text-sm text-muted-foreground">
             Chargement des devis…
           </p>
         )}
 
         {!loadingQuotes && quotes.length === 0 && (
-          <p className="mt-2 text-sm text-muted-foreground">
-            Aucun devis pour l&apos;instant.
+          <p className="rounded-lg border bg-card p-4 text-sm text-muted-foreground">
+            Aucun devis pour l&apos;instant. Ajoutez un premier devis depuis le
+            formulaire en bas de page.
           </p>
         )}
 
         {!loadingQuotes && quotes.length > 0 && (
-          <div className="mt-3 overflow-x-auto rounded-lg border">
+          <div className="overflow-x-auto rounded-lg border bg-card">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b bg-muted/50 text-left">
@@ -481,7 +540,7 @@ export default function ProspectDetailPage({
                           href={`/quotes/${q.id}`}
                           className="text-sm font-medium text-primary hover:underline"
                         >
-                          Voir le devis
+                          Voir
                         </Link>
 
                         <a
@@ -514,29 +573,31 @@ export default function ProspectDetailPage({
             </table>
           </div>
         )}
-      </div>
+      </section>
 
-      {/* Relances */}
-      <div>
-        <h2 className="text-lg font-semibold">Relances</h2>
-
-        <p className="mt-1 text-xs text-muted-foreground">
-          Toute relance doit être approuvée manuellement avant d&apos;être
-          envoyée.
-        </p>
+      <section className="space-y-3">
+        <div>
+          <h2 className="text-lg font-semibold">Relances du prospect</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Toute relance doit être approuvée manuellement avant d&apos;être
+            envoyée.
+          </p>
+        </div>
 
         {reminderError && (
-          <p className="mt-2 text-sm text-destructive">{reminderError}</p>
+          <p className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+            {reminderError}
+          </p>
         )}
 
         {prospectReminders.length === 0 && (
-          <p className="mt-2 text-sm text-muted-foreground">
+          <p className="rounded-lg border bg-card p-4 text-sm text-muted-foreground">
             Aucune relance pour l&apos;instant. Générez-en une depuis un devis.
           </p>
         )}
 
         {prospectReminders.length > 0 && (
-          <div className="mt-3 space-y-3">
+          <div className="space-y-3">
             {prospectReminders.map((r) => {
               const quote = quoteById[r.quoteId];
               return (
@@ -582,13 +643,22 @@ export default function ProspectDetailPage({
                         </div>
                       ) : (
                         <>
-                          <p className="font-medium">{r.subject}</p>
-                          {quote && (
+                          <div className="space-y-1">
+                            <p className="font-medium">{r.subject}</p>
                             <p className="text-xs text-muted-foreground">
-                              Devis : {quote.title}
-                              {quote.quoteNumber ? ` — ${quote.quoteNumber}` : ""}
+                              Devis lié :{" "}
+                              {quote ? (
+                                <Link
+                                  href={`/quotes/${quote.id}`}
+                                  className="font-medium text-primary hover:underline"
+                                >
+                                  {quoteDisplayName(quote)}
+                                </Link>
+                              ) : (
+                                quoteDisplayName(quote)
+                              )}
                             </p>
-                          )}
+                          </div>
                           <div className="space-y-2">
                             <p
                               className={`whitespace-pre-line text-xs text-muted-foreground ${
@@ -614,16 +684,51 @@ export default function ProspectDetailPage({
                           </div>
                           <div className="flex flex-wrap gap-4 pt-1 text-xs text-muted-foreground">
                             <span>
-                              Approuvé le :{" "}
+                              Créée le :{" "}
                               <span className="font-medium">
-                                {formatDate(r.approvedAt)}
+                                {formatDateTime(r.createdAt)}
                               </span>
                             </span>
-                            <span>
-                              Envoyé le :{" "}
-                              <span className="font-medium">
-                                {formatDate(r.sentAt)}
+                            {r.scheduledAt && (
+                              <span>
+                                Programmée le :{" "}
+                                <span className="font-medium">
+                                  {formatDateTime(r.scheduledAt)}
+                                </span>
                               </span>
+                            )}
+                            {r.approvedAt && (
+                              <span>
+                                Approuvée le :{" "}
+                                <span className="font-medium">
+                                  {formatDateTime(r.approvedAt)}
+                                </span>
+                              </span>
+                            )}
+                            {r.sentAt && (
+                              <span>
+                                Envoyée le :{" "}
+                                <span className="font-medium">
+                                  {formatDateTime(r.sentAt)}
+                                </span>
+                              </span>
+                            )}
+                            {!r.scheduledAt && !r.sentAt && (
+                              <span>
+                                Programmation :{" "}
+                                <span className="font-medium">—</span>
+                              </span>
+                            )}
+                            {!r.sentAt && (
+                              <span>
+                                Envoi :{" "}
+                                <span className="font-medium">—</span>
+                              </span>
+                            )}
+                          </div>
+                          <div className="pt-1">
+                            <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
+                              {reminderStatusLabel(r.status)}
                             </span>
                           </div>
                         </>
@@ -631,9 +736,11 @@ export default function ProspectDetailPage({
                     </div>
 
                     <div className="flex shrink-0 flex-col items-end gap-2">
-                      <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
-                        {reminderStatusLabel(r.status)}
-                      </span>
+                      {editingReminderId === r.id && (
+                        <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
+                          {reminderStatusLabel(r.status)}
+                        </span>
+                      )}
 
                       {editingReminderId === r.id ? (
                         <>
@@ -704,7 +811,7 @@ export default function ProspectDetailPage({
             })}
           </div>
         )}
-      </div>
+      </section>
 
       {generateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
