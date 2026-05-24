@@ -77,6 +77,14 @@ async function fetchJson<T>(url: string): Promise<T | null> {
   return res.json() as Promise<T>;
 }
 
+async function getApiErrorMessage(
+  res: Response,
+  fallbackMessage: string
+): Promise<string> {
+  const json = await res.json().catch(() => ({}));
+  return (json as { error?: string }).error ?? fallbackMessage;
+}
+
 function quoteDisplayName(row: ReminderRow) {
   if (!row.quote) return "";
   return row.quote.quoteNumber
@@ -234,22 +242,27 @@ export default function RemindersPage() {
     setError(null);
     setSuccess(null);
 
-    const res = await fetch("/api/reminders/send", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reminderId }),
-    });
+    try {
+      const res = await fetch("/api/reminders/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reminderId }),
+      });
 
-    setActionId(null);
+      if (!res.ok) {
+        setError(await getApiErrorMessage(res, "Erreur lors de l'envoi"));
+        return;
+      }
 
-    if (!res.ok) {
-      const json = await res.json().catch(() => ({}));
-      setError((json as { error?: string }).error ?? "Erreur lors de l'envoi");
-      return;
+      await loadReminders();
+      setSuccess(isRetry ? "Relance renvoyée" : "Relance envoyée");
+    } catch {
+      setError(
+        "Erreur réseau : impossible de contacter le serveur pour envoyer la relance."
+      );
+    } finally {
+      setActionId(null);
     }
-
-    await loadReminders();
-    setSuccess(isRetry ? "Relance renvoyée" : "Relance envoyée");
   }
 
   const pendingApprovalCount = useMemo(

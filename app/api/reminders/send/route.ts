@@ -79,7 +79,10 @@ export async function POST(request: NextRequest) {
     const prospectEmail = reminder.quote.prospect.email?.trim();
     if (!prospectEmail) {
       return NextResponse.json(
-        { error: "Prospect does not have an email address" },
+        {
+          error:
+            "Impossible d'envoyer la relance : le prospect n'a pas d'adresse email.",
+        },
         { status: 422 }
       );
     }
@@ -102,7 +105,10 @@ export async function POST(request: NextRequest) {
 
       console.error("REMINDER_SEND_ERROR:", error);
       return NextResponse.json(
-        { error: "Erreur lors de l'envoi de la relance" },
+        {
+          error:
+            "Erreur Resend lors de l'envoi de la relance. La relance reste en échec.",
+        },
         { status: 502 }
       );
     }
