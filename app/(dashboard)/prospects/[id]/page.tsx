@@ -187,6 +187,9 @@ export default function ProspectDetailPage({
   const [prospectArchiveError, setProspectArchiveError] = useState<
     string | null
   >(null);
+  const [prospectConfirmAction, setProspectConfirmAction] = useState<
+    "ARCHIVE" | "RESTORE" | null
+  >(null);
 
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loadingQuotes, setLoadingQuotes] = useState(true);
@@ -334,12 +337,6 @@ export default function ProspectDetailPage({
   async function handleArchiveProspect() {
     if (!prospect || prospect.status === "ARCHIVED") return;
 
-    const confirmed = window.confirm(
-      "Archiver ce prospect ? Il sera masqué/archivé mais ne sera pas supprimé définitivement."
-    );
-
-    if (!confirmed) return;
-
     setProspectArchiveError(null);
     setProspectEditError(null);
     setProspectEditSuccess(null);
@@ -360,10 +357,12 @@ export default function ProspectDetailPage({
             "Erreur lors de l'archivage du prospect"
           )
         );
+        setProspectConfirmAction(null);
         setArchivingProspect(false);
         return;
       }
 
+      setProspectConfirmAction(null);
       setProspectEditSuccess("Prospect archivé.");
       setTimeout(() => {
         router.push("/prospects");
@@ -372,16 +371,13 @@ export default function ProspectDetailPage({
       setProspectArchiveError(
         "Erreur réseau lors de l'archivage du prospect. Réessayez dans quelques instants."
       );
+      setProspectConfirmAction(null);
       setArchivingProspect(false);
     }
   }
 
   async function handleRestoreProspect() {
     if (!prospect || prospect.status !== "ARCHIVED") return;
-
-    const confirmed = window.confirm("Restaurer ce prospect ?");
-
-    if (!confirmed) return;
 
     setProspectArchiveError(null);
     setProspectEditError(null);
@@ -403,15 +399,18 @@ export default function ProspectDetailPage({
             "Erreur lors de la restauration du prospect"
           )
         );
+        setProspectConfirmAction(null);
         return;
       }
 
       await fetchProspect();
+      setProspectConfirmAction(null);
       setProspectEditSuccess("Prospect restauré");
     } catch {
       setProspectArchiveError(
         "Erreur réseau lors de la restauration du prospect. Réessayez dans quelques instants."
       );
+      setProspectConfirmAction(null);
     } finally {
       setRestoringProspect(false);
     }
@@ -688,7 +687,7 @@ export default function ProspectDetailPage({
               {prospect.status === "ARCHIVED" ? (
                 <button
                   type="button"
-                  onClick={handleRestoreProspect}
+                  onClick={() => setProspectConfirmAction("RESTORE")}
                   disabled={restoringProspect || savingProspect}
                   className="rounded-md border px-3 py-1 text-xs font-medium hover:bg-muted disabled:opacity-50"
                 >
@@ -699,7 +698,7 @@ export default function ProspectDetailPage({
               ) : (
                 <button
                   type="button"
-                  onClick={handleArchiveProspect}
+                  onClick={() => setProspectConfirmAction("ARCHIVE")}
                   disabled={
                     archivingProspect || restoringProspect || savingProspect
                   }
@@ -1373,6 +1372,63 @@ export default function ProspectDetailPage({
                 {pending.has(`send-${sendConfirmReminder.id}`)
                   ? "Envoi…"
                   : "Confirmer l’envoi"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {prospect && prospectConfirmAction && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-lg rounded-lg border bg-background p-5 shadow-lg">
+            <h2 className="text-lg font-semibold">
+              {prospectConfirmAction === "ARCHIVE"
+                ? "Archiver le prospect"
+                : "Restaurer le prospect"}
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {prospectConfirmAction === "ARCHIVE"
+                ? "Le prospect sera archivé et masqué des vues actives, sans être supprimé définitivement."
+                : "Le prospect reviendra dans les vues actives avec le statut Nouveau."}
+            </p>
+
+            <div className="mt-4 rounded-md bg-muted/50 p-4 text-sm">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Prospect
+              </p>
+              <p className="mt-1 font-medium">{prospect.name}</p>
+              <p className="text-muted-foreground">
+                {prospect.company ?? prospect.email ?? "Sans société"}
+              </p>
+            </div>
+
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setProspectConfirmAction(null)}
+                disabled={archivingProspect || restoringProspect}
+                className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
+              >
+                Annuler
+              </button>
+
+              <button
+                type="button"
+                onClick={
+                  prospectConfirmAction === "ARCHIVE"
+                    ? handleArchiveProspect
+                    : handleRestoreProspect
+                }
+                disabled={archivingProspect || restoringProspect}
+                className={
+                  prospectConfirmAction === "ARCHIVE"
+                    ? "rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+                    : "rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                }
+              >
+                {archivingProspect || restoringProspect
+                  ? "Mise à jour…"
+                  : "Confirmer"}
               </button>
             </div>
           </div>

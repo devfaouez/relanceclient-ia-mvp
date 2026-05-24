@@ -163,6 +163,9 @@ export default function QuotePreviewPage({
   const [sendConfirmReminder, setSendConfirmReminder] =
     useState<Reminder | null>(null);
   const [sendConfirmQuote, setSendConfirmQuote] = useState(false);
+  const [statusConfirmQuote, setStatusConfirmQuote] = useState<
+    "REJECTED" | "CANCELLED" | null
+  >(null);
 
   const [editingLineId, setEditingLineId] = useState<string | null>(null);
   const [editLineDescription, setEditLineDescription] = useState("");
@@ -568,20 +571,6 @@ export default function QuotePreviewPage({
   async function handleUpdateQuoteStatus(
     status: "ACCEPTED" | "REJECTED" | "EXPIRED" | "CANCELLED"
   ) {
-    if (
-      status === "REJECTED" &&
-      !window.confirm("Confirmer le refus de ce devis ?")
-    ) {
-      return;
-    }
-
-    if (
-      status === "CANCELLED" &&
-      !window.confirm("Confirmer l’annulation de ce devis ?")
-    ) {
-      return;
-    }
-
     setSaving(true);
     setActionError(null);
     setActionSuccess(null);
@@ -611,6 +600,7 @@ export default function QuotePreviewPage({
 
       if (!res.ok) {
         const json = await res.json().catch(() => ({}));
+        setStatusConfirmQuote(null);
         setActionError(
           (json as { error?: string }).error ??
             "Erreur lors du changement de statut du devis"
@@ -622,8 +612,10 @@ export default function QuotePreviewPage({
       setActionSuccess(
         `Devis marqué comme ${quoteStatusLabel(status).toLowerCase()}`
       );
+      setStatusConfirmQuote(null);
       fetchQuote();
     } catch {
+      setStatusConfirmQuote(null);
       setActionError("Impossible de mettre à jour le statut du devis.");
     } finally {
       setSaving(false);
@@ -842,7 +834,7 @@ export default function QuotePreviewPage({
               {quote.status !== "REJECTED" && (
                 <button
                   type="button"
-                  onClick={() => handleUpdateQuoteStatus("REJECTED")}
+                  onClick={() => setStatusConfirmQuote("REJECTED")}
                   disabled={saving || quoteSending}
                   className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
                 >
@@ -864,7 +856,7 @@ export default function QuotePreviewPage({
               {quote.status !== "CANCELLED" && (
                 <button
                   type="button"
-                  onClick={() => handleUpdateQuoteStatus("CANCELLED")}
+                  onClick={() => setStatusConfirmQuote("CANCELLED")}
                   disabled={saving || quoteSending}
                   className="rounded-md border px-4 py-2 text-sm font-medium text-destructive hover:bg-muted disabled:opacity-50"
                 >
@@ -1663,6 +1655,53 @@ export default function QuotePreviewPage({
                 className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
               >
                 {quoteSending ? "Envoi…" : "Confirmer l’envoi"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {statusConfirmQuote && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 print:hidden">
+          <div className="w-full max-w-lg rounded-lg border bg-background p-5 shadow-lg">
+            <h2 className="text-lg font-semibold">
+              {statusConfirmQuote === "REJECTED"
+                ? "Confirmer le refus du devis"
+                : "Confirmer l’annulation du devis"}
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {statusConfirmQuote === "REJECTED"
+                ? "Le devis sera marqué comme refusé et restera consultable dans l’historique."
+                : "Le devis sera marqué comme annulé et ne pourra plus être traité comme actif."}
+            </p>
+
+            <div className="mt-4 rounded-md bg-muted/50 p-4 text-sm">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Devis
+              </p>
+              <p className="mt-1 font-medium">{quote.title}</p>
+              <p className="text-muted-foreground">
+                {quote.quoteNumber ?? quote.id.slice(0, 8)}
+              </p>
+            </div>
+
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setStatusConfirmQuote(null)}
+                disabled={saving}
+                className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
+              >
+                Annuler
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleUpdateQuoteStatus(statusConfirmQuote)}
+                disabled={saving}
+                className="rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
+              >
+                {saving ? "Mise à jour…" : "Confirmer"}
               </button>
             </div>
           </div>
