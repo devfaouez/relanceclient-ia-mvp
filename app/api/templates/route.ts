@@ -34,7 +34,7 @@ export async function GET() {
     }
     console.error("TEMPLATES_LIST_ERROR:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Erreur lors du chargement des modèles" },
       { status: 500 }
     );
   }
@@ -48,13 +48,16 @@ export async function POST(request: NextRequest) {
     try {
       body = await request.json();
     } catch {
-      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+      return NextResponse.json({ error: "JSON invalide" }, { status: 400 });
     }
 
     const parsed = createTemplateSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Validation error", details: parsed.error.flatten() },
+        {
+          error: "Le nom, le sujet et le contenu du modèle sont obligatoires",
+          details: parsed.error.flatten(),
+        },
         { status: 422 }
       );
     }
@@ -85,7 +88,7 @@ export async function POST(request: NextRequest) {
     }
     console.error("TEMPLATES_CREATE_ERROR:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Erreur lors de la création du modèle" },
       { status: 500 }
     );
   }

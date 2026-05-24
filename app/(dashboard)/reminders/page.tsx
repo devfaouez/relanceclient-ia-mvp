@@ -2,7 +2,15 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Check, RefreshCw, Search, Send, RotateCw } from "lucide-react";
+import {
+  CalendarClock,
+  Check,
+  RefreshCw,
+  Search,
+  Send,
+  RotateCw,
+  X,
+} from "lucide-react";
 import {
   compareText,
   formatDate,
@@ -143,6 +151,15 @@ function emptyRemindersMessage(displayFilter: DisplayFilter) {
   return "Aucune relance ne correspond aux filtres.";
 }
 
+function inputDateTimeValue(date: string | null) {
+  if (!date) return "";
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return "";
+
+  const offsetMs = parsed.getTimezoneOffset() * 60 * 1000;
+  return new Date(parsed.getTime() - offsetMs).toISOString().slice(0, 16);
+}
+
 export default function RemindersPage() {
   const [rows, setRows] = useState<ReminderRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -155,6 +172,10 @@ export default function RemindersPage() {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [sortKey, setSortKey] = useState<SortKey>("createdAt");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [schedulingReminderId, setSchedulingReminderId] = useState<
+    string | null
+  >(null);
+  const [scheduleReminderDate, setScheduleReminderDate] = useState("");
 
   const loadReminders = useCallback(async () => {
     setLoading(true);
@@ -259,6 +280,103 @@ export default function RemindersPage() {
     } catch {
       setError(
         "Erreur réseau : impossible de contacter le serveur pour envoyer la relance."
+      );
+    } finally {
+      setActionId(null);
+    }
+  }
+
+  function startSchedulingReminder(reminder: ReminderRow) {
+    setSchedulingReminderId(reminder.id);
+    setScheduleReminderDate(inputDateTimeValue(reminder.scheduledAt));
+    setError(null);
+    setSuccess(null);
+  }
+
+  function cancelSchedulingReminder() {
+    setSchedulingReminderId(null);
+    setScheduleReminderDate("");
+  }
+
+  async function updateScheduledReminder(reminderId: string) {
+    if (!scheduleReminderDate) {
+      setError("Choisissez une date et une heure de programmation.");
+      return;
+    }
+
+    const scheduledAt = new Date(scheduleReminderDate);
+    if (Number.isNaN(scheduledAt.getTime())) {
+      setError("La date de programmation est invalide.");
+      return;
+    }
+
+    setActionId(reminderId);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const res = await fetch(`/api/reminders/${reminderId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "SCHEDULED",
+          scheduledAt: scheduledAt.toISOString(),
+        }),
+      });
+
+      if (!res.ok) {
+        setError(
+          await getApiErrorMessage(
+            res,
+            "Erreur lors de la modification de la programmation"
+          )
+        );
+        return;
+      }
+
+      cancelSchedulingReminder();
+      await loadReminders();
+      setSuccess("Programmation mise à jour");
+    } catch {
+      setError(
+        "Erreur réseau : impossible de modifier la programmation de la relance."
+      );
+    } finally {
+      setActionId(null);
+    }
+  }
+
+  async function cancelScheduledReminder(reminderId: string) {
+    setActionId(reminderId);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const res = await fetch(`/api/reminders/${reminderId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "APPROVED", scheduledAt: null }),
+      });
+
+      if (!res.ok) {
+        setError(
+          await getApiErrorMessage(
+            res,
+            "Erreur lors de l'annulation de la programmation"
+          )
+        );
+        return;
+      }
+
+      if (schedulingReminderId === reminderId) {
+        cancelSchedulingReminder();
+      }
+
+      await loadReminders();
+      setSuccess("Programmation annulée. La relance reste approuvée.");
+    } catch {
+      setError(
+        "Erreur réseau : impossible d'annuler la programmation de la relance."
       );
     } finally {
       setActionId(null);
@@ -469,7 +587,11 @@ export default function RemindersPage() {
       </div>
 
       {error && <p className="text-sm text-destructive">{error}</p>}
-      {success && <p className="text-sm text-muted-foreground">{success}</p>}
+      {success && (
+        <p className="rounded-md border border-emerald-600/30 bg-emerald-50 p-3 text-sm text-emerald-900">
+          {success}
+        </p>
+      )}
 
       {!loading && !error && (
         <p className="text-sm text-muted-foreground">
@@ -532,9 +654,9 @@ export default function RemindersPage() {
                           Créée le{sortLabel("createdAt")}
                         </button>
                       </th>
-                      <th className="px-4 py-3 font-medium">approvedAt</th>
+                      <th className="px-4 py-3 font-medium">Approuvée le</th>
                       <th className="px-4 py-3 font-medium">Programmation</th>
-                      <th className="px-4 py-3 font-medium">sentAt</th>
+                      <th className="px-4 py-3 font-medium">Envoyée le</th>
                       <th className="px-4 py-3"></th>
                     </tr>
                   </thead>
@@ -582,13 +704,39 @@ export default function RemindersPage() {
                         {formatDate(row.approvedAt)}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">
-                        {formatScheduledDateTime(row.scheduledAt)}
+                        {row.scheduledAt
+                          ? formatScheduledDateTime(row.scheduledAt)
+                          : "Non programmée"}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">
                         {formatDate(row.sentAt)}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <div className="flex justify-end gap-2">
+                        <div className="flex flex-wrap justify-end gap-2">
+                          {row.status === "SCHEDULED" && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => startSchedulingReminder(row)}
+                                disabled={actionId === row.id}
+                                className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs font-medium hover:bg-muted disabled:opacity-50"
+                              >
+                                <CalendarClock className="h-3.5 w-3.5" />
+                                Modifier
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => cancelScheduledReminder(row.id)}
+                                disabled={actionId === row.id}
+                                className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-xs font-medium text-destructive hover:bg-muted disabled:opacity-50"
+                              >
+                                <X className="h-3.5 w-3.5" />
+                                Annuler
+                              </button>
+                            </>
+                          )}
+
                           {row.status === "PENDING_APPROVAL" && (
                             <button
                               type="button"
@@ -636,8 +784,42 @@ export default function RemindersPage() {
               <div className="border-t px-4 py-4">
                 {row.status === "FAILED" && (
                   <p className="mb-3 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive">
-                    Échec d’envoi
+                    Échec d’envoi. Cette relance ne sera pas renvoyée
+                    automatiquement.
                   </p>
+                )}
+                {schedulingReminderId === row.id && (
+                  <div className="mb-3 rounded-md border bg-muted/30 p-3">
+                    <label className="block text-xs font-medium text-muted-foreground">
+                      Programmer pour
+                    </label>
+                    <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                      <input
+                        type="datetime-local"
+                        value={scheduleReminderDate}
+                        onChange={(event) =>
+                          setScheduleReminderDate(event.target.value)
+                        }
+                        className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => updateScheduledReminder(row.id)}
+                        disabled={actionId === row.id}
+                        className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                      >
+                        Enregistrer
+                      </button>
+                      <button
+                        type="button"
+                        onClick={cancelSchedulingReminder}
+                        disabled={actionId === row.id}
+                        className="rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
+                      >
+                        Fermer
+                      </button>
+                    </div>
+                  </div>
                 )}
                 <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Contenu de la relance
