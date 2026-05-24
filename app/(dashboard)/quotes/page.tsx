@@ -30,6 +30,24 @@ type Quote = {
 
 type SortKey = "createdAt" | "amount" | "status" | "prospect" | "title";
 type SortDirection = "asc" | "desc";
+type DisplayFilter = "ACTIVE" | "CLOSED" | "EXPIRED" | "ALL";
+
+const DISPLAY_FILTERS: { value: DisplayFilter; label: string }[] = [
+  { value: "ACTIVE", label: "Actifs" },
+  { value: "CLOSED", label: "Clôturés" },
+  { value: "EXPIRED", label: "Expirés" },
+  { value: "ALL", label: "Tous" },
+];
+
+const ACTIVE_QUOTE_STATUSES = ["DRAFT", "SENT"];
+const CLOSED_QUOTE_STATUSES = ["ACCEPTED", "REJECTED", "CANCELLED"];
+
+function matchesDisplayFilter(status: string, displayFilter: DisplayFilter) {
+  if (displayFilter === "ALL") return true;
+  if (displayFilter === "ACTIVE") return ACTIVE_QUOTE_STATUSES.includes(status);
+  if (displayFilter === "CLOSED") return CLOSED_QUOTE_STATUSES.includes(status);
+  return status === "EXPIRED";
+}
 
 function quoteSearchText(quote: Quote) {
   return [
@@ -51,10 +69,31 @@ function prospectDisplayName(quote: Quote) {
   return quote.prospect.company ?? quote.prospect.name;
 }
 
+function quoteCountLabel(count: number) {
+  return `${count} devis affiché${count > 1 ? "s" : ""}`;
+}
+
+function emptyQuotesMessage(displayFilter: DisplayFilter) {
+  if (displayFilter === "ACTIVE") {
+    return "Aucun devis actif trouvé.";
+  }
+
+  if (displayFilter === "CLOSED") {
+    return "Aucun devis clôturé trouvé.";
+  }
+
+  if (displayFilter === "EXPIRED") {
+    return "Aucun devis expiré trouvé.";
+  }
+
+  return "Aucun devis trouvé.";
+}
+
 export default function QuotesPage() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [displayFilter, setDisplayFilter] = useState<DisplayFilter>("ACTIVE");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("createdAt");
@@ -78,12 +117,14 @@ export default function QuotesPage() {
     const query = searchQuery.trim().toLowerCase();
 
     const filtered = quotes.filter((quote) => {
+      const matchesDisplay = matchesDisplayFilter(quote.status, displayFilter);
+
       const matchesStatus =
         statusFilter === "ALL" || quote.status === statusFilter;
 
       const matchesSearch = !query || quoteSearchText(quote).includes(query);
 
-      return matchesStatus && matchesSearch;
+      return matchesDisplay && matchesStatus && matchesSearch;
     });
 
     return [...filtered].sort((a, b) => {
@@ -115,7 +156,7 @@ export default function QuotesPage() {
 
       return sortDirection === "asc" ? result : -result;
     });
-  }, [quotes, searchQuery, sortDirection, sortKey, statusFilter]);
+  }, [displayFilter, quotes, searchQuery, sortDirection, sortKey, statusFilter]);
 
   const totalAmount = filteredQuotes.reduce((sum, quote) => {
     return sum + quote.totalAmount;
@@ -164,10 +205,13 @@ export default function QuotesPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-lg border bg-card p-5">
-          <p className="text-sm text-muted-foreground">Nombre de devis</p>
+          <p className="text-sm text-muted-foreground">Devis affichés</p>
           <p className="mt-2 text-3xl font-semibold">{filteredQuotes.length}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            sur {quotes.length} au total
+          </p>
         </div>
 
         <div className="rounded-lg border bg-card p-5">
@@ -175,6 +219,26 @@ export default function QuotesPage() {
           <p className="mt-2 text-3xl font-semibold">
             {formatAmount(totalAmount)}
           </p>
+        </div>
+
+        <div className="rounded-lg border bg-card p-5">
+          <p className="text-sm text-muted-foreground">Affichage</p>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            {DISPLAY_FILTERS.map((filter) => (
+              <button
+                key={filter.value}
+                type="button"
+                onClick={() => setDisplayFilter(filter.value)}
+                className={`rounded-md border px-3 py-2 text-sm font-medium ${
+                  displayFilter === filter.value
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-background hover:bg-muted"
+                }`}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="rounded-lg border bg-card p-5">
@@ -238,6 +302,12 @@ export default function QuotesPage() {
         </div>
       </div>
 
+      {!loading && !error && (
+        <p className="text-sm text-muted-foreground">
+          {quoteCountLabel(filteredQuotes.length)}
+        </p>
+      )}
+
       {loading && (
         <p className="text-sm text-muted-foreground">Chargement…</p>
       )}
@@ -248,7 +318,7 @@ export default function QuotesPage() {
         <div className="rounded-lg border bg-card px-5 py-10 text-center">
           <FileText className="mx-auto h-8 w-8 text-muted-foreground" />
           <p className="mt-4 text-sm text-muted-foreground">
-            Aucun devis trouvé.
+            {emptyQuotesMessage(displayFilter)}
           </p>
         </div>
       )}
