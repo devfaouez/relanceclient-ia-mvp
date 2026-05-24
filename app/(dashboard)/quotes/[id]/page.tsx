@@ -122,6 +122,14 @@ function toNumber(value: string | null | undefined) {
   return Number(value);
 }
 
+async function getApiErrorMessage(
+  res: Response,
+  fallbackMessage: string
+): Promise<string> {
+  const json = await res.json().catch(() => ({}));
+  return (json as { error?: string }).error ?? fallbackMessage;
+}
+
 export default function QuotePreviewPage({
   params,
 }: {
@@ -137,6 +145,7 @@ export default function QuotePreviewPage({
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [quoteSending, setQuoteSending] = useState(false);
+  const [quoteSendFailed, setQuoteSendFailed] = useState(false);
 
   const [quoteTitle, setQuoteTitle] = useState("");
   const [quoteNumber, setQuoteNumber] = useState("");
@@ -481,26 +490,30 @@ export default function QuotePreviewPage({
     setActionError(null);
     setActionSuccess(null);
 
-    const res = await fetch("/api/reminders/send", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reminderId }),
-    });
+    try {
+      const res = await fetch("/api/reminders/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reminderId }),
+      });
 
-    setSaving(false);
+      if (!res.ok) {
+        setActionError(
+          await getApiErrorMessage(res, "Erreur lors de l'envoi de la relance")
+        );
+        return;
+      }
 
-    if (!res.ok) {
-      const json = await res.json().catch(() => ({}));
+      setSendConfirmReminder(null);
+      setActionSuccess(isRetry ? "Relance renvoyée" : "Relance envoyée");
+      fetchReminders();
+    } catch {
       setActionError(
-        (json as { error?: string }).error ??
-          "Erreur lors de l'envoi de la relance"
+        "Erreur réseau : impossible de contacter le serveur pour envoyer la relance."
       );
-      return;
+    } finally {
+      setSaving(false);
     }
-
-    setSendConfirmReminder(null);
-    setActionSuccess(isRetry ? "Relance renvoyée" : "Relance envoyée");
-    fetchReminders();
   }
 
   async function handleGenerateReminder(e: React.FormEvent) {
@@ -628,24 +641,34 @@ export default function QuotePreviewPage({
     setActionError(null);
     setActionSuccess(null);
 
-    const res = await fetch(`/api/quotes/${params.id}/send`, {
-      method: "POST",
-    });
+    try {
+      const res = await fetch(`/api/quotes/${params.id}/send`, {
+        method: "POST",
+      });
 
-    setQuoteSending(false);
+      if (!res.ok) {
+        setQuoteSendFailed(true);
+        setActionError(
+          await getApiErrorMessage(
+            res,
+            "Erreur lors de l'envoi du devis. Le devis n'a pas été marqué comme envoyé."
+          )
+        );
+        return;
+      }
 
-    if (!res.ok) {
-      const json = await res.json().catch(() => ({}));
+      setSendConfirmQuote(false);
+      setQuoteSendFailed(false);
+      setActionSuccess("Devis envoyé par email. Le statut est passé à Envoyé.");
+      fetchQuote();
+    } catch {
+      setQuoteSendFailed(true);
       setActionError(
-        (json as { error?: string }).error ??
-          "Erreur lors de l'envoi du devis"
+        "Erreur réseau : impossible de contacter le serveur pour envoyer le devis. Le devis n'a pas été marqué comme envoyé."
       );
-      return;
+    } finally {
+      setQuoteSending(false);
     }
-
-    setSendConfirmQuote(false);
-    setActionSuccess("Devis envoyé par email");
-    fetchQuote();
   }
 
   async function handleUpdateTerms(e: React.FormEvent) {
@@ -772,6 +795,13 @@ export default function QuotePreviewPage({
   const { quote, preferences } = data;
   const prospect = quote.prospect;
   const isClosedQuote = CLOSED_QUOTE_STATUSES.includes(quote.status);
+  const sendQuoteButtonLabel = quoteSending
+    ? "Envoi…"
+    : quoteSendFailed
+      ? "Réessayer l’envoi du devis"
+      : quote.status === "SENT"
+        ? "Renvoyer le devis"
+        : "Envoyer le devis";
 
   return (
     <section className="space-y-6">
@@ -793,10 +823,11 @@ export default function QuotePreviewPage({
               setActionError(null);
               setActionSuccess(null);
 
-              if (!prospect.email) {
+              if (!prospect.email?.trim()) {
                 setActionError(
                   "Impossible d'envoyer le devis : le prospect n'a pas d'adresse email."
                 );
+                setQuoteSendFailed(true);
                 return;
               }
 
@@ -805,7 +836,7 @@ export default function QuotePreviewPage({
             disabled={saving || quoteSending}
             className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
-            {quoteSending ? "Envoi…" : "Envoyer le devis"}
+            {sendQuoteButtonLabel}
           </button>
 
           {!isClosedQuote && quote.status !== "SENT" && (
@@ -1612,55 +1643,44 @@ export default function QuotePreviewPage({
         </aside>
       </div>
 
-      {sendConfirmQuote && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 print:hidden">
-          <div className="w-full max-w-lg rounded-lg border bg-background p-5 shadow-lg">
-            <h2 className="text-lg font-semibold">Confirmer l’envoi du devis</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Le devis PDF sera envoyé par email au prospect.
+      <ConfirmModal
+        open={sendConfirmQuote}
+        title={
+          quote.status === "SENT"
+            ? "Confirmer le renvoi du devis"
+            : quoteSendFailed
+              ? "Réessayer l’envoi du devis"
+              : "Confirmer l’envoi du devis"
+        }
+        description={
+          quote.status === "SENT"
+            ? "Le devis PDF sera renvoyé par email au prospect. La date d’envoi sera mise à jour si Resend confirme l’envoi."
+            : "Le devis PDF sera envoyé par email au prospect. Le statut passera à Envoyé uniquement si Resend confirme l’envoi."
+        }
+        confirmLabel={quoteSending ? "Envoi…" : "Confirmer l’envoi"}
+        loading={quoteSending}
+        onCancel={() => setSendConfirmQuote(false)}
+        onConfirm={handleSendQuote}
+      >
+        <div className="mt-4 space-y-3 rounded-md bg-muted/50 p-4 text-sm">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Destinataire
             </p>
+            <p className="mt-1 font-medium">{prospect.name}</p>
+            <p className="text-muted-foreground">{prospect.email}</p>
+          </div>
 
-            <div className="mt-4 space-y-3 rounded-md bg-muted/50 p-4 text-sm">
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Destinataire
-                </p>
-                <p className="mt-1 font-medium">{prospect.name}</p>
-                <p className="text-muted-foreground">{prospect.email}</p>
-              </div>
-
-              <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                  Sujet
-                </p>
-                <p className="mt-1 font-medium">
-                  Devis {quote.quoteNumber ?? quote.title}
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setSendConfirmQuote(false)}
-                disabled={quoteSending}
-                className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
-              >
-                Annuler
-              </button>
-
-              <button
-                type="button"
-                onClick={handleSendQuote}
-                disabled={quoteSending}
-                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-              >
-                {quoteSending ? "Envoi…" : "Confirmer l’envoi"}
-              </button>
-            </div>
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Sujet
+            </p>
+            <p className="mt-1 font-medium">
+              Devis {quote.quoteNumber ?? quote.title}
+            </p>
           </div>
         </div>
-      )}
+      </ConfirmModal>
 
       <ConfirmModal
         open={Boolean(statusConfirmQuote)}

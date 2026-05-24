@@ -28,6 +28,16 @@ function pdfFilenameLabel(value: string) {
   return value.replace(/[^\w.-]+/g, "-").replace(/^-+|-+$/g, "") || "devis";
 }
 
+function quoteSendError(message: string, status: number) {
+  return NextResponse.json(
+    {
+      error: message,
+      sent: false,
+    },
+    { status }
+  );
+}
+
 async function readableToBuffer(stream: NodeJS.ReadableStream) {
   const chunks: Buffer[] = [];
 
@@ -67,9 +77,9 @@ export async function POST(_request: NextRequest, { params }: RouteContext) {
 
     if (!resendApiKey || !fromEmail) {
       console.error("QUOTE_SEND_ERROR: Resend email configuration missing");
-      return NextResponse.json(
-        { error: "Configuration email manquante" },
-        { status: 500 }
+      return quoteSendError(
+        "Configuration Resend manquante : RESEND_API_KEY ou RESEND_FROM_EMAIL n'est pas défini. Le devis n'a pas été envoyé.",
+        500
       );
     }
 
@@ -91,9 +101,9 @@ export async function POST(_request: NextRequest, { params }: RouteContext) {
 
     const prospectEmail = cleanText(quote.prospect.email);
     if (!prospectEmail) {
-      return NextResponse.json(
-        { error: "Le prospect n'a pas d'adresse email" },
-        { status: 422 }
+      return quoteSendError(
+        "Impossible d'envoyer le devis : le prospect n'a pas d'adresse email.",
+        422
       );
     }
 
@@ -113,17 +123,25 @@ export async function POST(_request: NextRequest, { params }: RouteContext) {
     let pdfBuffer: Buffer;
 
     try {
-      pdfBuffer = await renderQuotePdfBuffer(quote, preferences);
-    } catch (error) {
-      if (!preferences?.logoUrl) {
-        throw error;
-      }
+      try {
+        pdfBuffer = await renderQuotePdfBuffer(quote, preferences);
+      } catch (error) {
+        if (!preferences?.logoUrl) {
+          throw error;
+        }
 
-      console.warn("QUOTE_SEND_PDF_LOGO_ERROR:", error);
-      pdfBuffer = await renderQuotePdfBuffer(quote, {
-        ...preferences,
-        logoUrl: null,
-      });
+        console.warn("QUOTE_SEND_PDF_LOGO_ERROR:", error);
+        pdfBuffer = await renderQuotePdfBuffer(quote, {
+          ...preferences,
+          logoUrl: null,
+        });
+      }
+    } catch (error) {
+      console.error("QUOTE_SEND_PDF_ERROR:", error);
+      return quoteSendError(
+        "Impossible de générer le PDF du devis. Vérifiez les informations du devis et le logo configuré.",
+        500
+      );
     }
 
     const quoteLabel = cleanText(quote.quoteNumber) ?? quote.title;
@@ -158,9 +176,9 @@ export async function POST(_request: NextRequest, { params }: RouteContext) {
 
     if (sendError) {
       console.error("QUOTE_SEND_ERROR:", sendError);
-      return NextResponse.json(
-        { error: "Erreur lors de l'envoi du devis" },
-        { status: 502 }
+      return quoteSendError(
+        "Erreur Resend lors de l'envoi du devis. Le devis n'a pas été marqué comme envoyé.",
+        502
       );
     }
 
@@ -184,9 +202,9 @@ export async function POST(_request: NextRequest, { params }: RouteContext) {
     }
 
     console.error("QUOTE_SEND_ERROR:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+    return quoteSendError(
+      "Erreur serveur lors de l'envoi du devis. Le devis n'a pas été marqué comme envoyé.",
+      500
     );
   }
 }
