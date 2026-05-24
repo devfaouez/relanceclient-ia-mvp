@@ -125,6 +125,16 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
+    if (
+      parsed.data.status === ReminderStatus.SCHEDULED &&
+      (!existing.approvedAt || !existing.approvedById)
+    ) {
+      return NextResponse.json(
+        { error: "La relance doit être approuvée avant programmation" },
+        { status: 422 }
+      );
+    }
+
     // Empêcher la rétrogradation d'un reminder déjà SENT
     if (existing.status === ReminderStatus.SENT) {
       return NextResponse.json(

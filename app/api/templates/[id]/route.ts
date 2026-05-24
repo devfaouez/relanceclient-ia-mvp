@@ -29,7 +29,7 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
     });
 
     if (!template) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
+      return NextResponse.json({ error: "Modèle introuvable" }, { status: 404 });
     }
 
     return NextResponse.json(template);
@@ -39,7 +39,7 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
     }
     console.error("TEMPLATE_GET_ERROR:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Erreur lors du chargement du modèle" },
       { status: 500 }
     );
   }
@@ -53,13 +53,16 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     try {
       body = await request.json();
     } catch {
-      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+      return NextResponse.json({ error: "JSON invalide" }, { status: 400 });
     }
 
     const parsed = updateTemplateSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Validation error", details: parsed.error.flatten() },
+        {
+          error: "Les informations du modèle sont invalides",
+          details: parsed.error.flatten(),
+        },
         { status: 422 }
       );
     }
@@ -70,7 +73,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     });
 
     if (!existing) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
+      return NextResponse.json({ error: "Modèle introuvable" }, { status: 404 });
     }
 
     const template = await prisma.reminderTemplate.update({
@@ -94,7 +97,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     }
     console.error("TEMPLATE_PATCH_ERROR:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Erreur lors de la modification du modèle" },
       { status: 500 }
     );
   }
@@ -110,7 +113,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteContext) {
     });
 
     if (!existing) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
+      return NextResponse.json({ error: "Modèle introuvable" }, { status: 404 });
     }
 
     await prisma.reminderTemplate.update({
@@ -125,7 +128,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteContext) {
     }
     console.error("TEMPLATE_DELETE_ERROR:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Erreur lors de l'archivage du modèle" },
       { status: 500 }
     );
   }

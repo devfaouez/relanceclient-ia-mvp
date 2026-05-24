@@ -48,6 +48,7 @@ function quoteLabel(quote: {
 }
 
 function reminderDescription(reminder: {
+  subject: string;
   quote: {
     title: string;
     quoteNumber: string | null;
@@ -57,7 +58,7 @@ function reminderDescription(reminder: {
     };
   };
 }) {
-  return `${quoteLabel(reminder.quote)} pour ${prospectLabel(
+  return `"${reminder.subject}" - ${quoteLabel(reminder.quote)} pour ${prospectLabel(
     reminder.quote.prospect
   )}`;
 }
@@ -161,7 +162,7 @@ export async function GET() {
             id: `quote_sent:${quote.id}`,
             type: "quote_sent",
             title: "Devis envoyé",
-            description,
+            description: `${description} - email envoyé au client`,
             date: quote.sentAt,
             href: `/quotes/${quote.id}`,
             entityType: "quote",
@@ -174,7 +175,7 @@ export async function GET() {
             id: `quote_accepted:${quote.id}`,
             type: "quote_accepted",
             title: "Devis accepté",
-            description,
+            description: `${description} - proposition validée`,
             date: quote.acceptedAt,
             href: `/quotes/${quote.id}`,
             entityType: "quote",
@@ -187,7 +188,7 @@ export async function GET() {
             id: `quote_rejected:${quote.id}`,
             type: "quote_rejected",
             title: "Devis refusé",
-            description,
+            description: `${description} - proposition refusée`,
             date: quote.rejectedAt,
             href: `/quotes/${quote.id}`,
             entityType: "quote",
@@ -218,7 +219,7 @@ export async function GET() {
             id: `reminder_created:${reminder.id}`,
             type: "reminder_created",
             title: "Relance créée",
-            description: `${reminder.subject} - ${description}`,
+            description,
             date: reminder.createdAt,
             href: `/quotes/${reminder.quote.id}`,
             entityType: "reminder",
@@ -231,7 +232,7 @@ export async function GET() {
             id: `reminder_scheduled:${reminder.id}`,
             type: "reminder_scheduled",
             title: "Relance programmée",
-            description: `${reminder.subject} - ${description}`,
+            description: `${description} - envoi programmé`,
             date: reminder.scheduledAt,
             href: `/quotes/${reminder.quote.id}`,
             entityType: "reminder",
@@ -244,7 +245,7 @@ export async function GET() {
             id: `reminder_sent:${reminder.id}`,
             type: "reminder_sent",
             title: "Relance envoyée",
-            description: `${reminder.subject} - ${description}`,
+            description: `${description} - email envoyé`,
             date: reminder.sentAt,
             href: `/quotes/${reminder.quote.id}`,
             entityType: "reminder",
@@ -257,7 +258,7 @@ export async function GET() {
             id: `reminder_failed:${reminder.id}`,
             type: "reminder_failed",
             title: "Relance en échec",
-            description: `${reminder.subject} - ${description}`,
+            description: `${description} - envoi à reprendre manuellement`,
             date: reminder.updatedAt,
             href: `/quotes/${reminder.quote.id}`,
             entityType: "reminder",

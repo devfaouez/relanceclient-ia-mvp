@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Archive, Edit, Plus, Search, Sparkles } from "lucide-react";
+import { ConfirmModal } from "@/components/confirm-modal";
 import { compareText, formatDate } from "@/lib/formatters";
 import {
   TEMPLATE_STATUS_LABELS,
@@ -47,6 +48,8 @@ export default function TemplatesPage() {
   const [saving, setSaving] = useState(false);
   const [creatingDefaults, setCreatingDefaults] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [archiveConfirmTemplate, setArchiveConfirmTemplate] =
+    useState<Template | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [error, setError] = useState<string | null>(null);
@@ -199,7 +202,11 @@ export default function TemplatesPage() {
       return;
     }
 
-    setSuccess(editingId ? "Modèle modifié" : "Modèle créé");
+    setSuccess(
+      editingId
+        ? "Modèle modifié avec succès."
+        : "Modèle créé avec succès."
+    );
     cancelForm();
     await loadTemplates();
   }
@@ -227,7 +234,9 @@ export default function TemplatesPage() {
     }
 
     setSuccess(
-      status === "INACTIVE" ? "Modèle désactivé" : "Modèle réactivé"
+      status === "INACTIVE"
+        ? "Modèle désactivé avec succès."
+        : "Modèle réactivé avec succès."
     );
     await loadTemplates();
   }
@@ -257,8 +266,8 @@ export default function TemplatesPage() {
         created > 0
           ? `${created} modèle${created > 1 ? "s" : ""} par défaut créé${
               created > 1 ? "s" : ""
-            }`
-          : "Tous les modèles par défaut existent déjà"
+            } avec succès.`
+          : "Tous les modèles par défaut existent déjà."
       );
       await loadTemplates();
     } catch (e) {
@@ -296,7 +305,8 @@ export default function TemplatesPage() {
       cancelForm();
     }
 
-    setSuccess("Modèle archivé");
+    setArchiveConfirmTemplate(null);
+    setSuccess("Modèle archivé avec succès.");
     await loadTemplates();
   }
 
@@ -328,12 +338,14 @@ export default function TemplatesPage() {
             type="button"
             onClick={createDefaultTemplates}
             disabled={creatingDefaults || saving}
-            className="inline-flex items-center justify-center gap-2 rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
+            className="inline-flex max-w-full items-center justify-center gap-2 rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
           >
             <Sparkles className="h-4 w-4" />
-            {creatingDefaults
-              ? "Création..."
-              : "Créer les modèles par défaut"}
+            <span className="truncate">
+              {creatingDefaults
+                ? "Création..."
+                : "Créer les modèles par défaut"}
+            </span>
           </button>
 
           <button
@@ -355,7 +367,9 @@ export default function TemplatesPage() {
       )}
 
       {success && (
-        <p className="rounded-md border bg-muted p-3 text-sm">{success}</p>
+        <p className="rounded-md border border-emerald-600/30 bg-emerald-50 p-3 text-sm text-emerald-900">
+          {success}
+        </p>
       )}
 
       {showForm && (
@@ -643,7 +657,7 @@ export default function TemplatesPage() {
                       {template.status !== "ARCHIVED" && (
                         <button
                           type="button"
-                          onClick={() => archiveTemplate(template)}
+                          onClick={() => setArchiveConfirmTemplate(template)}
                           disabled={saving}
                           className="inline-flex items-center gap-1 rounded-md border px-3 py-1 text-xs font-medium text-destructive hover:bg-muted disabled:opacity-50"
                         >
@@ -659,6 +673,32 @@ export default function TemplatesPage() {
           </table>
         </div>
       )}
+
+      <ConfirmModal
+        open={Boolean(archiveConfirmTemplate)}
+        title="Archiver le modèle"
+        description="Le modèle ne sera plus proposé pour générer de nouvelles relances, mais il restera conservé dans l'historique."
+        confirmLabel={saving ? "Archivage..." : "Archiver"}
+        loading={saving}
+        destructive
+        onCancel={() => setArchiveConfirmTemplate(null)}
+        onConfirm={() => {
+          if (!archiveConfirmTemplate) return;
+          archiveTemplate(archiveConfirmTemplate);
+        }}
+      >
+        {archiveConfirmTemplate && (
+          <div className="mt-4 rounded-md bg-muted/50 p-4 text-sm">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Modèle
+            </p>
+            <p className="mt-1 font-medium">{archiveConfirmTemplate.name}</p>
+            <p className="mt-1 text-muted-foreground">
+              {archiveConfirmTemplate.subject}
+            </p>
+          </div>
+        )}
+      </ConfirmModal>
     </section>
   );
 }

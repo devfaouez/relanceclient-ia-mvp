@@ -28,17 +28,33 @@ const filters: { value: ActivityFilter; label: string }[] = [
 ];
 
 const typeLabels: Record<string, string> = {
-  prospect_created: "Prospect",
-  quote_created: "Devis",
-  quote_sent: "Devis",
-  quote_accepted: "Devis",
-  quote_rejected: "Devis",
-  quote_cancelled: "Devis",
-  reminder_created: "Relance",
-  reminder_scheduled: "Relance",
-  reminder_sent: "Relance",
-  reminder_failed: "Relance",
+  prospect_created: "Prospect créé",
+  quote_created: "Devis créé",
+  quote_sent: "Devis envoyé",
+  quote_accepted: "Devis accepté",
+  quote_rejected: "Devis refusé",
+  quote_cancelled: "Devis annulé",
+  reminder_created: "Relance créée",
+  reminder_scheduled: "Relance programmée",
+  reminder_sent: "Relance envoyée",
+  reminder_failed: "Relance en échec",
 };
+
+function activityDotClassName(type: string) {
+  if (type === "reminder_failed" || type === "quote_rejected") {
+    return "relative mt-1 h-4 w-4 rounded-full border-2 border-destructive bg-card";
+  }
+
+  if (type === "quote_accepted" || type === "reminder_sent") {
+    return "relative mt-1 h-4 w-4 rounded-full border-2 border-emerald-600 bg-card";
+  }
+
+  if (type === "reminder_scheduled") {
+    return "relative mt-1 h-4 w-4 rounded-full border-2 border-amber-500 bg-card";
+  }
+
+  return "relative mt-1 h-4 w-4 rounded-full border-2 border-primary bg-card";
+}
 
 export default function ActivityPage() {
   const [events, setEvents] = useState<ActivityEvent[]>([]);
@@ -138,7 +154,7 @@ export default function ActivityPage() {
                   <span className="absolute left-2 top-5 h-full w-px bg-border" />
                 )}
 
-                <span className="relative mt-1 h-4 w-4 rounded-full border-2 border-primary bg-card" />
+                <span className={activityDotClassName(event.type)} />
 
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -167,7 +183,7 @@ export default function ActivityPage() {
                         href={event.href}
                         className="text-sm font-medium text-primary hover:underline"
                       >
-                        Voir →
+                        Voir
                       </Link>
                     )}
                   </div>

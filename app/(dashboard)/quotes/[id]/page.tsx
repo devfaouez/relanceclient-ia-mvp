@@ -397,7 +397,7 @@ export default function QuotePreviewPage({
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        status: "DRAFT",
+        status: "APPROVED",
         scheduledAt: null,
       }),
     });
@@ -417,7 +417,7 @@ export default function QuotePreviewPage({
       cancelSchedulingReminder();
     }
 
-    setActionSuccess("Programmation annulée");
+    setActionSuccess("Programmation annulée. La relance reste approuvée.");
     fetchReminders();
   }
 
@@ -1256,9 +1256,8 @@ export default function QuotePreviewPage({
                     reminder.status !== "FAILED";
                   const canApprove = reminder.status === "PENDING_APPROVAL";
                   const canSchedule =
-                    reminder.status !== "SENT" &&
-                    reminder.status !== "CANCELLED" &&
-                    reminder.status !== "FAILED";
+                    reminder.status === "APPROVED" ||
+                    reminder.status === "SCHEDULED";
                   const canSend = reminder.status === "APPROVED";
                   const canRetry = reminder.status === "FAILED";
                   const isScheduled = reminder.status === "SCHEDULED";
@@ -1324,14 +1323,21 @@ export default function QuotePreviewPage({
                       <div className="mt-3 space-y-1 text-xs text-muted-foreground">
                         <p>Créée le : {formatDate(reminder.createdAt)}</p>
                         <p>Approuvée le : {formatDate(reminder.approvedAt)}</p>
-                        <p>{formatScheduledDateTime(reminder.scheduledAt)}</p>
+                        <p>
+                          Programmation :{" "}
+                          {reminder.scheduledAt
+                            ? formatScheduledDateTime(reminder.scheduledAt)
+                            : "Non programmée"}
+                        </p>
                         <p>Envoyée le : {formatDate(reminder.sentAt)}</p>
                       </div>
 
                       {isScheduling && (
                         <div className="mt-3 rounded-md border bg-muted/30 p-3">
                           <label className="block text-xs font-medium text-muted-foreground">
-                            Date et heure de programmation
+                            {isScheduled
+                              ? "Modifier la programmation"
+                              : "Programmer la relance"}
                           </label>
                           <input
                             type="datetime-local"
