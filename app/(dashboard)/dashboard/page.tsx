@@ -6,6 +6,7 @@ import Link from "next/link";
 import {
   Euro,
   FileText,
+  Inbox,
   Percent,
   Plus,
   Users,
@@ -100,18 +101,23 @@ type DashboardStats = {
 function StatCard({
   label,
   value,
+  helper,
   icon: Icon,
 }: {
   label: string;
   value: string | number;
+  helper?: string;
   icon: ComponentType<{ className?: string }>;
 }) {
   return (
-    <div className="rounded-lg border bg-card p-5">
+    <div className="rounded-lg border bg-card p-4">
       <div className="flex items-center justify-between gap-4">
-        <div>
+        <div className="min-w-0">
           <p className="text-sm text-muted-foreground">{label}</p>
-          <p className="mt-2 text-3xl font-semibold">{value}</p>
+          <p className="mt-1 truncate text-2xl font-semibold">{value}</p>
+          {helper && (
+            <p className="mt-1 text-xs text-muted-foreground">{helper}</p>
+          )}
         </div>
         <span className="rounded-md bg-muted p-2 text-primary">
           <Icon className="h-5 w-5" />
@@ -139,20 +145,42 @@ function ChartCard({
   children: ReactNode;
 }) {
   return (
-    <div className="rounded-lg border bg-card p-5">
+    <div className="rounded-lg border bg-card p-4">
       <div>
         <h3 className="font-semibold">{title}</h3>
         <p className="mt-1 text-sm text-muted-foreground">{description}</p>
       </div>
-      <div className="mt-4 h-52">{children}</div>
+      <div className="mt-3 h-40">{children}</div>
     </div>
   );
 }
 
-function EmptyChartMessage() {
+function EmptyState({
+  title,
+  description,
+  href,
+  actionLabel,
+}: {
+  title: string;
+  description: string;
+  href?: string;
+  actionLabel?: string;
+}) {
   return (
-    <div className="flex h-full items-center justify-center rounded-md bg-muted/40 text-sm text-muted-foreground">
-      Aucune donnée à afficher.
+    <div className="flex h-full flex-col items-center justify-center rounded-md bg-muted/40 px-4 py-6 text-center">
+      <Inbox className="h-6 w-6 text-muted-foreground" />
+      <p className="mt-3 text-sm font-medium">{title}</p>
+      <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+        {description}
+      </p>
+      {href && actionLabel && (
+        <Link
+          href={href}
+          className="mt-4 rounded-md border bg-background px-3 py-1.5 text-sm font-medium hover:bg-muted"
+        >
+          {actionLabel}
+        </Link>
+      )}
     </div>
   );
 }
@@ -283,16 +311,30 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Prospects" value={stats.totalProspects} icon={Users} />
-        <StatCard label="Devis" value={stats.totalQuotes} icon={FileText} />
+        <StatCard
+          label="Prospects"
+          value={stats.totalProspects}
+          helper="Contacts enregistrés"
+          icon={Users}
+        />
+        <StatCard
+          label="Devis"
+          value={stats.totalQuotes}
+          helper={`${stats.sentQuotes} envoyé${
+            stats.sentQuotes > 1 ? "s" : ""
+          }`}
+          icon={FileText}
+        />
         <StatCard
           label="Montant total des devis"
           value={formatAmount(stats.totalQuoteAmount)}
+          helper="Tous statuts confondus"
           icon={Euro}
         />
         <StatCard
           label="Taux d'acceptation"
           value={`${stats.acceptanceRate} %`}
+          helper="Sur les devis sortis du brouillon"
           icon={Percent}
         />
       </div>
@@ -322,8 +364,8 @@ export default function DashboardPage() {
                     data={quoteStatusData}
                     cx="50%"
                     cy="43%"
-                    innerRadius={42}
-                    outerRadius={66}
+                    innerRadius={36}
+                    outerRadius={58}
                     paddingAngle={2}
                     nameKey="name"
                     stroke="hsl(var(--card))"
@@ -347,7 +389,12 @@ export default function DashboardPage() {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <EmptyChartMessage />
+              <EmptyState
+                title="Aucun devis envoyé"
+                description="Envoyez un premier devis PDF pour visualiser la répartition par statut."
+                href="/quotes"
+                actionLabel="Voir les devis"
+              />
             )}
           </ChartCard>
 
@@ -360,7 +407,7 @@ export default function DashboardPage() {
                 <BarChart
                   data={quoteAmountData}
                   margin={{ top: 8, right: 8, bottom: 0, left: 4 }}
-                  barSize={28}
+                  barSize={24}
                 >
                   <CartesianGrid
                     stroke={chartGridColor}
@@ -397,7 +444,12 @@ export default function DashboardPage() {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <EmptyChartMessage />
+              <EmptyState
+                title="Aucun montant à comparer"
+                description="Les volumes apparaîtront dès qu'un devis sera envoyé, accepté ou refusé."
+                href="/quotes"
+                actionLabel="Préparer un devis"
+              />
             )}
           </ChartCard>
         </div>
@@ -427,8 +479,8 @@ export default function DashboardPage() {
                   data={reminderData}
                   cx="50%"
                   cy="43%"
-                  innerRadius={42}
-                  outerRadius={66}
+                  innerRadius={36}
+                  outerRadius={58}
                   paddingAngle={2}
                   nameKey="name"
                   stroke="hsl(var(--card))"
@@ -452,28 +504,38 @@ export default function DashboardPage() {
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <EmptyChartMessage />
+            <EmptyState
+              title="Aucune relance suivie"
+              description="Générez une relance depuis un devis pour suivre les validations et les envois."
+              href="/reminders"
+              actionLabel="Voir les relances"
+            />
           )}
         </ChartCard>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-3">
+      <div className="grid gap-4 xl:grid-cols-3">
         <div className="rounded-lg border bg-card">
           <div className="border-b px-5 py-4">
             <h2 className="font-semibold">5 derniers prospects</h2>
           </div>
 
           {stats.latestProspects.length === 0 ? (
-            <p className="px-5 py-8 text-sm text-muted-foreground">
-              Aucun prospect pour l&apos;instant.
-            </p>
+            <div className="px-5 py-8">
+              <EmptyState
+                title="Aucun prospect"
+                description="Créez un premier contact pour démarrer le workflow de devis."
+                href="/prospects/new"
+                actionLabel="Nouveau prospect"
+              />
+            </div>
           ) : (
             <div className="divide-y">
               {stats.latestProspects.map((prospect) => (
                 <Link
                   key={prospect.id}
                   href={`/prospects/${prospect.id}`}
-                  className="block px-5 py-4 hover:bg-muted/40"
+                  className="block px-5 py-3.5 hover:bg-muted/40"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
@@ -504,16 +566,21 @@ export default function DashboardPage() {
           </div>
 
           {stats.latestQuotes.length === 0 ? (
-            <p className="px-5 py-8 text-sm text-muted-foreground">
-              Aucun devis pour l&apos;instant.
-            </p>
+            <div className="px-5 py-8">
+              <EmptyState
+                title="Aucun devis"
+                description="Les derniers devis créés apparaîtront ici."
+                href="/quotes"
+                actionLabel="Voir les devis"
+              />
+            </div>
           ) : (
             <div className="divide-y">
               {stats.latestQuotes.map((quote) => (
                 <Link
                   key={quote.id}
                   href={`/quotes/${quote.id}`}
-                  className="block px-5 py-4 hover:bg-muted/40"
+                  className="block px-5 py-3.5 hover:bg-muted/40"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
@@ -545,16 +612,21 @@ export default function DashboardPage() {
           </div>
 
           {stats.latestPendingReminders.length === 0 ? (
-            <p className="px-5 py-8 text-sm text-muted-foreground">
-              Aucune relance en attente d&apos;approbation.
-            </p>
+            <div className="px-5 py-8">
+              <EmptyState
+                title="Aucune relance à approuver"
+                description="Les relances générées en attente de validation seront listées ici."
+                href="/reminders"
+                actionLabel="Voir les relances"
+              />
+            </div>
           ) : (
             <div className="divide-y">
               {stats.latestPendingReminders.map((reminder) => (
                 <Link
                   key={reminder.id}
                   href={`/quotes/${reminder.quote.id}`}
-                  className="block px-5 py-4 hover:bg-muted/40"
+                  className="block px-5 py-3.5 hover:bg-muted/40"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">

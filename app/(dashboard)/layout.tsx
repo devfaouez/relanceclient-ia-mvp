@@ -10,6 +10,7 @@ const navigation = [
   { href: "/reminders", label: "Relances" },
   { href: "/activity", label: "Activité" },
   { href: "/templates", label: "Modèles" },
+  { href: "/help", label: "Aide" },
   { href: "/settings", label: "Paramètres" },
 ];
 
