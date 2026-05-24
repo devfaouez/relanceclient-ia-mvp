@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ConfirmModal } from "@/components/confirm-modal";
 import { formatAmount, formatDate, formatDateTime } from "@/lib/formatters";
 import {
   PROSPECT_STATUS_LABELS,
@@ -1378,62 +1379,44 @@ export default function ProspectDetailPage({
         </div>
       )}
 
-      {prospect && prospectConfirmAction && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="w-full max-w-lg rounded-lg border bg-background p-5 shadow-lg">
-            <h2 className="text-lg font-semibold">
-              {prospectConfirmAction === "ARCHIVE"
-                ? "Archiver le prospect"
-                : "Restaurer le prospect"}
-            </h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {prospectConfirmAction === "ARCHIVE"
-                ? "Le prospect sera archivé et masqué des vues actives, sans être supprimé définitivement."
-                : "Le prospect reviendra dans les vues actives avec le statut Nouveau."}
+      <ConfirmModal
+        open={Boolean(prospect && prospectConfirmAction)}
+        title={
+          prospectConfirmAction === "ARCHIVE"
+            ? "Archiver le prospect"
+            : "Restaurer le prospect"
+        }
+        description={
+          prospectConfirmAction === "ARCHIVE"
+            ? "Le prospect sera archivé et masqué des vues actives, sans être supprimé définitivement."
+            : "Le prospect reviendra dans les vues actives avec le statut Nouveau."
+        }
+        confirmLabel={
+          archivingProspect || restoringProspect
+            ? "Mise à jour…"
+            : "Confirmer"
+        }
+        loading={archivingProspect || restoringProspect}
+        destructive={prospectConfirmAction === "ARCHIVE"}
+        onCancel={() => setProspectConfirmAction(null)}
+        onConfirm={
+          prospectConfirmAction === "ARCHIVE"
+            ? handleArchiveProspect
+            : handleRestoreProspect
+        }
+      >
+        {prospect && (
+          <div className="mt-4 rounded-md bg-muted/50 p-4 text-sm">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Prospect
             </p>
-
-            <div className="mt-4 rounded-md bg-muted/50 p-4 text-sm">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Prospect
-              </p>
-              <p className="mt-1 font-medium">{prospect.name}</p>
-              <p className="text-muted-foreground">
-                {prospect.company ?? prospect.email ?? "Sans société"}
-              </p>
-            </div>
-
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setProspectConfirmAction(null)}
-                disabled={archivingProspect || restoringProspect}
-                className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
-              >
-                Annuler
-              </button>
-
-              <button
-                type="button"
-                onClick={
-                  prospectConfirmAction === "ARCHIVE"
-                    ? handleArchiveProspect
-                    : handleRestoreProspect
-                }
-                disabled={archivingProspect || restoringProspect}
-                className={
-                  prospectConfirmAction === "ARCHIVE"
-                    ? "rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
-                    : "rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                }
-              >
-                {archivingProspect || restoringProspect
-                  ? "Mise à jour…"
-                  : "Confirmer"}
-              </button>
-            </div>
+            <p className="mt-1 font-medium">{prospect.name}</p>
+            <p className="text-muted-foreground">
+              {prospect.company ?? prospect.email ?? "Sans société"}
+            </p>
           </div>
-        </div>
-      )}
+        )}
+      </ConfirmModal>
 
       {/* Formulaire d'ajout de devis */}
       <div>

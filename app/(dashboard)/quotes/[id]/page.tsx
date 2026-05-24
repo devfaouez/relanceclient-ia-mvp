@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { ConfirmModal } from "@/components/confirm-modal";
 import {
   formatAmount,
   formatDate,
@@ -1661,52 +1662,37 @@ export default function QuotePreviewPage({
         </div>
       )}
 
-      {statusConfirmQuote && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 print:hidden">
-          <div className="w-full max-w-lg rounded-lg border bg-background p-5 shadow-lg">
-            <h2 className="text-lg font-semibold">
-              {statusConfirmQuote === "REJECTED"
-                ? "Confirmer le refus du devis"
-                : "Confirmer l’annulation du devis"}
-            </h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {statusConfirmQuote === "REJECTED"
-                ? "Le devis sera marqué comme refusé et restera consultable dans l’historique."
-                : "Le devis sera marqué comme annulé et ne pourra plus être traité comme actif."}
-            </p>
-
-            <div className="mt-4 rounded-md bg-muted/50 p-4 text-sm">
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Devis
-              </p>
-              <p className="mt-1 font-medium">{quote.title}</p>
-              <p className="text-muted-foreground">
-                {quote.quoteNumber ?? quote.id.slice(0, 8)}
-              </p>
-            </div>
-
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setStatusConfirmQuote(null)}
-                disabled={saving}
-                className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
-              >
-                Annuler
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleUpdateQuoteStatus(statusConfirmQuote)}
-                disabled={saving}
-                className="rounded-md bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
-              >
-                {saving ? "Mise à jour…" : "Confirmer"}
-              </button>
-            </div>
-          </div>
+      <ConfirmModal
+        open={Boolean(statusConfirmQuote)}
+        title={
+          statusConfirmQuote === "REJECTED"
+            ? "Confirmer le refus du devis"
+            : "Confirmer l’annulation du devis"
+        }
+        description={
+          statusConfirmQuote === "REJECTED"
+            ? "Le devis sera marqué comme refusé et restera consultable dans l’historique."
+            : "Le devis sera marqué comme annulé et ne pourra plus être traité comme actif."
+        }
+        confirmLabel={saving ? "Mise à jour…" : "Confirmer"}
+        loading={saving}
+        destructive
+        onCancel={() => setStatusConfirmQuote(null)}
+        onConfirm={() => {
+          if (!statusConfirmQuote) return;
+          handleUpdateQuoteStatus(statusConfirmQuote);
+        }}
+      >
+        <div className="mt-4 rounded-md bg-muted/50 p-4 text-sm">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Devis
+          </p>
+          <p className="mt-1 font-medium">{quote.title}</p>
+          <p className="text-muted-foreground">
+            {quote.quoteNumber ?? quote.id.slice(0, 8)}
+          </p>
         </div>
-      )}
+      </ConfirmModal>
 
       {sendConfirmReminder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 print:hidden">
