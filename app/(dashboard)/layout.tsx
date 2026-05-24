@@ -11,6 +11,7 @@ const navigation = [
   { href: "/activity", label: "Activité" },
   { href: "/templates", label: "Modèles" },
   { href: "/help", label: "Aide" },
+  { href: "/account", label: "Compte" },
   { href: "/settings", label: "Paramètres" },
 ];
 

@@ -9,16 +9,21 @@ datasource db {
 }
 
 model User {
-  preferences UserPreferences?
-  aiUsages    AiUsage[]
-  id          String             @id @default(cuid())
-  email       String             @unique
-  name        String?
-  prospects   Prospect[]
-  templates   ReminderTemplate[]
-  approvals   Reminder[]         @relation("ReminderApprovedBy")
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
+  preferences          UserPreferences?
+  aiUsages             AiUsage[]
+  id                   String             @id @default(cuid())
+  email                String             @unique
+  name                 String?
+  stripeCustomerId     String?            @unique
+  stripeSubscriptionId String?            @unique
+  subscriptionStatus   SubscriptionStatus @default(INACTIVE)
+  plan                 SubscriptionPlan   @default(FREE)
+  currentPeriodEnd     DateTime?
+  prospects            Prospect[]
+  templates            ReminderTemplate[]
+  approvals            Reminder[]         @relation("ReminderApprovedBy")
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
 }
 
 model Prospect {
@@ -152,6 +157,19 @@ enum TemplateStatus {
   ACTIVE
   INACTIVE
   ARCHIVED
+}
+
+enum SubscriptionPlan {
+  FREE
+  PRO
+}
+
+enum SubscriptionStatus {
+  INACTIVE
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
 }
 
 model UserPreferences {
