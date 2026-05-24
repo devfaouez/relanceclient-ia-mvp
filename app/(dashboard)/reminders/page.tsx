@@ -8,7 +8,10 @@ import {
   formatDate,
   formatScheduledDateTime,
 } from "@/lib/formatters";
-import { reminderStatusLabel } from "@/lib/status-labels";
+import {
+  REMINDER_STATUS_LABELS,
+  reminderStatusLabel,
+} from "@/lib/status-labels";
 
 type Reminder = {
   id: string;
@@ -43,6 +46,30 @@ type ReminderRow = Reminder & {
 
 type SortKey = "createdAt" | "status" | "prospect" | "quote";
 type SortDirection = "asc" | "desc";
+type DisplayFilter = "ACTIONABLE" | "SCHEDULED" | "SENT" | "FAILED" | "ALL";
+
+const DISPLAY_FILTERS: { value: DisplayFilter; label: string }[] = [
+  { value: "ACTIONABLE", label: "À traiter" },
+  { value: "SCHEDULED", label: "Programmées" },
+  { value: "SENT", label: "Envoyées" },
+  { value: "FAILED", label: "Échec" },
+  { value: "ALL", label: "Toutes" },
+];
+
+const ACTIONABLE_REMINDER_STATUSES = [
+  "DRAFT",
+  "PENDING_APPROVAL",
+  "APPROVED",
+];
+
+function matchesDisplayFilter(status: string, displayFilter: DisplayFilter) {
+  if (displayFilter === "ALL") return true;
+  if (displayFilter === "ACTIONABLE") {
+    return ACTIONABLE_REMINDER_STATUSES.includes(status);
+  }
+
+  return status === displayFilter;
+}
 
 async function fetchJson<T>(url: string): Promise<T | null> {
   const res = await fetch(url);
@@ -82,6 +109,32 @@ function reminderDisplayStatus(status: string) {
   return status === "FAILED" ? "Échec d’envoi" : reminderStatusLabel(status);
 }
 
+function reminderCountLabel(count: number) {
+  return `${count} relance${count > 1 ? "s" : ""} affichée${
+    count > 1 ? "s" : ""
+  }`;
+}
+
+function emptyRemindersMessage(displayFilter: DisplayFilter) {
+  if (displayFilter === "ACTIONABLE") {
+    return "Aucune relance à traiter ne correspond aux filtres.";
+  }
+
+  if (displayFilter === "SCHEDULED") {
+    return "Aucune relance programmée ne correspond aux filtres.";
+  }
+
+  if (displayFilter === "SENT") {
+    return "Aucune relance envoyée ne correspond aux filtres.";
+  }
+
+  if (displayFilter === "FAILED") {
+    return "Aucune relance en échec ne correspond aux filtres.";
+  }
+
+  return "Aucune relance ne correspond aux filtres.";
+}
+
 export default function RemindersPage() {
   const [rows, setRows] = useState<ReminderRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -89,6 +142,8 @@ export default function RemindersPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [displayFilter, setDisplayFilter] =
+    useState<DisplayFilter>("ACTIONABLE");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [sortKey, setSortKey] = useState<SortKey>("createdAt");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -197,16 +252,23 @@ export default function RemindersPage() {
     setSuccess(isRetry ? "Relance renvoyée" : "Relance envoyée");
   }
 
-  const pendingCount = useMemo(
+  const pendingApprovalCount = useMemo(
     () => rows.filter((row) => row.status === "PENDING_APPROVAL").length,
     [rows]
   );
 
-  const statuses = useMemo(
-    () =>
-      Array.from(new Set(rows.map((row) => row.status))).sort((a, b) =>
-        compareText(reminderStatusLabel(a), reminderStatusLabel(b))
-      ),
+  const scheduledCount = useMemo(
+    () => rows.filter((row) => row.status === "SCHEDULED").length,
+    [rows]
+  );
+
+  const sentCount = useMemo(
+    () => rows.filter((row) => row.status === "SENT").length,
+    [rows]
+  );
+
+  const failedCount = useMemo(
+    () => rows.filter((row) => row.status === "FAILED").length,
     [rows]
   );
 
@@ -214,11 +276,12 @@ export default function RemindersPage() {
     const query = searchQuery.trim().toLowerCase();
 
     const filtered = rows.filter((row) => {
+      const matchesDisplay = matchesDisplayFilter(row.status, displayFilter);
       const matchesStatus =
         statusFilter === "ALL" || row.status === statusFilter;
       const matchesSearch = !query || reminderSearchText(row).includes(query);
 
-      return matchesStatus && matchesSearch;
+      return matchesDisplay && matchesStatus && matchesSearch;
     });
 
     return [...filtered].sort((a, b) => {
@@ -246,7 +309,14 @@ export default function RemindersPage() {
 
       return sortDirection === "asc" ? result : -result;
     });
-  }, [rows, searchQuery, sortDirection, sortKey, statusFilter]);
+  }, [
+    displayFilter,
+    rows,
+    searchQuery,
+    sortDirection,
+    sortKey,
+    statusFilter,
+  ]);
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) {
@@ -284,19 +354,46 @@ export default function RemindersPage() {
         </button>
       </div>
 
-      <div className="rounded-lg border bg-card px-5 py-4">
-        <p className="text-sm text-muted-foreground">
-          {rows.length} relance{rows.length > 1 ? "s" : ""} au total, dont{" "}
-          <span className="font-medium text-foreground">{pendingCount}</span> à
-          approuver.
-        </p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          <span className="font-medium text-foreground">
-            {filteredRows.length}
-          </span>{" "}
-          relance{filteredRows.length > 1 ? "s" : ""} affichée
-          {filteredRows.length > 1 ? "s" : ""}.
-        </p>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="rounded-lg border bg-card p-5">
+          <p className="text-sm text-muted-foreground">À approuver</p>
+          <p className="mt-2 text-3xl font-semibold">{pendingApprovalCount}</p>
+        </div>
+
+        <div className="rounded-lg border bg-card p-5">
+          <p className="text-sm text-muted-foreground">Programmées</p>
+          <p className="mt-2 text-3xl font-semibold">{scheduledCount}</p>
+        </div>
+
+        <div className="rounded-lg border bg-card p-5">
+          <p className="text-sm text-muted-foreground">Envoyées</p>
+          <p className="mt-2 text-3xl font-semibold">{sentCount}</p>
+        </div>
+
+        <div className="rounded-lg border bg-card p-5">
+          <p className="text-sm text-muted-foreground">Échec</p>
+          <p className="mt-2 text-3xl font-semibold">{failedCount}</p>
+        </div>
+
+        <div className="rounded-lg border bg-card p-5">
+          <p className="text-sm text-muted-foreground">Affichage</p>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            {DISPLAY_FILTERS.map((filter) => (
+              <button
+                key={filter.value}
+                type="button"
+                onClick={() => setDisplayFilter(filter.value)}
+                className={`rounded-md border px-3 py-2 text-sm font-medium ${
+                  displayFilter === filter.value
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-background hover:bg-muted"
+                }`}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       <div className="grid gap-4 rounded-lg border bg-card p-5 lg:grid-cols-[1fr_220px_220px_180px]">
@@ -321,9 +418,9 @@ export default function RemindersPage() {
             className="mt-2 w-full rounded-md border bg-background px-3 py-2 text-sm"
           >
             <option value="ALL">Tous les statuts</option>
-            {statuses.map((status) => (
+            {Object.entries(REMINDER_STATUS_LABELS).map(([status, label]) => (
               <option key={status} value={status}>
-                {reminderStatusLabel(status)}
+                {label}
               </option>
             ))}
           </select>
@@ -361,6 +458,12 @@ export default function RemindersPage() {
       {error && <p className="text-sm text-destructive">{error}</p>}
       {success && <p className="text-sm text-muted-foreground">{success}</p>}
 
+      {!loading && !error && (
+        <p className="text-sm text-muted-foreground">
+          {reminderCountLabel(filteredRows.length)} sur {rows.length} au total.
+        </p>
+      )}
+
       {loading ? (
         <p className="text-sm text-muted-foreground">Chargement…</p>
       ) : rows.length === 0 ? (
@@ -369,7 +472,7 @@ export default function RemindersPage() {
         </p>
       ) : filteredRows.length === 0 ? (
         <p className="rounded-lg border bg-card px-5 py-8 text-sm text-muted-foreground">
-          Aucune relance ne correspond aux filtres.
+          {emptyRemindersMessage(displayFilter)}
         </p>
       ) : (
         <div className="space-y-4">
