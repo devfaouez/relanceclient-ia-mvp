@@ -21,6 +21,13 @@ type Prospect = {
 
 type SortKey = "name" | "company" | "status" | "createdAt";
 type SortDirection = "asc" | "desc";
+type DisplayFilter = "ACTIVE" | "ARCHIVED" | "ALL";
+
+const DISPLAY_FILTER_LABELS: Record<DisplayFilter, string> = {
+  ACTIVE: "Actifs",
+  ARCHIVED: "Archivés",
+  ALL: "Tous",
+};
 
 function prospectSearchText(prospect: Prospect) {
   return [
@@ -41,6 +48,8 @@ export default function ProspectsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [displayFilter, setDisplayFilter] =
+    useState<DisplayFilter>("ACTIVE");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [sortKey, setSortKey] = useState<SortKey>("createdAt");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -60,12 +69,16 @@ export default function ProspectsPage() {
     const query = searchQuery.trim().toLowerCase();
 
     const filtered = prospects.filter((prospect) => {
+      const matchesDisplay =
+        displayFilter === "ALL" ||
+        (displayFilter === "ACTIVE" && prospect.status !== "ARCHIVED") ||
+        (displayFilter === "ARCHIVED" && prospect.status === "ARCHIVED");
       const matchesStatus =
         statusFilter === "ALL" || prospect.status === statusFilter;
       const matchesSearch =
         !query || prospectSearchText(prospect).includes(query);
 
-      return matchesStatus && matchesSearch;
+      return matchesDisplay && matchesStatus && matchesSearch;
     });
 
     return [...filtered].sort((a, b) => {
@@ -93,7 +106,14 @@ export default function ProspectsPage() {
 
       return sortDirection === "asc" ? result : -result;
     });
-  }, [prospects, searchQuery, sortDirection, sortKey, statusFilter]);
+  }, [
+    displayFilter,
+    prospects,
+    searchQuery,
+    sortDirection,
+    sortKey,
+    statusFilter,
+  ]);
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) {
@@ -116,6 +136,13 @@ export default function ProspectsPage() {
     prospects.length > 0 &&
     filteredProspects.length === 0;
 
+  const emptyFilteredMessage =
+    displayFilter === "ACTIVE"
+      ? "Aucun prospect actif ne correspond à vos filtres."
+      : displayFilter === "ARCHIVED"
+        ? "Aucun prospect archivé ne correspond à vos filtres."
+        : "Aucun prospect ne correspond à vos filtres.";
+
   return (
     <section className="space-y-6">
       <div className="flex items-center justify-between">
@@ -125,7 +152,8 @@ export default function ProspectsPage() {
             <p className="mt-2 text-sm text-muted-foreground">
               {filteredProspects.length} prospect
               {filteredProspects.length > 1 ? "s" : ""} affiché
-              {filteredProspects.length > 1 ? "s" : ""}
+              {filteredProspects.length > 1 ? "s" : ""} ·{" "}
+              {DISPLAY_FILTER_LABELS[displayFilter].toLowerCase()}
             </p>
           )}
         </div>
@@ -137,7 +165,7 @@ export default function ProspectsPage() {
         </Link>
       </div>
 
-      <div className="grid gap-4 rounded-lg border bg-card p-5 lg:grid-cols-[1fr_180px_180px_180px]">
+      <div className="grid gap-4 rounded-lg border bg-card p-5 lg:grid-cols-[1fr_160px_180px_180px_180px]">
         <div>
           <label className="text-sm font-medium">Recherche</label>
           <div className="mt-2 flex items-center gap-2 rounded-md border bg-background px-3">
@@ -149,6 +177,21 @@ export default function ProspectsPage() {
               className="w-full bg-transparent py-2 text-sm outline-none"
             />
           </div>
+        </div>
+
+        <div>
+          <label className="text-sm font-medium">Affichage</label>
+          <select
+            value={displayFilter}
+            onChange={(event) =>
+              setDisplayFilter(event.target.value as DisplayFilter)
+            }
+            className="mt-2 w-full rounded-md border bg-background px-3 py-2 text-sm"
+          >
+            <option value="ACTIVE">Actifs</option>
+            <option value="ARCHIVED">Archivés</option>
+            <option value="ALL">Tous</option>
+          </select>
         </div>
 
         <div>
@@ -208,7 +251,7 @@ export default function ProspectsPage() {
 
       {hasNoFilteredProspects && (
         <p className="rounded-lg border bg-card px-5 py-10 text-center text-sm text-muted-foreground">
-          Aucun prospect trouvé.
+          {emptyFilteredMessage}
         </p>
       )}
 
