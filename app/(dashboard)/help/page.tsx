@@ -85,6 +85,52 @@ const checklist = [
   },
 ];
 
+const betaChecklist = [
+  "Paramètres entreprise complétés",
+  "Domaine Resend vérifié",
+  "Prospect test avec email valide",
+  "Devis test créé",
+  "PDF vérifié",
+  "Devis envoyé",
+  "Relance générée",
+  "Relance approuvée",
+  "Relance envoyée manuellement",
+  "Relance programmée testée",
+  "Cron testé",
+  "Page activité vérifiée",
+];
+
+const productionTestSteps = [
+  {
+    title: "Préparer un vrai scénario de test",
+    description:
+      "Utilisez une adresse email contrôlée, un prospect test et un devis représentatif.",
+    href: "/prospects",
+    label: "Créer le prospect",
+  },
+  {
+    title: "Contrôler le devis avant envoi",
+    description:
+      "Vérifiez les lignes, le montant, les informations entreprise et le rendu PDF.",
+    href: "/quotes",
+    label: "Ouvrir les devis",
+  },
+  {
+    title: "Tester les deux modes de relance",
+    description:
+      "Envoyez une relance manuelle, puis programmez une autre relance à court délai.",
+    href: "/reminders",
+    label: "Tester les relances",
+  },
+  {
+    title: "Vérifier les traces",
+    description:
+      "Confirmez les statuts, les erreurs éventuelles, le cron et les événements d'activité.",
+    href: "/activity",
+    label: "Voir l'activité",
+  },
+];
+
 const frequentIssues = [
   {
     title: "Prospect sans email",
@@ -207,6 +253,53 @@ export default function HelpPage() {
               </li>
             ))}
           </ul>
+        </div>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
+        <div className="rounded-lg border bg-card p-5">
+          <h2 className="font-semibold">Checklist bêta</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            À cocher avant d&apos;inviter les premiers utilisateurs à tester le
+            parcours complet.
+          </p>
+
+          <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+            {betaChecklist.map((item) => (
+              <li key={item} className="flex gap-2 rounded-md border px-3 py-2">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                <span className="text-sm">{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="rounded-lg border bg-card p-5">
+          <h2 className="font-semibold">Test de production recommandé</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Faites un test court de bout en bout avec une adresse que vous
+            maîtrisez avant d&apos;envoyer à un vrai client.
+          </p>
+
+          <div className="mt-4 space-y-3">
+            {productionTestSteps.map((step, index) => (
+              <div key={step.title} className="rounded-md border p-4">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Test {index + 1}
+                </p>
+                <h3 className="mt-1 text-sm font-medium">{step.title}</h3>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  {step.description}
+                </p>
+                <Link
+                  href={step.href}
+                  className="mt-2 inline-flex text-sm font-medium text-primary hover:underline"
+                >
+                  {step.label}
+                </Link>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
