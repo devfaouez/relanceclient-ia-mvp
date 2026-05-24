@@ -377,22 +377,22 @@ export default function RemindersPage() {
 
         <div className="rounded-lg border bg-card p-5">
           <p className="text-sm text-muted-foreground">Affichage</p>
-          <div className="mt-2 grid grid-cols-2 gap-2">
+          <select
+            value={displayFilter}
+            onChange={(event) =>
+              setDisplayFilter(event.target.value as DisplayFilter)
+            }
+            className="mt-2 w-full rounded-md border bg-background px-3 py-2 text-sm"
+          >
             {DISPLAY_FILTERS.map((filter) => (
-              <button
+              <option
                 key={filter.value}
-                type="button"
-                onClick={() => setDisplayFilter(filter.value)}
-                className={`rounded-md border px-3 py-2 text-sm font-medium ${
-                  displayFilter === filter.value
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-background hover:bg-muted"
-                }`}
+                value={filter.value}
               >
                 {filter.label}
-              </button>
+              </option>
             ))}
-          </div>
+          </select>
         </div>
       </div>
 
