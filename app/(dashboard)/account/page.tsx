@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { CreditCard, Loader2 } from "lucide-react";
 import { formatDate } from "@/lib/formatters";
 
@@ -51,9 +52,15 @@ function SubscriptionBadge({
 }
 
 export default function AccountPage() {
+  const searchParams = useSearchParams();
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
+  const paymentSuccess = searchParams.get("success") === "1";
+  const paymentCanceled = searchParams.get("canceled") === "1";
 
   useEffect(() => {
     fetch("/api/account/subscription")
@@ -68,6 +75,36 @@ export default function AccountPage() {
       .catch((e: Error) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
+
+  async function startCheckout() {
+    setCheckoutError(null);
+    setCheckoutLoading(true);
+
+    try {
+      const response = await fetch("/api/stripe/checkout", {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        throw new Error("Impossible de lancer le paiement Stripe");
+      }
+
+      const data = (await response.json()) as { url?: string };
+
+      if (!data.url) {
+        throw new Error("URL Stripe manquante");
+      }
+
+      window.location.href = data.url;
+    } catch (e) {
+      setCheckoutError(
+        e instanceof Error
+          ? e.message
+          : "Impossible de lancer le paiement Stripe"
+      );
+      setCheckoutLoading(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -99,10 +136,23 @@ export default function AccountPage() {
       <div>
         <h1 className="text-2xl font-semibold">Compte</h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-          Suivi du plan et de l&apos;abonnement. Stripe sera activé à l&apos;étape
-          suivante, sans bloquer l&apos;accès pendant la bêta.
+          Suivi du plan et de l&apos;abonnement Stripe, sans bloquer
+          l&apos;accès pendant la bêta.
         </p>
       </div>
+
+      {paymentSuccess ? (
+        <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+          Paiement confirmé. L&apos;abonnement sera mis à jour dès réception du
+          webhook Stripe.
+        </div>
+      ) : null}
+
+      {paymentCanceled ? (
+        <div className="rounded-md border bg-secondary px-4 py-3 text-sm">
+          Paiement annulé. Vous pouvez relancer le checkout à tout moment.
+        </div>
+      ) : null}
 
       <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
         <div className="rounded-lg border bg-card p-5">
@@ -113,7 +163,7 @@ export default function AccountPage() {
             <div>
               <h2 className="font-semibold">Abonnement actuel</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Base prête pour Stripe, sans paiement actif pour l&apos;instant.
+                Votre plan est synchronisé avec les événements Stripe.
               </p>
             </div>
           </div>
@@ -141,23 +191,41 @@ export default function AccountPage() {
         <div className="rounded-lg border bg-card p-5">
           <h2 className="font-semibold">Gestion Stripe</h2>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Le checkout Stripe, le portail client et les webhooks ne sont pas
-            encore branchés. Cette page prépare l&apos;affichage et l&apos;API
-            d&apos;abonnement sans limiter l&apos;application.
+            Passez au plan Pro via Stripe Checkout. Le portail client sera
+            ajouté plus tard pour gérer les moyens de paiement et les factures.
           </p>
 
-          <button
-            type="button"
-            disabled
-            className="mt-5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground opacity-50"
-          >
-            Gérer l&apos;abonnement
-          </button>
+          {subscription.plan === "FREE" ? (
+            <button
+              type="button"
+              onClick={startCheckout}
+              disabled={checkoutLoading}
+              className="mt-5 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {checkoutLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : null}
+              Passer au Pro
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled
+              className="mt-5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground opacity-50"
+            >
+              Gérer l&apos;abonnement
+            </button>
+          )}
 
           <p className="mt-3 text-xs text-muted-foreground">
-            Ce bouton sera relié au portail client Stripe à l&apos;étape
-            suivante.
+            {subscription.plan === "FREE"
+              ? "Le checkout ouvre une session Stripe sécurisée."
+              : "Ce bouton sera relié au portail client Stripe à l'étape suivante."}
           </p>
+
+          {checkoutError ? (
+            <p className="mt-3 text-sm text-destructive">{checkoutError}</p>
+          ) : null}
         </div>
       </div>
     </section>
