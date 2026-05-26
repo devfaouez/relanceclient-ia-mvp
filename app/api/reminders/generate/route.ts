@@ -9,6 +9,10 @@ import {
   AiQuotaExceededError,
   AiGenerationError,
 } from "@/lib/ai/reminder-generator";
+import {
+  getAccountUsage,
+  hasReachedLimit,
+} from "@/lib/subscription-limits";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -29,6 +33,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: "Validation error", details: parsed.error.flatten() },
         { status: 422 }
+      );
+    }
+
+    const usage = await getAccountUsage(
+      dbUser.id,
+      dbUser.plan,
+      dbUser.subscriptionStatus
+    );
+    if (
+      hasReachedLimit(
+        usage.aiRemindersUsedThisMonth,
+        usage.maxAiRemindersPerMonth
+      )
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Limite mensuelle du plan Gratuit atteinte : vous avez déjà généré 10 relances IA ce mois-ci. Passez au plan Pro pour générer des relances en illimité.",
+        },
+        { status: 403 }
       );
     }
 

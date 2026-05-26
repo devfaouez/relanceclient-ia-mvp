@@ -5,6 +5,10 @@ import {
   UnauthorizedError,
 } from "@/lib/auth";
 import { createQuoteSchema } from "@/lib/validations";
+import {
+  getAccountUsage,
+  hasReachedLimit,
+} from "@/lib/subscription-limits";
 
 export const dynamic = "force-dynamic";
 
@@ -89,6 +93,21 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
 
     if (!prospect) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    const usage = await getAccountUsage(
+      dbUser.id,
+      dbUser.plan,
+      dbUser.subscriptionStatus
+    );
+    if (hasReachedLimit(usage.quotesUsed, usage.maxQuotes)) {
+      return NextResponse.json(
+        {
+          error:
+            "Limite du plan Gratuit atteinte : vous avez déjà créé 5 devis. Passez au plan Pro pour créer des devis en illimité.",
+        },
+        { status: 403 }
+      );
     }
 
     let body: unknown;
