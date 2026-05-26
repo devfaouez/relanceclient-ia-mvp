@@ -56,6 +56,7 @@ export default function AccountPage() {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [portalLoading, setPortalLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
@@ -103,6 +104,38 @@ export default function AccountPage() {
           : "Impossible de lancer le paiement Stripe"
       );
       setCheckoutLoading(false);
+    }
+  }
+
+  async function openBillingPortal() {
+    setCheckoutError(null);
+    setPortalLoading(true);
+
+    try {
+      const response = await fetch("/api/stripe/portal", {
+        method: "POST",
+      });
+      const data = (await response.json()) as { url?: string; error?: string };
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ??
+            "Impossible d'ouvrir le portail Stripe. Vérifiez sa configuration."
+        );
+      }
+
+      if (!data.url) {
+        throw new Error("URL du portail Stripe manquante");
+      }
+
+      window.location.href = data.url;
+    } catch (e) {
+      setCheckoutError(
+        e instanceof Error
+          ? e.message
+          : "Impossible d'ouvrir le portail Stripe. Vérifiez sa configuration."
+      );
+      setPortalLoading(false);
     }
   }
 
@@ -191,8 +224,8 @@ export default function AccountPage() {
         <div className="rounded-lg border bg-card p-5">
           <h2 className="font-semibold">Gestion Stripe</h2>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Passez au plan Pro via Stripe Checkout. Le portail client sera
-            ajouté plus tard pour gérer les moyens de paiement et les factures.
+            Passez au plan Pro via Stripe Checkout, puis gérez votre abonnement
+            et vos factures depuis le portail client Stripe.
           </p>
 
           {subscription.plan === "FREE" ? (
@@ -210,9 +243,13 @@ export default function AccountPage() {
           ) : (
             <button
               type="button"
-              disabled
-              className="mt-5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground opacity-50"
+              onClick={openBillingPortal}
+              disabled={portalLoading}
+              className="mt-5 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
             >
+              {portalLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : null}
               Gérer l&apos;abonnement
             </button>
           )}
@@ -220,7 +257,7 @@ export default function AccountPage() {
           <p className="mt-3 text-xs text-muted-foreground">
             {subscription.plan === "FREE"
               ? "Le checkout ouvre une session Stripe sécurisée."
-              : "Ce bouton sera relié au portail client Stripe à l'étape suivante."}
+              : "Le portail Stripe permet de modifier l'abonnement et de consulter les factures."}
           </p>
 
           {checkoutError ? (
