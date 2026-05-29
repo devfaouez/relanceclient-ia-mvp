@@ -37,7 +37,7 @@ const plans = [
   {
     name: "FREE",
     description: "Idéal pour tester",
-    items: ["5 devis", "10 relances IA / mois", "Idéal pour tester"],
+    items: ["5 devis", "10 relances IA / mois"],
     highlighted: false,
   },
   {
@@ -160,7 +160,9 @@ export default function HomePage() {
               Solution
             </p>
             <h2 className="mt-3 text-2xl font-semibold tracking-tight">
-              Centralisez prospects, devis, relances et suivi commercial.
+              RelanceClient vous rappelle quand relancer, rédige le message, et
+              joint le devis en PDF. Vous validez en un clic — le reste est
+              automatique.
             </h2>
           </div>
         </section>
