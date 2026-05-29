@@ -1,12 +1,36 @@
 import Link from "next/link";
 
 const features = [
-  "Gestion prospects",
-  "Création devis PDF",
-  "Envoi par email",
-  "Relances IA",
-  "Relances programmées",
-  "Historique / activité",
+  {
+    title: "Gestion prospects",
+    description:
+      "Ajoutez rapidement vos prospects avec leur nom, email et entreprise, puis suivez leur statut sans perdre le fil.",
+  },
+  {
+    title: "Création devis PDF",
+    description:
+      "Générez des devis professionnels en PDF, propres et prêts à être envoyés au client.",
+  },
+  {
+    title: "Envoi par email",
+    description:
+      "Envoyez vos devis directement depuis l’application, avec le PDF du devis en pièce jointe.",
+  },
+  {
+    title: "Relances IA",
+    description:
+      "L’IA prépare des messages de relance personnalisés selon le devis, le client et le stade de relance.",
+  },
+  {
+    title: "Relances programmées",
+    description:
+      "Planifiez vos relances à J+3, J+7 ou J+14, puis validez le message avant l’envoi.",
+  },
+  {
+    title: "Historique / activité",
+    description:
+      "Gardez un journal complet des envois, relances et réponses pour chaque prospect.",
+  },
 ];
 
 const plans = [
@@ -19,6 +43,8 @@ const plans = [
   {
     name: "PRO",
     description: "Pour suivre chaque opportunité",
+    price: "29€/mois HT",
+    roi: "Un seul devis converti grâce à une relance rembourse votre abonnement pour l’année.",
     items: [
       "Devis illimités",
       "Relances IA illimitées",
@@ -56,11 +82,12 @@ export default function HomePage() {
               SaaS pour artisans
             </p>
             <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl lg:text-6xl">
-              RelanceClient IA
+              Ne laissez plus vos devis sans réponse.
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground sm:text-xl">
-              Créez vos devis, envoyez-les par email et relancez vos clients
-              automatiquement avec l’IA.
+              Vous envoyez des devis et vous oubliez de relancer. RelanceClient
+              prépare vos relances, vous validez, on envoie — avec le PDF du
+              devis en pièce jointe.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
@@ -122,8 +149,10 @@ export default function HomePage() {
               Problème
             </p>
             <h2 className="mt-3 text-2xl font-semibold tracking-tight">
-              Les artisans perdent des devis parce qu’ils ne relancent pas au
-              bon moment.
+              Vous chiffrez un devis de 4 000€ le dimanche soir. Vous l’envoyez
+              le lundi. Le chantier reprend, la semaine file. Quand vous y
+              repensez vendredi, le client a déjà signé ailleurs. Pas parce que
+              vous étiez trop cher — parce que l’autre a relancé, et pas vous.
             </h2>
           </div>
           <div className="rounded-lg border bg-card p-6">
@@ -147,12 +176,11 @@ export default function HomePage() {
           </div>
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {features.map((feature) => (
-              <div key={feature} className="rounded-lg border bg-card p-5">
+              <div key={feature.title} className="rounded-lg border bg-card p-5">
                 <div className="mb-4 h-2 w-12 rounded-full bg-primary" />
-                <h3 className="font-semibold">{feature}</h3>
+                <h3 className="font-semibold">{feature.title}</h3>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  Une interface simple pour garder le contrôle sans alourdir la
-                  journée de travail.
+                  {feature.description}
                 </p>
               </div>
             ))}
@@ -184,6 +212,9 @@ export default function HomePage() {
                     <p className="mt-2 text-sm text-muted-foreground">
                       {plan.description}
                     </p>
+                    {"price" in plan && (
+                      <p className="mt-4 text-3xl font-semibold">{plan.price}</p>
+                    )}
                   </div>
                   {plan.highlighted && (
                     <span className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
@@ -199,6 +230,9 @@ export default function HomePage() {
                     </li>
                   ))}
                 </ul>
+                {"roi" in plan && (
+                  <p className="mt-6 text-sm font-medium">{plan.roi}</p>
+                )}
               </article>
             ))}
           </div>
@@ -230,7 +264,10 @@ export default function HomePage() {
 
         <footer className="border-t py-6">
           <div className="flex flex-col gap-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-            <p>© RelanceClient IA. Base bêta à compléter avant lancement.</p>
+            <p>
+              © 2026 RelanceClient IA — Conçu en France pour les artisans du
+              bâtiment.
+            </p>
             <nav className="flex flex-wrap gap-4">
               <Link className="hover:text-foreground" href="/legal">
                 Mentions légales
