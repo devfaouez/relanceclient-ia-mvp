@@ -148,22 +148,22 @@ export default function HomePage() {
             <p className="text-sm font-medium uppercase tracking-wide text-primary">
               Problème
             </p>
-            <h2 className="mt-3 text-2xl font-semibold tracking-tight">
+            <p className="mt-3 text-base leading-7 text-foreground sm:text-lg sm:leading-8">
               Vous chiffrez un devis de 4 000€ le dimanche soir. Vous l’envoyez
               le lundi. Le chantier reprend, la semaine file. Quand vous y
               repensez vendredi, le client a déjà signé ailleurs. Pas parce que
               vous étiez trop cher — parce que l’autre a relancé, et pas vous.
-            </h2>
+            </p>
           </div>
           <div className="rounded-lg border bg-card p-6">
             <p className="text-sm font-medium uppercase tracking-wide text-primary">
               Solution
             </p>
-            <h2 className="mt-3 text-2xl font-semibold tracking-tight">
+            <p className="mt-3 text-base leading-7 text-foreground sm:text-lg sm:leading-8">
               RelanceClient vous rappelle quand relancer, rédige le message, et
               joint le devis en PDF. Vous validez en un clic — le reste est
               automatique.
-            </h2>
+            </p>
           </div>
         </section>
 
