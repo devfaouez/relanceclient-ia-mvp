@@ -59,11 +59,11 @@ export default function HomePage() {
   return (
     <main className="min-h-screen">
       <div className="mx-auto flex max-w-6xl flex-col gap-14 px-6 py-8 sm:gap-16 sm:py-10">
-        <header className="flex items-center justify-between gap-4">
+        <header className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
           <Link className="text-lg font-semibold" href="/">
             RelanceClient IA
           </Link>
-          <nav className="flex items-center gap-3 text-sm">
+          <nav className="flex w-full items-center justify-between gap-3 text-sm sm:w-auto">
             <Link className="text-muted-foreground hover:text-foreground" href="/login">
               Se connecter
             </Link>
@@ -91,13 +91,13 @@ export default function HomePage() {
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
-                className="inline-flex items-center justify-center rounded-md bg-primary px-5 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                className="inline-flex w-full items-center justify-center rounded-md bg-primary px-5 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 sm:w-auto"
                 href="/register"
               >
                 Créer un compte
               </Link>
               <Link
-                className="inline-flex items-center justify-center rounded-md border bg-card px-5 py-3 text-sm font-medium hover:bg-muted"
+                className="inline-flex w-full items-center justify-center rounded-md border bg-card px-5 py-3 text-sm font-medium hover:bg-muted sm:w-auto"
                 href="/login"
               >
                 Se connecter
@@ -172,7 +172,7 @@ export default function HomePage() {
             <p className="text-sm font-medium uppercase tracking-wide text-primary">
               Fonctionnalités
             </p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight">
+            <h2 className="mt-3 text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">
               Tout le suivi commercial au même endroit.
             </h2>
           </div>
@@ -194,7 +194,7 @@ export default function HomePage() {
             <p className="text-sm font-medium uppercase tracking-wide text-primary">
               Tarifs
             </p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight">
+            <h2 className="mt-3 text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">
               Commencez gratuitement, passez en Pro quand le suivi devient clé.
             </h2>
           </div>
@@ -241,7 +241,7 @@ export default function HomePage() {
         </section>
 
         <section className="rounded-lg border bg-card p-6 text-center sm:p-8">
-          <h2 className="text-3xl font-semibold tracking-tight">
+          <h2 className="text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">
             Reprenez le contrôle de vos devis en attente.
           </h2>
           <p className="mx-auto mt-3 max-w-2xl text-muted-foreground">
@@ -250,13 +250,13 @@ export default function HomePage() {
           </p>
           <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
             <Link
-              className="inline-flex items-center justify-center rounded-md bg-primary px-5 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              className="inline-flex w-full items-center justify-center rounded-md bg-primary px-5 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90 sm:w-auto"
               href="/register"
             >
               Créer un compte
             </Link>
             <Link
-              className="inline-flex items-center justify-center rounded-md border bg-background px-5 py-3 text-sm font-medium hover:bg-muted"
+              className="inline-flex w-full items-center justify-center rounded-md border bg-background px-5 py-3 text-sm font-medium hover:bg-muted sm:w-auto"
               href="/login"
             >
               Se connecter
@@ -266,7 +266,7 @@ export default function HomePage() {
 
         <footer className="border-t py-6">
           <div className="flex flex-col gap-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-            <p>
+            <p className="leading-6">
               © 2026 RelanceClient IA — Conçu en France pour les artisans du
               bâtiment.
             </p>
