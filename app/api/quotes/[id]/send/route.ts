@@ -13,6 +13,7 @@ import {
   buildQuoteEmailHtml,
   buildQuoteEmailText,
 } from "@/lib/email/templates/quote";
+import { buildSender } from "@/lib/email/sender";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -149,11 +150,17 @@ export async function POST(_request: NextRequest, { params }: RouteContext) {
       cleanText(quote.quoteNumber) ?? quote.id.slice(0, 8)
     );
     const businessName = cleanText(preferences?.businessName);
+    const sender = buildSender({
+      fromEmail: process.env.RESEND_FROM_EMAIL ?? "",
+      businessName: preferences?.businessName,
+      companyEmail: preferences?.companyEmail,
+    });
     const resend = new Resend(resendApiKey);
 
     const { error: sendError } = await resend.emails.send({
-      from: fromEmail,
+      from: sender.from,
       to: prospectEmail,
+      replyTo: sender.replyTo,
       subject: `Devis ${quoteLabel}`,
       text: buildQuoteEmailText({
         prospectName: quote.prospect.name,

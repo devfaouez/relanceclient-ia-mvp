@@ -5,6 +5,7 @@ import {
   buildReminderEmailHtml,
   buildReminderEmailText,
 } from "@/lib/email/templates/reminder";
+import { buildSender } from "@/lib/email/sender";
 
 export class ReminderEmailConfigurationError extends Error {
   constructor() {
@@ -55,13 +56,19 @@ export async function sendReminderEmail(
 
   const preferences = await prisma.userPreferences.findUnique({
     where: { userId },
-    select: { signatureBlock: true },
+    select: { businessName: true, companyEmail: true, signatureBlock: true },
+  });
+  const sender = buildSender({
+    fromEmail,
+    businessName: preferences?.businessName,
+    companyEmail: preferences?.companyEmail,
   });
 
   const resend = new Resend(resendApiKey);
   const { error } = await resend.emails.send({
-    from: fromEmail,
+    from: sender.from,
     to: prospectEmail,
+    replyTo: sender.replyTo,
     subject: reminder.subject,
     text: buildReminderEmailText({
       subject: reminder.subject,
