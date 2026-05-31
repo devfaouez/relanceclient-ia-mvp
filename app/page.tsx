@@ -29,7 +29,7 @@ const features = [
   {
     title: "Historique / activité",
     description:
-      "Gardez un journal complet des envois, relances et réponses pour chaque prospect.",
+      "Gardez un journal complet des devis envoyés, relances générées et actions réalisées pour chaque prospect.",
   },
 ];
 
