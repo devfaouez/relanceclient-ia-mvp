@@ -43,7 +43,9 @@ const plans = [
   {
     name: "PRO",
     description: "Pour suivre chaque opportunité",
-    price: "29€/mois HT",
+    monthlyPrice: "29€/mois HT",
+    yearlyPrice: "290€/an HT",
+    yearlyNote: "2 mois offerts avec l’abonnement annuel",
     roi: "Un seul devis converti grâce à une relance rembourse votre abonnement pour l’année.",
     items: [
       "Devis illimités",
@@ -214,8 +216,18 @@ export default function HomePage() {
                     <p className="mt-2 text-sm text-muted-foreground">
                       {plan.description}
                     </p>
-                    {"price" in plan && (
-                      <p className="mt-4 text-3xl font-semibold">{plan.price}</p>
+                    {"monthlyPrice" in plan && (
+                      <div className="mt-4 space-y-2">
+                        <p className="text-3xl font-semibold">
+                          {plan.monthlyPrice}
+                        </p>
+                        <p className="text-lg font-semibold">
+                          {plan.yearlyPrice}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {plan.yearlyNote}
+                        </p>
+                      </div>
                     )}
                   </div>
                   {plan.highlighted && (

@@ -27,6 +27,8 @@ type Usage = {
   maxAiRemindersPerMonth: number | null;
 };
 
+type BillingCycle = "monthly" | "yearly";
+
 const planLabels: Record<Subscription["plan"], string> = {
   FREE: "Gratuit",
   PRO: "Pro",
@@ -75,7 +77,8 @@ export default function AccountPage() {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [usage, setUsage] = useState<Usage | null>(null);
   const [loading, setLoading] = useState(true);
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] =
+    useState<BillingCycle | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
@@ -108,13 +111,17 @@ export default function AccountPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  async function startCheckout() {
+  async function startCheckout(billingCycle: BillingCycle) {
     setCheckoutError(null);
-    setCheckoutLoading(true);
+    setCheckoutLoading(billingCycle);
 
     try {
       const response = await fetch("/api/stripe/checkout", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ billingCycle }),
       });
 
       if (!response.ok) {
@@ -134,7 +141,7 @@ export default function AccountPage() {
           ? e.message
           : "Impossible de lancer le paiement Stripe"
       );
-      setCheckoutLoading(false);
+      setCheckoutLoading(null);
     }
   }
 
@@ -268,17 +275,30 @@ export default function AccountPage() {
           </p>
 
           {subscription.plan === "FREE" ? (
-            <button
-              type="button"
-              onClick={startCheckout}
-              disabled={checkoutLoading}
-              className="mt-5 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {checkoutLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : null}
-              Passer au Pro
-            </button>
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={() => startCheckout("monthly")}
+                disabled={checkoutLoading !== null}
+                className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {checkoutLoading === "monthly" ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : null}
+                Passer au Pro mensuel
+              </button>
+              <button
+                type="button"
+                onClick={() => startCheckout("yearly")}
+                disabled={checkoutLoading !== null}
+                className="inline-flex items-center justify-center gap-2 rounded-md border bg-card px-4 py-2 text-sm font-medium hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {checkoutLoading === "yearly" ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : null}
+                Passer au Pro annuel
+              </button>
+            </div>
           ) : (
             <button
               type="button"

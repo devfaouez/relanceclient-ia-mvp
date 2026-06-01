@@ -15,14 +15,58 @@ function getAppUrl(request: NextRequest) {
   );
 }
 
+type BillingCycle = "monthly" | "yearly";
+
+function getBillingCycle(value: unknown): BillingCycle {
+  return value === "yearly" ? "yearly" : "monthly";
+}
+
+function getProPriceId(billingCycle: BillingCycle) {
+  if (billingCycle === "yearly") {
+    return process.env.STRIPE_PRO_YEARLY_PRICE_ID;
+  }
+
+  return (
+    process.env.STRIPE_PRO_MONTHLY_PRICE_ID ??
+    process.env.STRIPE_PRO_PRICE_ID ??
+    process.env.STRIPE_PRICE_PRO_ID
+  );
+}
+
 export async function POST(request: NextRequest) {
   try {
     const stripe = getStripe();
-    const priceId = process.env.STRIPE_PRICE_PRO_ID;
 
-    if (!stripe || !priceId) {
+    if (!stripe) {
       return NextResponse.json(
         { error: "Stripe is not configured" },
+        { status: 500 }
+      );
+    }
+
+    let body: unknown = {};
+    try {
+      body = await request.json();
+    } catch {
+      body = {};
+    }
+
+    const bodyRecord =
+      body && typeof body === "object" && !Array.isArray(body) ? body : {};
+    const billingCycle = getBillingCycle(
+      "billingCycle" in bodyRecord
+        ? bodyRecord.billingCycle
+        : "billingInterval" in bodyRecord
+          ? bodyRecord.billingInterval
+          : undefined
+    );
+    const priceId = getProPriceId(billingCycle);
+
+    if (!priceId) {
+      return NextResponse.json(
+        {
+          error: `Stripe Pro ${billingCycle} price is not configured`,
+        },
         { status: 500 }
       );
     }
@@ -61,10 +105,12 @@ export async function POST(request: NextRequest) {
       ],
       metadata: {
         userId: dbUser.id,
+        billingCycle,
       },
       subscription_data: {
         metadata: {
           userId: dbUser.id,
+          billingCycle,
         },
       },
       success_url: `${appUrl}/account?success=1`,
