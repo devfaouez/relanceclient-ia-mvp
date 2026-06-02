@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ArrowLeft, Plus, Sparkles } from "lucide-react";
 import { ConfirmModal } from "@/components/confirm-modal";
 import { formatAmount, formatDate, formatDateTime } from "@/lib/formatters";
 import {
@@ -156,6 +158,70 @@ function formatProspectApiError(
     firstFormError ??
     json.error ??
     fallback
+  );
+}
+
+function statusTone(status: string) {
+  switch (status) {
+    case "ACCEPTED":
+    case "APPROVED":
+    case "QUALIFIED":
+    case "SENT":
+    case "WON":
+      return "bg-[hsl(var(--emerald-soft))] text-primary";
+    case "CONTACTED":
+    case "SCHEDULED":
+      return "bg-sky-50 text-sky-700";
+    case "DRAFT":
+    case "NEW":
+    case "PENDING_APPROVAL":
+      return "bg-amber-50 text-amber-700";
+    case "ARCHIVED":
+    case "CANCELLED":
+      return "bg-slate-100 text-slate-600";
+    case "EXPIRED":
+    case "FAILED":
+    case "LOST":
+    case "REJECTED":
+      return "bg-red-50 text-red-700";
+    default:
+      return "bg-slate-100 text-slate-600";
+  }
+}
+
+function StatusBadge({ label, status }: { label: string; status: string }) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${statusTone(
+        status,
+      )}`}
+    >
+      <span className="h-1.5 w-1.5 rounded-full bg-current" />
+      {label}
+    </span>
+  );
+}
+
+function SectionHeading({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
+  return (
+    <div>
+      <h2 className="text-[17px] font-bold">{title}</h2>
+      <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+    </div>
+  );
+}
+
+function EmptyPanel({ children }: { children: ReactNode }) {
+  return (
+    <div className="rounded-2xl border border-dashed border-border bg-[hsl(var(--emerald-tint))]/60 p-5 text-sm text-muted-foreground shadow-[var(--surface-shadow)]">
+      {children}
+    </div>
   );
 }
 
@@ -623,64 +689,77 @@ export default function ProspectDetailPage({
 
   if (pageError) {
     return (
-      <section>
-        <p className="text-sm text-destructive">{pageError}</p>
+      <section className="space-y-5">
+        <p className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4 text-sm font-medium text-destructive">
+          {pageError}
+        </p>
         <Link
           href="/prospects"
-          className="mt-4 inline-block text-sm underline hover:text-foreground"
+          className="inline-flex items-center gap-2 rounded-xl border bg-card px-4 py-2.5 text-sm font-semibold shadow-[var(--surface-shadow)] hover:border-primary hover:text-primary"
         >
-          ← Retour aux prospects
+          <ArrowLeft className="h-4 w-4" />
+          Retour aux prospects
         </Link>
       </section>
     );
   }
 
   const inputClass =
-    "mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring";
+    "mt-2 w-full rounded-xl border border-input bg-card px-3 py-2.5 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-[hsl(var(--emerald-soft))] disabled:opacity-60";
 
   return (
-    <section className="space-y-8">
-      <div className="space-y-2">
+    <section className="space-y-7">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-xs font-medium text-muted-foreground">
+            Pilotage
+          </p>
+          {loadingProspect ? (
+            <div className="mt-2 rounded-2xl border border-border bg-card p-4 text-sm text-muted-foreground shadow-[var(--surface-shadow)]">
+              Chargement…
+            </div>
+          ) : (
+            prospect && (
+              <>
+                <h1 className="mt-1 text-2xl font-bold">{prospect.name}</h1>
+                <p className="mt-1 text-sm font-medium text-muted-foreground">
+                  Vue CRM légère pour suivre le prospect, ses devis et ses
+                  relances.
+                </p>
+              </>
+            )
+          )}
+        </div>
+
         <Link
           href="/prospects"
-          className="text-sm text-muted-foreground hover:text-foreground"
+          className="inline-flex items-center justify-center gap-2 rounded-xl border bg-card px-4 py-2.5 text-sm font-semibold shadow-[var(--surface-shadow)] hover:border-primary hover:text-primary"
         >
-          ← Prospects
+          <ArrowLeft className="h-4 w-4" />
+          Retour aux prospects
         </Link>
-        {loadingProspect ? (
-          <span className="text-sm text-muted-foreground">Chargement…</span>
-        ) : (
-          prospect && (
-            <div>
-              <h1 className="text-2xl font-semibold">{prospect.name}</h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Vue CRM légère pour suivre le prospect, ses devis et ses
-                relances.
-              </p>
-            </div>
-          )
-        )}
       </div>
 
       {prospect && (
-        <section className="rounded-lg border bg-card p-5">
-          <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-[var(--surface-shadow)]">
+          <div className="flex flex-wrap items-start justify-between gap-3 border-b bg-[hsl(var(--emerald-tint))]/45 px-5 py-4 sm:px-6">
             <div>
-              <h2 className="text-lg font-semibold">Résumé du prospect</h2>
+              <h2 className="text-[17px] font-bold">Résumé du prospect</h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 Coordonnées et statut commercial.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="rounded-full bg-secondary px-3 py-1 text-xs font-medium">
-                {prospectStatusLabel(prospect.status)}
-              </span>
+              <StatusBadge
+                label={prospectStatusLabel(prospect.status)}
+                status={prospect.status}
+              />
               {!isEditingProspect && (
                 <button
                   type="button"
                   onClick={startEditingProspect}
                   disabled={archivingProspect || restoringProspect}
-                  className="rounded-md border px-3 py-1 text-xs font-medium hover:bg-muted disabled:opacity-50"
+                  className="rounded-lg border bg-card px-3 py-1.5 text-xs font-semibold hover:border-primary hover:text-primary disabled:opacity-50"
                 >
                   Modifier le prospect
                 </button>
@@ -690,7 +769,7 @@ export default function ProspectDetailPage({
                   type="button"
                   onClick={() => setProspectConfirmAction("RESTORE")}
                   disabled={restoringProspect || savingProspect}
-                  className="rounded-md border px-3 py-1 text-xs font-medium hover:bg-muted disabled:opacity-50"
+                  className="rounded-lg border bg-card px-3 py-1.5 text-xs font-semibold hover:border-primary hover:text-primary disabled:opacity-50"
                 >
                   {restoringProspect
                     ? "Restauration…"
@@ -703,7 +782,7 @@ export default function ProspectDetailPage({
                   disabled={
                     archivingProspect || restoringProspect || savingProspect
                   }
-                  className="rounded-md border px-3 py-1 text-xs font-medium text-destructive hover:bg-muted disabled:opacity-50"
+                  className="rounded-lg border bg-card px-3 py-1.5 text-xs font-semibold text-destructive hover:border-destructive disabled:opacity-50"
                 >
                   {archivingProspect
                     ? "Archivage…"
@@ -713,40 +792,49 @@ export default function ProspectDetailPage({
             </div>
           </div>
 
-          {prospectArchiveError && (
-            <p className="mb-4 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
-              {prospectArchiveError}
-            </p>
-          )}
+          <div className="space-y-5 px-5 py-5 sm:px-6">
+            {prospectArchiveError && (
+              <p className="rounded-xl border border-destructive/20 bg-destructive/5 p-3 text-sm font-medium text-destructive">
+                {prospectArchiveError}
+              </p>
+            )}
 
-          {prospectEditSuccess && (
-            <p className="mb-4 rounded-md border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700">
-              {prospectEditSuccess}
-            </p>
-          )}
+            {prospectEditSuccess && (
+              <p className="rounded-xl border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))] p-3 text-sm font-medium text-primary">
+                {prospectEditSuccess}
+              </p>
+            )}
 
-          <dl className="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-3">
-            <div className="rounded-md border bg-background p-3">
-              <dt className="text-muted-foreground">Email</dt>
-              <dd className="mt-1 font-medium">{prospect.email ?? "—"}</dd>
-            </div>
-            <div className="rounded-md border bg-background p-3">
-              <dt className="text-muted-foreground">Téléphone</dt>
-              <dd className="mt-1 font-medium">{prospect.phone ?? "—"}</dd>
-            </div>
-            <div className="rounded-md border bg-background p-3">
-              <dt className="text-muted-foreground">Société</dt>
-              <dd className="mt-1 font-medium">{prospect.company ?? "—"}</dd>
-            </div>
-          </dl>
+            <dl className="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-3">
+              <div className="rounded-xl border border-border bg-card p-4">
+                <dt className="text-xs font-medium text-muted-foreground">
+                  Email
+                </dt>
+                <dd className="mt-1 font-semibold">{prospect.email ?? "—"}</dd>
+              </div>
+              <div className="rounded-xl border border-border bg-card p-4">
+                <dt className="text-xs font-medium text-muted-foreground">
+                  Téléphone
+                </dt>
+                <dd className="mt-1 font-semibold">{prospect.phone ?? "—"}</dd>
+              </div>
+              <div className="rounded-xl border border-border bg-card p-4">
+                <dt className="text-xs font-medium text-muted-foreground">
+                  Société
+                </dt>
+                <dd className="mt-1 font-semibold">
+                  {prospect.company ?? "—"}
+                </dd>
+              </div>
+            </dl>
 
-          {isEditingProspect && (
-            <form
-              onSubmit={handleUpdateProspect}
-              className="mt-5 space-y-4 rounded-md border bg-background p-4"
-            >
+            {isEditingProspect && (
+              <form
+                onSubmit={handleUpdateProspect}
+                className="space-y-4 rounded-2xl border border-border bg-[hsl(var(--emerald-tint))]/45 p-4"
+              >
               {prospectEditError && (
-                <p className="text-sm text-destructive">
+                <p className="rounded-xl border border-destructive/20 bg-destructive/5 p-3 text-sm font-medium text-destructive">
                   {prospectEditError}
                 </p>
               )}
@@ -755,7 +843,7 @@ export default function ProspectDetailPage({
                 <div>
                   <label
                     htmlFor="prospect-name"
-                    className="block text-sm font-medium"
+                    className="block text-[13px] font-semibold"
                   >
                     Nom <span className="text-destructive">*</span>
                   </label>
@@ -778,7 +866,7 @@ export default function ProspectDetailPage({
                 <div>
                   <label
                     htmlFor="prospect-email"
-                    className="block text-sm font-medium"
+                    className="block text-[13px] font-semibold"
                   >
                     Email
                   </label>
@@ -800,7 +888,7 @@ export default function ProspectDetailPage({
                 <div>
                   <label
                     htmlFor="prospect-phone"
-                    className="block text-sm font-medium"
+                    className="block text-[13px] font-semibold"
                   >
                     Téléphone
                   </label>
@@ -822,7 +910,7 @@ export default function ProspectDetailPage({
                 <div>
                   <label
                     htmlFor="prospect-company"
-                    className="block text-sm font-medium"
+                    className="block text-[13px] font-semibold"
                   >
                     Société
                   </label>
@@ -844,7 +932,7 @@ export default function ProspectDetailPage({
                 <div>
                   <label
                     htmlFor="prospect-status"
-                    className="block text-sm font-medium"
+                    className="block text-[13px] font-semibold"
                   >
                     Statut
                   </label>
@@ -875,7 +963,7 @@ export default function ProspectDetailPage({
                 <button
                   type="submit"
                   disabled={savingProspect}
-                  className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                  className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-[var(--surface-shadow)] hover:bg-primary/90 disabled:opacity-50"
                 >
                   {savingProspect ? "Enregistrement…" : "Enregistrer"}
                 </button>
@@ -883,64 +971,76 @@ export default function ProspectDetailPage({
                   type="button"
                   onClick={cancelEditingProspect}
                   disabled={savingProspect}
-                  className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
+                  className="rounded-xl border bg-card px-4 py-2.5 text-sm font-semibold hover:border-primary hover:text-primary disabled:opacity-50"
                 >
                   Annuler
                 </button>
               </div>
-            </form>
-          )}
+              </form>
+            )}
+          </div>
         </section>
       )}
 
       <section className="space-y-3">
-        <div>
-          <h2 className="text-lg font-semibold">Statistiques rapides</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Indicateurs clés liés à ce prospect.
-          </p>
-        </div>
+        <SectionHeading
+          title="Statistiques rapides"
+          description="Indicateurs clés liés à ce prospect."
+        />
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           {stats.map((item) => (
-            <div key={item.label} className="rounded-lg border bg-card p-4">
-              <p className="text-xs text-muted-foreground">{item.label}</p>
-              <p className="mt-2 text-2xl font-semibold">{item.value}</p>
+            <div
+              key={item.label}
+              className="rounded-2xl border border-border bg-card p-4 shadow-[var(--surface-shadow)]"
+            >
+              <p className="text-xs font-medium text-muted-foreground">
+                {item.label}
+              </p>
+              <p className="mt-2 text-2xl font-bold">{item.value}</p>
             </div>
           ))}
         </div>
       </section>
 
       <section className="space-y-3">
-        <div>
-          <h2 className="text-lg font-semibold">Devis du prospect</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Liste des devis, montants, statuts et accès rapides.
-          </p>
-        </div>
+        <SectionHeading
+          title="Devis du prospect"
+          description="Liste des devis, montants, statuts et accès rapides."
+        />
 
         {loadingQuotes && (
-          <p className="rounded-lg border bg-card p-4 text-sm text-muted-foreground">
+          <p className="rounded-2xl border border-border bg-card p-5 text-sm text-muted-foreground shadow-[var(--surface-shadow)]">
             Chargement des devis…
           </p>
         )}
 
         {!loadingQuotes && quotes.length === 0 && (
-          <p className="rounded-lg border bg-card p-4 text-sm text-muted-foreground">
+          <EmptyPanel>
             Aucun devis pour l&apos;instant. Ajoutez un premier devis depuis le
             formulaire en bas de page.
-          </p>
+          </EmptyPanel>
         )}
 
         {!loadingQuotes && quotes.length > 0 && (
-          <div className="overflow-x-auto rounded-lg border bg-card">
+          <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-[var(--surface-shadow)]">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b bg-muted/50 text-left">
-                  <th className="px-4 py-3 font-medium">Titre</th>
-                  <th className="px-4 py-3 font-medium">Numéro</th>
-                  <th className="px-4 py-3 font-medium">Montant</th>
-                  <th className="px-4 py-3 font-medium">Statut</th>
-                  <th className="px-4 py-3 font-medium">Date</th>
+                <tr className="border-b bg-[hsl(var(--emerald-tint))] text-left">
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
+                    Titre
+                  </th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
+                    Numéro
+                  </th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
+                    Montant
+                  </th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
+                    Statut
+                  </th>
+                  <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
+                    Date
+                  </th>
                   <th className="px-4 py-3"></th>
                 </tr>
               </thead>
@@ -948,9 +1048,9 @@ export default function ProspectDetailPage({
                 {quotes.map((q) => (
                   <tr
                     key={q.id}
-                    className="border-b last:border-0 hover:bg-muted/30"
+                    className="border-b transition last:border-0 hover:bg-[hsl(var(--emerald-tint))]/70"
                   >
-                    <td className="px-4 py-3 font-medium">{q.title}</td>
+                    <td className="px-4 py-3 font-semibold">{q.title}</td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {q.quoteNumber ?? "—"}
                     </td>
@@ -960,25 +1060,26 @@ export default function ProspectDetailPage({
                         : "—"}
                     </td>
                     <td className="px-4 py-3">
-                      <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
-                        {quoteStatusLabel(q.status)}
-                      </span>
+                      <StatusBadge
+                        label={quoteStatusLabel(q.status)}
+                        status={q.status}
+                      />
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {formatDate(q.createdAt)}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <div className="flex justify-end gap-3">
+                      <div className="flex flex-wrap justify-end gap-3">
                         <Link
                           href={`/quotes/${q.id}`}
-                          className="text-sm font-medium text-primary hover:underline"
+                          className="text-sm font-semibold text-primary hover:underline"
                         >
                           Voir
                         </Link>
 
                         <a
                           href={`/api/quotes/${q.id}/pdf`}
-                          className="text-sm font-medium text-primary hover:underline"
+                          className="text-sm font-semibold text-primary hover:underline"
                         >
                           PDF
                         </a>
@@ -992,7 +1093,7 @@ export default function ProspectDetailPage({
                             })
                           }
                           disabled={pending.has(`gen-${q.id}`)}
-                          className="text-sm font-medium text-primary hover:underline disabled:opacity-50"
+                          className="text-sm font-semibold text-primary hover:underline disabled:opacity-50"
                         >
                           {pending.has(`gen-${q.id}`)
                             ? "Génération…"
@@ -1009,24 +1110,21 @@ export default function ProspectDetailPage({
       </section>
 
       <section className="space-y-3">
-        <div>
-          <h2 className="text-lg font-semibold">Relances du prospect</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Toute relance doit être approuvée manuellement avant d&apos;être
-            envoyée.
-          </p>
-        </div>
+        <SectionHeading
+          title="Relances du prospect"
+          description="Toute relance doit être approuvée manuellement avant d'être envoyée."
+        />
 
         {reminderError && (
-          <p className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+          <p className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4 text-sm font-medium text-destructive">
             {reminderError}
           </p>
         )}
 
         {prospectReminders.length === 0 && (
-          <p className="rounded-lg border bg-card p-4 text-sm text-muted-foreground">
+          <EmptyPanel>
             Aucune relance pour l&apos;instant. Générez-en une depuis un devis.
-          </p>
+          </EmptyPanel>
         )}
 
         {prospectReminders.length > 0 && (
@@ -1036,7 +1134,7 @@ export default function ProspectDetailPage({
               return (
                 <div
                   key={r.id}
-                  className="rounded-lg border bg-card p-4 text-sm"
+                  className="rounded-2xl border border-border bg-card p-4 text-sm shadow-[var(--surface-shadow)]"
                 >
                   <div className="flex flex-wrap items-start justify-between gap-4">
                     <div className="min-w-0 flex-1 space-y-1">
@@ -1045,7 +1143,7 @@ export default function ProspectDetailPage({
                           <div>
                             <label
                               htmlFor={`subject-${r.id}`}
-                              className="block text-xs font-medium text-muted-foreground"
+                              className="block text-[13px] font-semibold"
                             >
                               Sujet
                             </label>
@@ -1061,7 +1159,7 @@ export default function ProspectDetailPage({
                           <div>
                             <label
                               htmlFor={`body-${r.id}`}
-                              className="block text-xs font-medium text-muted-foreground"
+                              className="block text-[13px] font-semibold"
                             >
                               Contenu
                             </label>
@@ -1077,13 +1175,13 @@ export default function ProspectDetailPage({
                       ) : (
                         <>
                           <div className="space-y-1">
-                            <p className="font-medium">{r.subject}</p>
+                            <p className="font-semibold">{r.subject}</p>
                             <p className="text-xs text-muted-foreground">
                               Devis lié :{" "}
                               {quote ? (
                                 <Link
                                   href={`/quotes/${quote.id}`}
-                                  className="font-medium text-primary hover:underline"
+                                  className="font-semibold text-primary hover:underline"
                                 >
                                   {quoteDisplayName(quote)}
                                 </Link>
@@ -1094,7 +1192,7 @@ export default function ProspectDetailPage({
                           </div>
                           <div className="space-y-2">
                             <p
-                              className={`whitespace-pre-line text-xs text-muted-foreground ${
+                              className={`whitespace-pre-line rounded-xl bg-muted/40 p-3 text-xs leading-5 text-muted-foreground ${
                                 expandedReminderIds.has(r.id)
                                   ? ""
                                   : "line-clamp-3"
@@ -1107,7 +1205,7 @@ export default function ProspectDetailPage({
                               <button
                                 type="button"
                                 onClick={() => toggleReminderExpanded(r.id)}
-                                className="text-xs font-medium text-primary hover:underline"
+                                className="text-xs font-semibold text-primary hover:underline"
                               >
                                 {expandedReminderIds.has(r.id)
                                   ? "Masquer"
@@ -1160,9 +1258,10 @@ export default function ProspectDetailPage({
                             )}
                           </div>
                           <div className="pt-1">
-                            <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
-                              {reminderStatusLabel(r.status)}
-                            </span>
+                            <StatusBadge
+                              label={reminderStatusLabel(r.status)}
+                              status={r.status}
+                            />
                           </div>
                         </>
                       )}
@@ -1170,9 +1269,10 @@ export default function ProspectDetailPage({
 
                     <div className="flex shrink-0 flex-col items-end gap-2">
                       {editingReminderId === r.id && (
-                        <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
-                          {reminderStatusLabel(r.status)}
-                        </span>
+                        <StatusBadge
+                          label={reminderStatusLabel(r.status)}
+                          status={r.status}
+                        />
                       )}
 
                       {editingReminderId === r.id ? (
@@ -1181,16 +1281,18 @@ export default function ProspectDetailPage({
                             type="button"
                             onClick={() => handleUpdateReminder(r.id)}
                             disabled={pending.has(`edit-${r.id}`)}
-                            className="rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                            className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                           >
-                            {pending.has(`edit-${r.id}`) ? "Enregistrement…" : "Enregistrer"}
+                            {pending.has(`edit-${r.id}`)
+                              ? "Enregistrement…"
+                              : "Enregistrer"}
                           </button>
 
                           <button
                             type="button"
                             onClick={cancelEditingReminder}
                             disabled={pending.has(`edit-${r.id}`)}
-                            className="rounded-md border px-3 py-1 text-xs font-medium hover:bg-muted disabled:opacity-50"
+                            className="rounded-lg border bg-card px-3 py-1.5 text-xs font-semibold hover:border-primary hover:text-primary disabled:opacity-50"
                           >
                             Annuler
                           </button>
@@ -1203,7 +1305,7 @@ export default function ProspectDetailPage({
                               <button
                                 type="button"
                                 onClick={() => startEditingReminder(r)}
-                                className="rounded-md border px-3 py-1 text-xs font-medium hover:bg-muted"
+                                className="rounded-lg border bg-card px-3 py-1.5 text-xs font-semibold hover:border-primary hover:text-primary"
                               >
                                 Modifier
                               </button>
@@ -1217,7 +1319,7 @@ export default function ProspectDetailPage({
                                 type="button"
                                 onClick={() => handleApproveReminder(r.id)}
                                 disabled={pending.has(`approve-${r.id}`)}
-                                className="rounded-md border px-3 py-1 text-xs font-medium hover:bg-muted disabled:opacity-50"
+                                className="rounded-lg border bg-card px-3 py-1.5 text-xs font-semibold hover:border-primary hover:text-primary disabled:opacity-50"
                               >
                                 {pending.has(`approve-${r.id}`)
                                   ? "…"
@@ -1230,9 +1332,11 @@ export default function ProspectDetailPage({
                               type="button"
                               onClick={() => setSendConfirmReminder(r)}
                               disabled={pending.has(`send-${r.id}`)}
-                              className="rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                              className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                             >
-                              {pending.has(`send-${r.id}`) ? "Envoi…" : "Envoyer"}
+                              {pending.has(`send-${r.id}`)
+                                ? "Envoi…"
+                                : "Envoyer"}
                             </button>
                           )}
                         </>
@@ -1248,17 +1352,20 @@ export default function ProspectDetailPage({
 
       {generateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="w-full max-w-lg rounded-lg border bg-background p-5 shadow-lg">
-            <div className="mb-4">
-              <h2 className="text-lg font-semibold">Générer une relance IA</h2>
+          <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-border bg-card shadow-lg">
+            <div className="border-b bg-[hsl(var(--emerald-tint))]/45 px-5 py-4">
+              <h2 className="text-[17px] font-bold">Générer une relance IA</h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 Devis : {generateModal.quoteTitle}
               </p>
             </div>
 
-            <form onSubmit={handleGenerateReminder} className="space-y-4">
+            <form onSubmit={handleGenerateReminder} className="space-y-4 p-5">
               <div>
-                <label htmlFor="generateTone" className="block text-sm font-medium">
+                <label
+                  htmlFor="generateTone"
+                  className="block text-[13px] font-semibold"
+                >
                   Ton de la relance
                 </label>
                 <select
@@ -1278,7 +1385,10 @@ export default function ProspectDetailPage({
               </div>
 
               <div>
-                <label htmlFor="generateNote" className="block text-sm font-medium">
+                <label
+                  htmlFor="generateNote"
+                  className="block text-[13px] font-semibold"
+                >
                   Note optionnelle pour l’IA
                 </label>
                 <textarea
@@ -1303,7 +1413,7 @@ export default function ProspectDetailPage({
                     setGenerateTone("PROFESSIONAL");
                     setGenerateNote("");
                   }}
-                  className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
+                  className="rounded-xl border bg-card px-4 py-2.5 text-sm font-semibold hover:border-primary hover:text-primary"
                 >
                   Annuler
                 </button>
@@ -1311,8 +1421,9 @@ export default function ProspectDetailPage({
                 <button
                   type="submit"
                   disabled={pending.has(`gen-${generateModal.quoteId}`)}
-                  className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-[var(--surface-shadow)] hover:bg-primary/90 disabled:opacity-50"
                 >
+                  <Sparkles className="h-4 w-4" />
                   {pending.has(`gen-${generateModal.quoteId}`)
                     ? "Génération…"
                     : "Générer"}
@@ -1325,9 +1436,9 @@ export default function ProspectDetailPage({
 
       {sendConfirmReminder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-          <div className="w-full max-w-lg rounded-lg border bg-background p-5 shadow-lg">
-            <div className="mb-4">
-              <h2 className="text-lg font-semibold">
+          <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-border bg-card shadow-lg">
+            <div className="border-b bg-[hsl(var(--emerald-tint))]/45 px-5 py-4">
+              <h2 className="text-[17px] font-bold">
                 Confirmer l’envoi de la relance
               </h2>
               <p className="mt-2 text-sm text-muted-foreground">
@@ -1336,7 +1447,7 @@ export default function ProspectDetailPage({
               </p>
             </div>
 
-            <div className="space-y-3 rounded-md bg-muted/50 p-4 text-sm">
+            <div className="m-5 space-y-3 rounded-xl bg-muted/50 p-4 text-sm">
               <div>
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Sujet
@@ -1354,12 +1465,12 @@ export default function ProspectDetailPage({
               </div>
             </div>
 
-            <div className="mt-5 flex justify-end gap-2">
+            <div className="flex justify-end gap-2 border-t bg-muted/30 px-5 py-4">
               <button
                 type="button"
                 onClick={() => setSendConfirmReminder(null)}
                 disabled={pending.has(`send-${sendConfirmReminder.id}`)}
-                className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
+                className="rounded-xl border bg-card px-4 py-2.5 text-sm font-semibold hover:border-primary hover:text-primary disabled:opacity-50"
               >
                 Annuler
               </button>
@@ -1368,7 +1479,7 @@ export default function ProspectDetailPage({
                 type="button"
                 onClick={() => handleSendReminder(sendConfirmReminder.id)}
                 disabled={pending.has(`send-${sendConfirmReminder.id}`)}
-                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-[var(--surface-shadow)] hover:bg-primary/90 disabled:opacity-50"
               >
                 {pending.has(`send-${sendConfirmReminder.id}`)
                   ? "Envoi…"
@@ -1406,7 +1517,7 @@ export default function ProspectDetailPage({
         }
       >
         {prospect && (
-          <div className="mt-4 rounded-md bg-muted/50 p-4 text-sm">
+          <div className="mt-4 rounded-xl bg-muted/50 p-4 text-sm">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Prospect
             </p>
@@ -1419,15 +1530,26 @@ export default function ProspectDetailPage({
       </ConfirmModal>
 
       {/* Formulaire d'ajout de devis */}
-      <div>
-        <h2 className="text-lg font-semibold">Ajouter un devis</h2>
-        <form onSubmit={handleCreateQuote} className="mt-3 max-w-lg space-y-4">
+      <div className="max-w-2xl overflow-hidden rounded-2xl border border-border bg-card shadow-[var(--surface-shadow)]">
+        <div className="border-b bg-[hsl(var(--emerald-tint))]/45 px-5 py-4 sm:px-6">
+          <h2 className="text-[17px] font-bold">Ajouter un devis</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Créez un brouillon ou un devis prêt à suivre depuis cette fiche.
+          </p>
+        </div>
+        <form
+          id="prospect-quote-form"
+          onSubmit={handleCreateQuote}
+          className="space-y-4 px-5 py-5 sm:px-6"
+        >
           {formError && (
-            <p className="text-sm text-destructive">{formError}</p>
+            <p className="rounded-xl border border-destructive/20 bg-destructive/5 p-3 text-sm font-medium text-destructive">
+              {formError}
+            </p>
           )}
 
           <div>
-            <label htmlFor="title" className="block text-sm font-medium">
+            <label htmlFor="title" className="block text-[13px] font-semibold">
               Titre <span className="text-destructive">*</span>
             </label>
             <input
@@ -1441,7 +1563,7 @@ export default function ProspectDetailPage({
           </div>
 
           <div>
-            <label htmlFor="amount" className="block text-sm font-medium">
+            <label htmlFor="amount" className="block text-[13px] font-semibold">
               Montant initial (EUR)
             </label>
             <input
@@ -1459,7 +1581,10 @@ export default function ProspectDetailPage({
           </div>
 
           <div>
-            <label htmlFor="quoteStatus" className="block text-sm font-medium">
+            <label
+              htmlFor="quoteStatus"
+              className="block text-[13px] font-semibold"
+            >
               Statut
             </label>
             <select
@@ -1475,15 +1600,18 @@ export default function ProspectDetailPage({
               ))}
             </select>
           </div>
-
+        </form>
+        <div className="border-t bg-muted/30 px-5 py-4 sm:px-6">
           <button
+            form="prospect-quote-form"
             type="submit"
             disabled={formLoading}
-            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-[var(--surface-shadow)] hover:bg-primary/90 disabled:opacity-50 sm:w-auto"
           >
+            <Plus className="h-4 w-4" />
             {formLoading ? "Création…" : "Créer le devis"}
           </button>
-        </form>
+        </div>
       </div>
     </section>
   );
