@@ -2,6 +2,18 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import {
+  ArrowLeft,
+  Check,
+  Download,
+  FileText,
+  Mail,
+  Pencil,
+  Printer,
+  Send,
+  Sparkles,
+  XCircle,
+} from "lucide-react";
 import { ConfirmModal } from "@/components/confirm-modal";
 import {
   formatAmount,
@@ -124,11 +136,69 @@ function toNumber(value: string | null | undefined) {
 
 async function getApiErrorMessage(
   res: Response,
-  fallbackMessage: string
+  fallbackMessage: string,
 ): Promise<string> {
   const json = await res.json().catch(() => ({}));
   return (json as { error?: string }).error ?? fallbackMessage;
 }
+
+function quoteStatusTone(status: string) {
+  switch (status) {
+    case "ACCEPTED":
+      return "bg-[hsl(var(--emerald-soft))] text-primary";
+    case "SENT":
+      return "bg-amber-50 text-amber-700";
+    case "DRAFT":
+    case "CANCELLED":
+      return "bg-slate-100 text-slate-600";
+    case "EXPIRED":
+    case "REJECTED":
+      return "bg-red-50 text-red-700";
+    default:
+      return "bg-slate-100 text-slate-600";
+  }
+}
+
+function reminderStatusTone(status: string) {
+  switch (status) {
+    case "APPROVED":
+      return "bg-[hsl(var(--emerald-soft))] text-primary";
+    case "SENT":
+      return "bg-primary text-primary-foreground";
+    case "SCHEDULED":
+      return "bg-sky-50 text-sky-700";
+    case "PENDING_APPROVAL":
+      return "bg-amber-50 text-amber-700";
+    case "FAILED":
+    case "CANCELLED":
+      return "bg-red-50 text-red-700";
+    default:
+      return "bg-slate-100 text-slate-600";
+  }
+}
+
+function StatusBadge({ label, tone }: { label: string; tone: string }) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${tone}`}
+    >
+      <span className="h-1.5 w-1.5 rounded-full bg-current" />
+      {label}
+    </span>
+  );
+}
+
+const primaryButtonClass =
+  "inline-flex items-center justify-center gap-2 rounded-[11px] bg-primary px-4 py-2.5 text-sm font-semibold leading-none text-primary-foreground shadow-[var(--surface-shadow)] transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50";
+
+const secondaryButtonClass =
+  "inline-flex items-center justify-center gap-2 rounded-[11px] border border-input bg-card px-4 py-2.5 text-sm font-semibold leading-none transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50";
+
+const smallSecondaryButtonClass =
+  "inline-flex items-center justify-center rounded-[9px] border border-input bg-card px-3 py-1.5 text-xs font-semibold transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50";
+
+const inputClass =
+  "mt-1.5 w-full rounded-[11px] border border-input bg-card px-3 py-2.5 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-[hsl(var(--emerald-soft))] disabled:opacity-50";
 
 export default function QuotePreviewPage({
   params,
@@ -163,7 +233,9 @@ export default function QuotePreviewPage({
   const [generateNote, setGenerateNote] = useState("");
   const [generateTemplateId, setGenerateTemplateId] = useState("");
 
-  const [editingReminderId, setEditingReminderId] = useState<string | null>(null);
+  const [editingReminderId, setEditingReminderId] = useState<string | null>(
+    null,
+  );
   const [editReminderSubject, setEditReminderSubject] = useState("");
   const [editReminderBody, setEditReminderBody] = useState("");
   const [schedulingReminderId, setSchedulingReminderId] = useState<
@@ -306,7 +378,7 @@ export default function QuotePreviewPage({
       const json = await res.json().catch(() => ({}));
       setActionError(
         (json as { error?: string }).error ??
-          "Erreur lors de la modification de ligne"
+          "Erreur lors de la modification de ligne",
       );
       return;
     }
@@ -378,7 +450,7 @@ export default function QuotePreviewPage({
       const json = await res.json().catch(() => ({}));
       setActionError(
         (json as { error?: string }).error ??
-          "Erreur lors de la programmation de la relance"
+          "Erreur lors de la programmation de la relance",
       );
       return;
     }
@@ -408,7 +480,7 @@ export default function QuotePreviewPage({
       const json = await res.json().catch(() => ({}));
       setActionError(
         (json as { error?: string }).error ??
-          "Erreur lors de l'annulation de la programmation"
+          "Erreur lors de l'annulation de la programmation",
       );
       return;
     }
@@ -446,7 +518,7 @@ export default function QuotePreviewPage({
       const json = await res.json().catch(() => ({}));
       setActionError(
         (json as { error?: string }).error ??
-          "Erreur lors de la modification de la relance"
+          "Erreur lors de la modification de la relance",
       );
       return;
     }
@@ -473,7 +545,7 @@ export default function QuotePreviewPage({
       const json = await res.json().catch(() => ({}));
       setActionError(
         (json as { error?: string }).error ??
-          "Erreur lors de l'approbation de la relance"
+          "Erreur lors de l'approbation de la relance",
       );
       return;
     }
@@ -499,7 +571,7 @@ export default function QuotePreviewPage({
 
       if (!res.ok) {
         setActionError(
-          await getApiErrorMessage(res, "Erreur lors de l'envoi de la relance")
+          await getApiErrorMessage(res, "Erreur lors de l'envoi de la relance"),
         );
         return;
       }
@@ -509,7 +581,7 @@ export default function QuotePreviewPage({
       fetchReminders();
     } catch {
       setActionError(
-        "Erreur réseau : impossible de contacter le serveur pour envoyer la relance."
+        "Erreur réseau : impossible de contacter le serveur pour envoyer la relance.",
       );
     } finally {
       setSaving(false);
@@ -540,7 +612,7 @@ export default function QuotePreviewPage({
       const json = await res.json().catch(() => ({}));
       setActionError(
         (json as { error?: string }).error ??
-          "Erreur lors de la génération de la relance"
+          "Erreur lors de la génération de la relance",
       );
       return;
     }
@@ -572,7 +644,7 @@ export default function QuotePreviewPage({
       const json = await res.json().catch(() => ({}));
       setActionError(
         (json as { error?: string }).error ??
-          "Erreur lors du changement de statut"
+          "Erreur lors du changement de statut",
       );
       return;
     }
@@ -583,7 +655,7 @@ export default function QuotePreviewPage({
   }
 
   async function handleUpdateQuoteStatus(
-    status: "ACCEPTED" | "REJECTED" | "EXPIRED" | "CANCELLED"
+    status: "ACCEPTED" | "REJECTED" | "EXPIRED" | "CANCELLED",
   ) {
     setSaving(true);
     setActionError(null);
@@ -617,14 +689,14 @@ export default function QuotePreviewPage({
         setStatusConfirmQuote(null);
         setActionError(
           (json as { error?: string }).error ??
-            "Erreur lors du changement de statut du devis"
+            "Erreur lors du changement de statut du devis",
         );
         return;
       }
 
       setQuoteStatus(status);
       setActionSuccess(
-        `Devis marqué comme ${quoteStatusLabel(status).toLowerCase()}`
+        `Devis marqué comme ${quoteStatusLabel(status).toLowerCase()}`,
       );
       setStatusConfirmQuote(null);
       fetchQuote();
@@ -651,8 +723,8 @@ export default function QuotePreviewPage({
         setActionError(
           await getApiErrorMessage(
             res,
-            "Erreur lors de l'envoi du devis. Le devis n'a pas été marqué comme envoyé."
-          )
+            "Erreur lors de l'envoi du devis. Le devis n'a pas été marqué comme envoyé.",
+          ),
         );
         return;
       }
@@ -664,7 +736,7 @@ export default function QuotePreviewPage({
     } catch {
       setQuoteSendFailed(true);
       setActionError(
-        "Erreur réseau : impossible de contacter le serveur pour envoyer le devis. Le devis n'a pas été marqué comme envoyé."
+        "Erreur réseau : impossible de contacter le serveur pour envoyer le devis. Le devis n'a pas été marqué comme envoyé.",
       );
     } finally {
       setQuoteSending(false);
@@ -696,7 +768,7 @@ export default function QuotePreviewPage({
     if (!res.ok) {
       const json = await res.json().catch(() => ({}));
       setActionError(
-        (json as { error?: string }).error ?? "Erreur lors de l'enregistrement"
+        (json as { error?: string }).error ?? "Erreur lors de l'enregistrement",
       );
       return;
     }
@@ -728,7 +800,7 @@ export default function QuotePreviewPage({
     if (!res.ok) {
       const json = await res.json().catch(() => ({}));
       setActionError(
-        (json as { error?: string }).error ?? "Erreur lors de l'ajout de ligne"
+        (json as { error?: string }).error ?? "Erreur lors de l'ajout de ligne",
       );
       return;
     }
@@ -755,7 +827,7 @@ export default function QuotePreviewPage({
       const json = await res.json().catch(() => ({}));
       setActionError(
         (json as { error?: string }).error ??
-          "Erreur lors de la suppression de ligne"
+          "Erreur lors de la suppression de ligne",
       );
       return;
     }
@@ -770,23 +842,29 @@ export default function QuotePreviewPage({
 
   if (loading) {
     return (
-      <section>
-        <p className="text-sm text-muted-foreground">Chargement du devis…</p>
+      <section className="space-y-4">
+        <div className="h-24 animate-pulse rounded-2xl border bg-card shadow-[var(--surface-shadow)]" />
+        <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
+          <div className="h-[520px] animate-pulse rounded-2xl border bg-card shadow-[var(--surface-shadow)]" />
+          <div className="h-80 animate-pulse rounded-2xl border bg-card shadow-[var(--surface-shadow)]" />
+        </div>
+        <p className="sr-only">Chargement du devis…</p>
       </section>
     );
   }
 
   if (pageError || !data) {
     return (
-      <section>
-        <p className="text-sm text-destructive">
+      <section className="rounded-2xl border border-destructive/20 bg-destructive/10 p-6 shadow-[var(--surface-shadow)]">
+        <p className="text-sm font-medium text-destructive">
           {pageError ?? "Devis introuvable"}
         </p>
         <Link
           href="/prospects"
-          className="mt-4 inline-block text-sm underline hover:text-foreground"
+          className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-destructive hover:underline"
         >
-          ← Retour aux prospects
+          <ArrowLeft className="h-4 w-4" />
+          Retour aux prospects
         </Link>
       </section>
     );
@@ -805,120 +883,141 @@ export default function QuotePreviewPage({
 
   return (
     <section className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
-        <div>
-          <Link
-            href={`/prospects/${quote.prospectId}`}
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
-            ← Retour au prospect
-          </Link>
-          <h1 className="mt-2 text-2xl font-semibold">Prévisualisation du devis</h1>
-        </div>
+      <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)] print:hidden">
+        <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+          <div className="min-w-0">
+            <Link
+              href={`/prospects/${quote.prospectId}`}
+              className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Retour au prospect
+            </Link>
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <h1 className="text-2xl font-bold">Prévisualisation du devis</h1>
+              <StatusBadge
+                label={quoteStatusLabel(quote.status)}
+                tone={quoteStatusTone(quote.status)}
+              />
+            </div>
+            <p className="mt-2 text-sm font-medium text-muted-foreground">
+              {quote.quoteNumber ?? quote.id.slice(0, 8)} · {quote.title} ·{" "}
+              {prospect.company ?? prospect.name}
+            </p>
+          </div>
 
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              setActionError(null);
-              setActionSuccess(null);
-
-              if (!prospect.email?.trim()) {
-                setActionError(
-                  "Impossible d'envoyer le devis : le prospect n'a pas d'adresse email."
-                );
-                setQuoteSendFailed(true);
-                return;
-              }
-
-              setSendConfirmQuote(true);
-            }}
-            disabled={saving || quoteSending}
-            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-          >
-            {sendQuoteButtonLabel}
-          </button>
-
-          {!isClosedQuote && quote.status !== "SENT" && (
+          <div className="flex flex-wrap gap-2 xl:justify-end">
             <button
               type="button"
-              onClick={handleMarkAsSent}
-              disabled={saving || quoteSending}
-              className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
+              onClick={() => window.print()}
+              disabled={quoteSending}
+              className={secondaryButtonClass}
             >
-              Marquer comme envoyé
+              <Printer className="h-4 w-4" />
+              Imprimer
             </button>
-          )}
 
-          {!isClosedQuote && (
-            <>
-              {quote.status !== "ACCEPTED" && (
-                <button
-                  type="button"
-                  onClick={() => handleUpdateQuoteStatus("ACCEPTED")}
-                  disabled={saving || quoteSending}
-                  className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
-                >
-                  Marquer comme accepté
-                </button>
-              )}
-
-              {quote.status !== "REJECTED" && (
-                <button
-                  type="button"
-                  onClick={() => setStatusConfirmQuote("REJECTED")}
-                  disabled={saving || quoteSending}
-                  className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
-                >
-                  Marquer comme refusé
-                </button>
-              )}
-
-              {quote.status !== "EXPIRED" && (
-                <button
-                  type="button"
-                  onClick={() => handleUpdateQuoteStatus("EXPIRED")}
-                  disabled={saving || quoteSending}
-                  className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
-                >
-                  Marquer comme expiré
-                </button>
-              )}
-
-              {quote.status !== "CANCELLED" && (
-                <button
-                  type="button"
-                  onClick={() => setStatusConfirmQuote("CANCELLED")}
-                  disabled={saving || quoteSending}
-                  className="rounded-md border px-4 py-2 text-sm font-medium text-destructive hover:bg-muted disabled:opacity-50"
-                >
-                  Annuler le devis
-                </button>
-              )}
-            </>
-          )}
-
-          <button
-            type="button"
-            onClick={() => window.print()}
-            disabled={quoteSending}
-            className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
-          >
-            Imprimer
-          </button>
-
-          <a
-            href={`/api/quotes/${quote.id}/pdf`}
-            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-          >
-            Télécharger PDF
-          </a>
+            <a
+              href={`/api/quotes/${quote.id}/pdf`}
+              className={primaryButtonClass}
+            >
+              <Download className="h-4 w-4" />
+              PDF
+            </a>
+          </div>
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-        <div className="quote-print-area mx-auto w-full max-w-5xl rounded-xl border bg-white p-8 text-slate-950 shadow-sm print:max-w-none print:border-0 print:p-0 print:shadow-none">
-          <div className="flex items-start justify-between gap-8 border-b pb-8">
+      <div className="flex flex-wrap gap-2 rounded-2xl border border-border bg-card p-3 shadow-[var(--surface-shadow)] print:hidden">
+        <button
+          type="button"
+          onClick={() => {
+            setActionError(null);
+            setActionSuccess(null);
+
+            if (!prospect.email?.trim()) {
+              setActionError(
+                "Impossible d'envoyer le devis : le prospect n'a pas d'adresse email.",
+              );
+              setQuoteSendFailed(true);
+              return;
+            }
+
+            setSendConfirmQuote(true);
+          }}
+          disabled={saving || quoteSending}
+          className={primaryButtonClass}
+        >
+          <Mail className="h-4 w-4" />
+          {sendQuoteButtonLabel}
+        </button>
+
+        {!isClosedQuote && quote.status !== "SENT" && (
+          <button
+            type="button"
+            onClick={handleMarkAsSent}
+            disabled={saving || quoteSending}
+            className={secondaryButtonClass}
+          >
+            <Send className="h-4 w-4" />
+            Marquer comme envoyé
+          </button>
+        )}
+
+        {!isClosedQuote && (
+          <>
+            {quote.status !== "ACCEPTED" && (
+              <button
+                type="button"
+                onClick={() => handleUpdateQuoteStatus("ACCEPTED")}
+                disabled={saving || quoteSending}
+                className={secondaryButtonClass}
+              >
+                <Check className="h-4 w-4" />
+                Marquer comme accepté
+              </button>
+            )}
+
+            {quote.status !== "REJECTED" && (
+              <button
+                type="button"
+                onClick={() => setStatusConfirmQuote("REJECTED")}
+                disabled={saving || quoteSending}
+                className={secondaryButtonClass}
+              >
+                <XCircle className="h-4 w-4" />
+                Marquer comme refusé
+              </button>
+            )}
+
+            {quote.status !== "EXPIRED" && (
+              <button
+                type="button"
+                onClick={() => handleUpdateQuoteStatus("EXPIRED")}
+                disabled={saving || quoteSending}
+                className={secondaryButtonClass}
+              >
+                Marquer comme expiré
+              </button>
+            )}
+
+            {quote.status !== "CANCELLED" && (
+              <button
+                type="button"
+                onClick={() => setStatusConfirmQuote("CANCELLED")}
+                disabled={saving || quoteSending}
+                className="inline-flex items-center justify-center rounded-[11px] border border-input bg-card px-4 py-2.5 text-sm font-semibold leading-none text-destructive transition hover:border-destructive hover:bg-destructive/10 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Annuler le devis
+              </button>
+            )}
+          </>
+        )}
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="quote-print-area mx-auto w-full max-w-5xl rounded-2xl border border-border bg-white p-5 text-slate-950 shadow-[var(--surface-shadow)] sm:p-8 lg:p-10 print:max-w-none print:border-0 print:p-0 print:shadow-none">
+          <div className="flex flex-col gap-8 border-b border-slate-200 pb-8 sm:flex-row sm:items-start sm:justify-between">
             <div>
               {preferences?.logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -929,21 +1028,38 @@ export default function QuotePreviewPage({
                 />
               ) : null}
 
-              <h2 className="text-xl font-bold">
-                {preferences?.businessName ?? "Entreprise"}
-              </h2>
+              <div className="flex items-center gap-3">
+                {!preferences?.logoUrl && (
+                  <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary text-primary-foreground">
+                    <FileText className="h-5 w-5" />
+                  </span>
+                )}
+                <h2 className="text-xl font-bold">
+                  {preferences?.businessName ?? "Entreprise"}
+                </h2>
+              </div>
 
-              <div className="mt-3 space-y-1 whitespace-pre-line text-sm text-slate-600">
-                {preferences?.companyAddress && <p>{preferences.companyAddress}</p>}
-                {preferences?.companyPhone && <p>Tél. : {preferences.companyPhone}</p>}
-                {preferences?.companyEmail && <p>Email : {preferences.companyEmail}</p>}
-                {preferences?.companyWebsite && <p>Site : {preferences.companyWebsite}</p>}
+              <div className="mt-4 space-y-1 whitespace-pre-line text-sm leading-6 text-slate-600">
+                {preferences?.companyAddress && (
+                  <p>{preferences.companyAddress}</p>
+                )}
+                {preferences?.companyPhone && (
+                  <p>Tél. : {preferences.companyPhone}</p>
+                )}
+                {preferences?.companyEmail && (
+                  <p>Email : {preferences.companyEmail}</p>
+                )}
+                {preferences?.companyWebsite && (
+                  <p>Site : {preferences.companyWebsite}</p>
+                )}
               </div>
             </div>
 
-            <div className="text-right">
-              <p className="text-4xl font-bold uppercase tracking-wide">Devis</p>
-              <p className="mt-2 text-sm text-slate-600">
+            <div className="sm:text-right">
+              <p className="text-3xl font-extrabold uppercase tracking-wide">
+                Devis
+              </p>
+              <p className="mt-3 text-sm text-slate-600">
                 N° {quote.quoteNumber ?? quote.id.slice(0, 8)}
               </p>
               <p className="mt-1 text-sm text-slate-600">
@@ -967,13 +1083,16 @@ export default function QuotePreviewPage({
                   Refusé le : {formatDate(quote.rejectedAt)}
                 </p>
               )}
-              <p className="mt-3 inline-block rounded-full bg-slate-100 px-3 py-1 text-xs font-medium">
-                {quoteStatusLabel(quote.status)}
-              </p>
+              <span className="mt-4 inline-flex">
+                <StatusBadge
+                  label={quoteStatusLabel(quote.status)}
+                  tone={quoteStatusTone(quote.status)}
+                />
+              </span>
             </div>
           </div>
 
-          <div className="grid gap-8 border-b py-8 md:grid-cols-2">
+          <div className="grid gap-8 border-b border-slate-200 py-8 md:grid-cols-2">
             <div>
               <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
                 Client
@@ -995,139 +1114,160 @@ export default function QuotePreviewPage({
           </div>
 
           <div className="py-8">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b bg-slate-50 text-left">
-                  <th className="px-4 py-3 font-semibold">Désignation</th>
-                  <th className="px-4 py-3 text-right font-semibold">Qté</th>
-                  <th className="px-4 py-3 text-right font-semibold">Prix unitaire</th>
-                  <th className="px-4 py-3 text-right font-semibold">Total</th>
-                  <th className="px-4 py-3 print:hidden"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {displayLines.map((line) => {
-                  const isEditing = editingLineId === line.id && !line.isFallback;
-                  const editedQuantity = Number(editLineQuantity);
-                  const editedUnitPrice = Number(editLineUnitPrice);
-                  const editedTotal =
-                    Number.isFinite(editedQuantity) && Number.isFinite(editedUnitPrice)
-                      ? editedQuantity * editedUnitPrice
-                      : 0;
+            <div className="overflow-x-auto rounded-xl border border-slate-200">
+              <table className="w-full min-w-[720px] border-collapse text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-[hsl(var(--emerald-tint))] text-left text-primary">
+                    <th className="px-4 py-3 text-xs font-bold uppercase tracking-wide">
+                      Désignation
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-bold uppercase tracking-wide">
+                      Qté
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-bold uppercase tracking-wide">
+                      Prix unitaire
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-bold uppercase tracking-wide">
+                      Total
+                    </th>
+                    <th className="px-4 py-3 print:hidden"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {displayLines.map((line) => {
+                    const isEditing =
+                      editingLineId === line.id && !line.isFallback;
+                    const editedQuantity = Number(editLineQuantity);
+                    const editedUnitPrice = Number(editLineUnitPrice);
+                    const editedTotal =
+                      Number.isFinite(editedQuantity) &&
+                      Number.isFinite(editedUnitPrice)
+                        ? editedQuantity * editedUnitPrice
+                        : 0;
 
-                  return (
-                    <tr key={line.id} className="border-b align-top">
-                      <td className="px-4 py-4">
-                        {isEditing ? (
-                          <textarea
-                            required
-                            value={editLineDescription}
-                            onChange={(e) => setEditLineDescription(e.target.value)}
-                            rows={2}
-                            className="w-full rounded-md border px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-ring"
-                          />
-                        ) : (
-                          line.description
-                        )}
-                      </td>
+                    return (
+                      <tr
+                        key={line.id}
+                        className="border-b border-slate-200 align-top last:border-0"
+                      >
+                        <td className="px-4 py-4 font-medium text-slate-900">
+                          {isEditing ? (
+                            <textarea
+                              required
+                              value={editLineDescription}
+                              onChange={(e) =>
+                                setEditLineDescription(e.target.value)
+                              }
+                              rows={2}
+                              className="w-full rounded-[10px] border border-slate-300 px-3 py-2 text-sm font-normal outline-none focus:border-primary focus:ring-4 focus:ring-[hsl(var(--emerald-soft))]"
+                            />
+                          ) : (
+                            line.description
+                          )}
+                        </td>
 
-                      <td className="px-4 py-4 text-right">
-                        {isEditing ? (
-                          <input
-                            required
-                            type="number"
-                            min="0.01"
-                            step="0.01"
-                            value={editLineQuantity}
-                            onChange={(e) => setEditLineQuantity(e.target.value)}
-                            className="w-24 rounded-md border px-2 py-1 text-right text-sm outline-none focus:ring-2 focus:ring-ring"
-                          />
-                        ) : (
-                          line.quantity
-                        )}
-                      </td>
+                        <td className="px-4 py-4 text-right">
+                          {isEditing ? (
+                            <input
+                              required
+                              type="number"
+                              min="0.01"
+                              step="0.01"
+                              value={editLineQuantity}
+                              onChange={(e) =>
+                                setEditLineQuantity(e.target.value)
+                              }
+                              className="w-24 rounded-[10px] border border-slate-300 px-3 py-2 text-right text-sm outline-none focus:border-primary focus:ring-4 focus:ring-[hsl(var(--emerald-soft))]"
+                            />
+                          ) : (
+                            line.quantity
+                          )}
+                        </td>
 
-                      <td className="px-4 py-4 text-right">
-                        {isEditing ? (
-                          <input
-                            required
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={editLineUnitPrice}
-                            onChange={(e) => setEditLineUnitPrice(e.target.value)}
-                            className="w-28 rounded-md border px-2 py-1 text-right text-sm outline-none focus:ring-2 focus:ring-ring"
-                          />
-                        ) : (
-                          formatAmount(line.unitPrice, quote.currency)
-                        )}
-                      </td>
+                        <td className="px-4 py-4 text-right">
+                          {isEditing ? (
+                            <input
+                              required
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={editLineUnitPrice}
+                              onChange={(e) =>
+                                setEditLineUnitPrice(e.target.value)
+                              }
+                              className="w-28 rounded-[10px] border border-slate-300 px-3 py-2 text-right text-sm outline-none focus:border-primary focus:ring-4 focus:ring-[hsl(var(--emerald-soft))]"
+                            />
+                          ) : (
+                            formatAmount(line.unitPrice, quote.currency)
+                          )}
+                        </td>
 
-                      <td className="px-4 py-4 text-right font-medium">
-                        {formatAmount(
-                          isEditing ? editedTotal : line.total,
-                          quote.currency
-                        )}
-                      </td>
+                        <td className="px-4 py-4 text-right font-medium">
+                          {formatAmount(
+                            isEditing ? editedTotal : line.total,
+                            quote.currency,
+                          )}
+                        </td>
 
-                      <td className="px-4 py-4 text-right print:hidden">
-                        {!line.isFallback && (
-                          <div className="flex justify-end gap-3">
-                            {isEditing ? (
-                              <>
-                                <button
-                                  type="button"
-                                  onClick={() => handleUpdateLine(line.id)}
-                                  disabled={saving}
-                                  className="text-xs font-medium hover:underline disabled:opacity-50"
-                                >
-                                  Enregistrer
-                                </button>
+                        <td className="px-4 py-4 text-right print:hidden">
+                          {!line.isFallback && (
+                            <div className="flex justify-end gap-2">
+                              {isEditing ? (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleUpdateLine(line.id)}
+                                    disabled={saving}
+                                    className="text-xs font-semibold text-primary hover:underline disabled:opacity-50"
+                                  >
+                                    Enregistrer
+                                  </button>
 
-                                <button
-                                  type="button"
-                                  onClick={cancelEditLine}
-                                  disabled={saving}
-                                  className="text-xs font-medium text-muted-foreground hover:underline disabled:opacity-50"
-                                >
-                                  Annuler
-                                </button>
-                              </>
-                            ) : (
-                              <>
-                                <button
-                                  type="button"
-                                  onClick={() => startEditLine(line)}
-                                  disabled={saving}
-                                  className="text-xs font-medium hover:underline disabled:opacity-50"
-                                >
-                                  Modifier
-                                </button>
+                                  <button
+                                    type="button"
+                                    onClick={cancelEditLine}
+                                    disabled={saving}
+                                    className="text-xs font-semibold text-muted-foreground hover:underline disabled:opacity-50"
+                                  >
+                                    Annuler
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => startEditLine(line)}
+                                    disabled={saving}
+                                    className="text-xs font-semibold text-primary hover:underline disabled:opacity-50"
+                                  >
+                                    Modifier
+                                  </button>
 
-                                <button
-                                  type="button"
-                                  onClick={() => handleDeleteLine(line.id)}
-                                  disabled={saving}
-                                  className="text-xs font-medium text-destructive hover:underline disabled:opacity-50"
-                                >
-                                  Supprimer
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteLine(line.id)}
+                                    disabled={saving}
+                                    className="text-xs font-semibold text-destructive hover:underline disabled:opacity-50"
+                                  >
+                                    Supprimer
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
 
             <div className="mt-6 flex justify-end">
-              <div className="w-full max-w-sm rounded-lg bg-slate-50 p-4">
-                <div className="flex justify-between text-sm">
-                  <span>Total</span>
-                  <span className="font-bold">
+              <div className="w-full max-w-sm rounded-xl border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))] p-5">
+                <div className="flex justify-between gap-6 text-sm">
+                  <span className="font-medium text-slate-600">Total</span>
+                  <span className="text-lg font-bold text-primary">
                     {formatAmount(totalAmount, quote.currency)}
                   </span>
                 </div>
@@ -1136,7 +1276,7 @@ export default function QuotePreviewPage({
           </div>
 
           {(quote.paymentTerms || quote.legalNotice) && (
-            <div className="grid gap-6 border-t py-6 text-sm md:grid-cols-2">
+            <div className="grid gap-6 border-t border-slate-200 py-6 text-sm md:grid-cols-2">
               {quote.paymentTerms && (
                 <div>
                   <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -1162,26 +1302,32 @@ export default function QuotePreviewPage({
           )}
 
           {preferences?.quoteFooter && (
-            <div className="border-t pt-6 text-xs leading-relaxed text-slate-500 whitespace-pre-line">
+            <div className="whitespace-pre-line border-t border-slate-200 pt-6 text-xs leading-relaxed text-slate-500">
               {preferences.quoteFooter}
             </div>
           )}
         </div>
 
-        <aside className="quote-print-hidden space-y-4 print:hidden">
-          <div className="rounded-lg border bg-card p-4">
-            <h2 className="text-sm font-semibold">Relances liées au devis</h2>
+        <aside className="quote-print-hidden space-y-4 print:hidden xl:sticky xl:top-24 xl:self-start">
+          <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)]">
+            <h2 className="text-[17px] font-bold">Relances liées au devis</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Générez, relisez puis validez. Rien ne part sans approbation.
+            </p>
 
-            <form onSubmit={handleGenerateReminder} className="mt-3 space-y-3 border-b pb-4">
+            <form
+              onSubmit={handleGenerateReminder}
+              className="mt-4 space-y-3 rounded-xl border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))] p-4"
+            >
               <div>
-                <label className="block text-xs font-medium text-muted-foreground">
+                <label className="block text-xs font-semibold text-foreground">
                   Modèle de relance
                 </label>
                 <select
                   value={generateTemplateId}
                   onChange={(e) => setGenerateTemplateId(e.target.value)}
                   disabled={templatesLoading}
-                  className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+                  className={inputClass}
                 >
                   <option value="">
                     {templatesLoading
@@ -1197,7 +1343,7 @@ export default function QuotePreviewPage({
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-muted-foreground">
+                <label className="block text-xs font-semibold text-foreground">
                   Ton de la relance
                 </label>
                 <select
@@ -1205,7 +1351,7 @@ export default function QuotePreviewPage({
                   onChange={(e) =>
                     setGenerateTone(e.target.value as ReminderTone)
                   }
-                  className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                  className={inputClass}
                 >
                   {REMINDER_TONES.map((tone) => (
                     <option key={tone.value} value={tone.value}>
@@ -1216,7 +1362,7 @@ export default function QuotePreviewPage({
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-muted-foreground">
+                <label className="block text-xs font-semibold text-foreground">
                   Note optionnelle pour l’IA
                 </label>
                 <textarea
@@ -1225,7 +1371,7 @@ export default function QuotePreviewPage({
                   rows={3}
                   maxLength={500}
                   placeholder="Exemple : le client hésite encore sur le prix."
-                  className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                  className={inputClass}
                 />
                 <p className="mt-1 text-xs text-muted-foreground">
                   {generateNote.length}/500 caractères
@@ -1235,18 +1381,19 @@ export default function QuotePreviewPage({
               <button
                 type="submit"
                 disabled={saving}
-                className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                className={`${primaryButtonClass} w-full`}
               >
+                <Sparkles className="h-4 w-4" />
                 {saving ? "Génération…" : "Générer une relance IA"}
               </button>
             </form>
 
             {reminders.length === 0 ? (
-              <p className="mt-2 text-sm text-muted-foreground">
+              <p className="mt-4 rounded-xl border border-dashed bg-background p-4 text-sm text-muted-foreground">
                 Aucune relance générée pour ce devis.
               </p>
             ) : (
-              <div className="mt-3 space-y-3">
+              <div className="mt-4 space-y-3">
                 {reminders.map((reminder) => {
                   const isEditing = editingReminderId === reminder.id;
                   const isScheduling = schedulingReminderId === reminder.id;
@@ -1265,7 +1412,7 @@ export default function QuotePreviewPage({
                   return (
                     <div
                       key={reminder.id}
-                      className="rounded-md border bg-background p-3 text-sm"
+                      className="rounded-xl border border-border bg-background p-4 text-sm"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
@@ -1281,7 +1428,7 @@ export default function QuotePreviewPage({
                                   onChange={(e) =>
                                     setEditReminderSubject(e.target.value)
                                   }
-                                  className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                                  className={inputClass}
                                 />
                               </div>
 
@@ -1295,13 +1442,15 @@ export default function QuotePreviewPage({
                                     setEditReminderBody(e.target.value)
                                   }
                                   rows={8}
-                                  className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                                  className={inputClass}
                                 />
                               </div>
                             </div>
                           ) : (
                             <>
-                              <p className="font-medium">{reminder.subject}</p>
+                              <p className="font-semibold text-foreground">
+                                {reminder.subject}
+                              </p>
                               <p className="mt-2 line-clamp-4 whitespace-pre-line text-xs text-muted-foreground">
                                 {reminder.body}
                               </p>
@@ -1309,18 +1458,19 @@ export default function QuotePreviewPage({
                           )}
                         </div>
 
-                        <span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
-                          {reminderStatusLabel(reminder.status)}
-                        </span>
+                        <StatusBadge
+                          label={reminderStatusLabel(reminder.status)}
+                          tone={reminderStatusTone(reminder.status)}
+                        />
                       </div>
 
                       {canRetry && (
-                        <p className="mt-3 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs font-medium text-destructive">
-                          Échec
+                        <p className="mt-3 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs font-semibold text-destructive">
+                          Échec d’envoi. Vérifiez le contenu avant de réessayer.
                         </p>
                       )}
 
-                      <div className="mt-3 space-y-1 text-xs text-muted-foreground">
+                      <div className="mt-3 space-y-1 rounded-lg bg-muted/40 p-3 text-xs text-muted-foreground">
                         <p>Créée le : {formatDate(reminder.createdAt)}</p>
                         <p>Approuvée le : {formatDate(reminder.approvedAt)}</p>
                         <p>
@@ -1333,7 +1483,7 @@ export default function QuotePreviewPage({
                       </div>
 
                       {isScheduling && (
-                        <div className="mt-3 rounded-md border bg-muted/30 p-3">
+                        <div className="mt-3 rounded-xl border border-border bg-card p-3">
                           <label className="block text-xs font-medium text-muted-foreground">
                             {isScheduled
                               ? "Modifier la programmation"
@@ -1345,7 +1495,7 @@ export default function QuotePreviewPage({
                             onChange={(e) =>
                               setScheduleReminderDate(e.target.value)
                             }
-                            className="mt-1 w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                            className={inputClass}
                           />
                         </div>
                       )}
@@ -1357,7 +1507,7 @@ export default function QuotePreviewPage({
                               type="button"
                               onClick={() => handleUpdateReminder(reminder.id)}
                               disabled={saving}
-                              className="rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                              className="inline-flex items-center justify-center rounded-[9px] bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                             >
                               Enregistrer
                             </button>
@@ -1366,7 +1516,7 @@ export default function QuotePreviewPage({
                               type="button"
                               onClick={cancelEditingReminder}
                               disabled={saving}
-                              className="rounded-md border px-3 py-1 text-xs font-medium hover:bg-muted disabled:opacity-50"
+                              className={smallSecondaryButtonClass}
                             >
                               Annuler
                             </button>
@@ -1375,9 +1525,11 @@ export default function QuotePreviewPage({
                           <>
                             <button
                               type="button"
-                              onClick={() => handleScheduleReminder(reminder.id)}
+                              onClick={() =>
+                                handleScheduleReminder(reminder.id)
+                              }
                               disabled={saving}
-                              className="rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                              className="inline-flex items-center justify-center rounded-[9px] bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                             >
                               Enregistrer
                             </button>
@@ -1386,7 +1538,7 @@ export default function QuotePreviewPage({
                               type="button"
                               onClick={cancelSchedulingReminder}
                               disabled={saving}
-                              className="rounded-md border px-3 py-1 text-xs font-medium hover:bg-muted disabled:opacity-50"
+                              className={smallSecondaryButtonClass}
                             >
                               Annuler
                             </button>
@@ -1398,7 +1550,7 @@ export default function QuotePreviewPage({
                                 type="button"
                                 onClick={() => startEditingReminder(reminder)}
                                 disabled={saving}
-                                className="rounded-md border px-3 py-1 text-xs font-medium hover:bg-muted disabled:opacity-50"
+                                className={smallSecondaryButtonClass}
                               >
                                 Modifier
                               </button>
@@ -1407,9 +1559,11 @@ export default function QuotePreviewPage({
                             {canSchedule && (
                               <button
                                 type="button"
-                                onClick={() => startSchedulingReminder(reminder)}
+                                onClick={() =>
+                                  startSchedulingReminder(reminder)
+                                }
                                 disabled={saving}
-                                className="rounded-md border px-3 py-1 text-xs font-medium hover:bg-muted disabled:opacity-50"
+                                className={smallSecondaryButtonClass}
                               >
                                 {isScheduled
                                   ? "Modifier la programmation"
@@ -1424,7 +1578,7 @@ export default function QuotePreviewPage({
                                   handleCancelScheduledReminder(reminder.id)
                                 }
                                 disabled={saving}
-                                className="rounded-md border px-3 py-1 text-xs font-medium text-destructive hover:bg-muted disabled:opacity-50"
+                                className="inline-flex items-center justify-center rounded-[9px] border border-input bg-card px-3 py-1.5 text-xs font-semibold text-destructive transition hover:border-destructive hover:bg-destructive/10 disabled:opacity-50"
                               >
                                 Annuler la programmation
                               </button>
@@ -1433,9 +1587,11 @@ export default function QuotePreviewPage({
                             {canApprove && (
                               <button
                                 type="button"
-                                onClick={() => handleApproveReminder(reminder.id)}
+                                onClick={() =>
+                                  handleApproveReminder(reminder.id)
+                                }
                                 disabled={saving}
-                                className="rounded-md border px-3 py-1 text-xs font-medium hover:bg-muted disabled:opacity-50"
+                                className={smallSecondaryButtonClass}
                               >
                                 Approuver
                               </button>
@@ -1446,8 +1602,9 @@ export default function QuotePreviewPage({
                                 type="button"
                                 onClick={() => setSendConfirmReminder(reminder)}
                                 disabled={saving}
-                                className="rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                                className="inline-flex items-center justify-center gap-1.5 rounded-[9px] bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                               >
+                                <Send className="h-3.5 w-3.5" />
                                 Envoyer
                               </button>
                             )}
@@ -1457,11 +1614,9 @@ export default function QuotePreviewPage({
                                 type="button"
                                 onClick={() => handleSendReminder(reminder.id)}
                                 disabled={saving}
-                                className="rounded-md bg-primary px-3 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                                className="inline-flex items-center justify-center rounded-[9px] bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                               >
-                                {saving
-                                  ? "Réessai…"
-                                  : "Réessayer l’envoi"}
+                                {saving ? "Réessai…" : "Réessayer l’envoi"}
                               </button>
                             )}
                           </>
@@ -1474,26 +1629,29 @@ export default function QuotePreviewPage({
             )}
           </div>
           {actionError && (
-            <p className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+            <p className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm font-medium text-destructive">
               {actionError}
             </p>
           )}
 
           {actionSuccess && (
-            <p className="rounded-md border bg-muted p-3 text-sm">
+            <p className="rounded-xl border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))] p-4 text-sm font-medium text-primary">
               {actionSuccess}
             </p>
           )}
 
           <form
             onSubmit={handleAddLine}
-            className="rounded-lg border bg-card p-4"
+            className="rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)]"
           >
-            <h2 className="text-sm font-semibold">Ajouter une ligne</h2>
+            <h2 className="text-[17px] font-bold">Ajouter une ligne</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Ajoutez une prestation au devis sans quitter l’aperçu.
+            </p>
 
-            <div className="mt-3 space-y-3">
+            <div className="mt-4 space-y-3">
               <div>
-                <label className="block text-xs font-medium text-muted-foreground">
+                <label className="block text-xs font-semibold text-foreground">
                   Désignation
                 </label>
                 <textarea
@@ -1501,13 +1659,13 @@ export default function QuotePreviewPage({
                   value={lineDescription}
                   onChange={(e) => setLineDescription(e.target.value)}
                   rows={3}
-                  className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                  className={inputClass}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-muted-foreground">
+                  <label className="block text-xs font-semibold text-foreground">
                     Quantité
                   </label>
                   <input
@@ -1517,12 +1675,12 @@ export default function QuotePreviewPage({
                     step="0.01"
                     value={lineQuantity}
                     onChange={(e) => setLineQuantity(e.target.value)}
-                    className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                    className={inputClass}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-muted-foreground">
+                  <label className="block text-xs font-semibold text-foreground">
                     Prix unitaire
                   </label>
                   <input
@@ -1532,7 +1690,7 @@ export default function QuotePreviewPage({
                     step="0.01"
                     value={lineUnitPrice}
                     onChange={(e) => setLineUnitPrice(e.target.value)}
-                    className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                    className={inputClass}
                   />
                 </div>
               </div>
@@ -1540,7 +1698,7 @@ export default function QuotePreviewPage({
               <button
                 type="submit"
                 disabled={saving}
-                className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                className={`${primaryButtonClass} w-full`}
               >
                 {saving ? "Enregistrement…" : "Ajouter la ligne"}
               </button>
@@ -1549,13 +1707,23 @@ export default function QuotePreviewPage({
 
           <form
             onSubmit={handleUpdateTerms}
-            className="rounded-lg border bg-card p-4"
+            className="rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)]"
           >
-            <h2 className="text-sm font-semibold">Informations du devis</h2>
-
-            <div className="mt-3 space-y-3">
+            <div className="flex items-start gap-3">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))] text-primary">
+                <Pencil className="h-4 w-4" />
+              </span>
               <div>
-                <label className="block text-xs font-medium text-muted-foreground">
+                <h2 className="text-[17px] font-bold">Informations du devis</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Ajustez le titre, le statut et les conditions.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-foreground">
                   Titre du devis
                 </label>
                 <input
@@ -1563,12 +1731,12 @@ export default function QuotePreviewPage({
                   type="text"
                   value={quoteTitle}
                   onChange={(e) => setQuoteTitle(e.target.value)}
-                  className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                  className={inputClass}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-muted-foreground">
+                <label className="block text-xs font-semibold text-foreground">
                   Numéro du devis
                 </label>
                 <input
@@ -1576,63 +1744,63 @@ export default function QuotePreviewPage({
                   value={quoteNumber}
                   onChange={(e) => setQuoteNumber(e.target.value)}
                   placeholder={quote.id.slice(0, 8)}
-                  className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                  className={inputClass}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-muted-foreground">
+                <label className="block text-xs font-semibold text-foreground">
                   Statut
                 </label>
                 <select
                   value={quoteStatus}
                   onChange={(e) => setQuoteStatus(e.target.value)}
-                  className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                  className={inputClass}
                 >
                   {Object.entries(QUOTE_STATUS_LABELS).map(
                     ([status, label]) => (
                       <option key={status} value={status}>
                         {label}
                       </option>
-                    )
+                    ),
                   )}
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-muted-foreground">
+                <label className="block text-xs font-semibold text-foreground">
                   Date de validité
                 </label>
                 <input
                   type="date"
                   value={validUntil}
                   onChange={(e) => setValidUntil(e.target.value)}
-                  className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                  className={inputClass}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-muted-foreground">
+                <label className="block text-xs font-semibold text-foreground">
                   Conditions de paiement
                 </label>
                 <textarea
                   value={paymentTerms}
                   onChange={(e) => setPaymentTerms(e.target.value)}
                   rows={4}
-                  className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                  className={inputClass}
                   placeholder="Exemple : Paiement à 30 jours après réception de facture."
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-muted-foreground">
+                <label className="block text-xs font-semibold text-foreground">
                   Mentions légales
                 </label>
                 <textarea
                   value={legalNotice}
                   onChange={(e) => setLegalNotice(e.target.value)}
                   rows={4}
-                  className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+                  className={inputClass}
                   placeholder="Exemple : TVA non applicable, article 293 B du CGI."
                 />
               </div>
@@ -1640,7 +1808,7 @@ export default function QuotePreviewPage({
               <button
                 type="submit"
                 disabled={saving}
-                className="w-full rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
+                className={`${secondaryButtonClass} w-full`}
               >
                 {saving ? "Enregistrement…" : "Enregistrer les informations"}
               </button>
@@ -1668,7 +1836,7 @@ export default function QuotePreviewPage({
         onCancel={() => setSendConfirmQuote(false)}
         onConfirm={handleSendQuote}
       >
-        <div className="mt-4 space-y-3 rounded-md bg-muted/50 p-4 text-sm">
+        <div className="mt-4 space-y-3 rounded-xl border border-border bg-muted/40 p-4 text-sm">
           <div>
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Destinataire
@@ -1709,7 +1877,7 @@ export default function QuotePreviewPage({
           handleUpdateQuoteStatus(statusConfirmQuote);
         }}
       >
-        <div className="mt-4 rounded-md bg-muted/50 p-4 text-sm">
+        <div className="mt-4 rounded-xl border border-border bg-muted/40 p-4 text-sm">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             Devis
           </p>
@@ -1722,22 +1890,24 @@ export default function QuotePreviewPage({
 
       {sendConfirmReminder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 print:hidden">
-          <div className="w-full max-w-lg rounded-lg border bg-background p-5 shadow-lg">
-            <h2 className="text-lg font-semibold">Confirmer l’envoi</h2>
+          <div className="w-full max-w-lg rounded-2xl border border-border bg-background p-6 shadow-lg">
+            <h2 className="text-xl font-bold">Confirmer l’envoi</h2>
             <p className="mt-2 text-sm text-muted-foreground">
               Cette relance sera envoyée par email au client du devis.
             </p>
 
-            <div className="mt-4 space-y-3 rounded-md bg-muted/50 p-4 text-sm">
+            <div className="mt-4 space-y-4 rounded-xl border border-border bg-muted/40 p-4 text-sm">
               <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Sujet
                 </p>
-                <p className="mt-1 font-medium">{sendConfirmReminder.subject}</p>
+                <p className="mt-1 font-medium">
+                  {sendConfirmReminder.subject}
+                </p>
               </div>
 
               <div>
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Message
                 </p>
                 <p className="mt-1 max-h-64 overflow-y-auto whitespace-pre-line text-muted-foreground">
@@ -1751,7 +1921,7 @@ export default function QuotePreviewPage({
                 type="button"
                 onClick={() => setSendConfirmReminder(null)}
                 disabled={saving}
-                className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted disabled:opacity-50"
+                className={secondaryButtonClass}
               >
                 Annuler
               </button>
@@ -1760,8 +1930,9 @@ export default function QuotePreviewPage({
                 type="button"
                 onClick={() => handleSendReminder(sendConfirmReminder.id)}
                 disabled={saving}
-                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                className={primaryButtonClass}
               >
+                <Send className="h-4 w-4" />
                 {saving ? "Envoi…" : "Confirmer l’envoi"}
               </button>
             </div>
