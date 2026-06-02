@@ -42,6 +42,62 @@ const DISPLAY_FILTERS: { value: DisplayFilter; label: string }[] = [
 const ACTIVE_QUOTE_STATUSES = ["DRAFT", "SENT"];
 const CLOSED_QUOTE_STATUSES = ["ACCEPTED", "REJECTED", "CANCELLED"];
 
+function statusTone(status: string) {
+  switch (status) {
+    case "ACCEPTED":
+      return "bg-[hsl(var(--emerald-soft))] text-primary";
+    case "SENT":
+      return "bg-amber-50 text-amber-700";
+    case "DRAFT":
+    case "CANCELLED":
+      return "bg-slate-100 text-slate-600";
+    case "EXPIRED":
+    case "REJECTED":
+      return "bg-red-50 text-red-700";
+    default:
+      return "bg-slate-100 text-slate-600";
+  }
+}
+
+function StatusBadge({ status }: { status: string }) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${statusTone(
+        status,
+      )}`}
+    >
+      <span className="h-1.5 w-1.5 rounded-full bg-current" />
+      {quoteStatusLabel(status)}
+    </span>
+  );
+}
+
+function MetricCard({
+  label,
+  value,
+  helper,
+  accent = false,
+}: {
+  label: string;
+  value: string | number;
+  helper?: string;
+  accent?: boolean;
+}) {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)]">
+      <p className="text-[13px] font-medium text-muted-foreground">{label}</p>
+      <p
+        className={`mt-1.5 truncate text-3xl font-bold leading-none ${
+          accent ? "text-primary" : ""
+        }`}
+      >
+        {value}
+      </p>
+      {helper && <p className="mt-2 text-xs text-muted-foreground">{helper}</p>}
+    </div>
+  );
+}
+
 function matchesDisplayFilter(status: string, displayFilter: DisplayFilter) {
   if (displayFilter === "ALL") return true;
   if (displayFilter === "ACTIVE") return ACTIVE_QUOTE_STATUSES.includes(status);
@@ -181,8 +237,11 @@ export default function QuotesPage() {
     <section className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Devis</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <p className="text-xs font-medium text-muted-foreground">
+            Pilotage
+          </p>
+          <h1 className="mt-1 text-2xl font-bold">Devis</h1>
+          <p className="mt-1 text-sm font-medium text-muted-foreground">
             Liste globale de tous vos devis, prospects liés et montants.
           </p>
         </div>
@@ -190,7 +249,7 @@ export default function QuotesPage() {
         <div className="flex flex-wrap gap-2">
           <Link
             href="/prospects/new"
-            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-[var(--surface-shadow)] hover:bg-primary/90"
           >
             <Plus className="h-4 w-4" />
             Nouveau prospect
@@ -198,7 +257,7 @@ export default function QuotesPage() {
 
           <Link
             href="/dashboard"
-            className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
+            className="inline-flex items-center rounded-xl border bg-card px-4 py-2.5 text-sm font-semibold shadow-[var(--surface-shadow)] hover:border-primary hover:text-primary"
           >
             Dashboard
           </Link>
@@ -206,29 +265,28 @@ export default function QuotesPage() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-lg border bg-card p-5">
-          <p className="text-sm text-muted-foreground">Devis affichés</p>
-          <p className="mt-2 text-3xl font-semibold">{filteredQuotes.length}</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            sur {quotes.length} au total
-          </p>
-        </div>
+        <MetricCard
+          label="Devis affichés"
+          value={filteredQuotes.length}
+          helper={`sur ${quotes.length} au total`}
+        />
 
-        <div className="rounded-lg border bg-card p-5">
-          <p className="text-sm text-muted-foreground">Montant affiché</p>
-          <p className="mt-2 text-3xl font-semibold">
-            {formatAmount(totalAmount)}
-          </p>
-        </div>
+        <MetricCard
+          label="Montant affiché"
+          value={formatAmount(totalAmount)}
+          accent
+        />
 
-        <div className="rounded-lg border bg-card p-5">
-          <p className="text-sm text-muted-foreground">Affichage</p>
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)]">
+          <p className="text-[13px] font-medium text-muted-foreground">
+            Affichage
+          </p>
           <select
             value={displayFilter}
             onChange={(event) =>
               setDisplayFilter(event.target.value as DisplayFilter)
             }
-            className="mt-2 w-full rounded-md border bg-background px-3 py-2 text-sm"
+            className="mt-2 w-full rounded-xl border border-input bg-card px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-[hsl(var(--emerald-soft))]"
           >
             {DISPLAY_FILTERS.map((filter) => (
               <option
@@ -241,12 +299,14 @@ export default function QuotesPage() {
           </select>
         </div>
 
-        <div className="rounded-lg border bg-card p-5">
-          <p className="text-sm text-muted-foreground">Filtre statut</p>
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)]">
+          <p className="text-[13px] font-medium text-muted-foreground">
+            Filtre statut
+          </p>
           <select
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value)}
-            className="mt-2 w-full rounded-md border bg-background px-3 py-2 text-sm"
+            className="mt-2 w-full rounded-xl border border-input bg-card px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-[hsl(var(--emerald-soft))]"
           >
             <option value="ALL">Tous les statuts</option>
             {Object.entries(QUOTE_STATUS_LABELS).map(([status, label]) => (
@@ -258,26 +318,26 @@ export default function QuotesPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 rounded-lg border bg-card p-5 lg:grid-cols-[1fr_220px_180px]">
+      <div className="grid gap-4 rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)] lg:grid-cols-[1fr_220px_180px]">
         <div>
-          <label className="text-sm font-medium">Recherche</label>
-          <div className="mt-2 flex items-center gap-2 rounded-md border bg-background px-3">
+          <label className="text-[13px] font-semibold">Recherche</label>
+          <div className="mt-2 flex items-center gap-2 rounded-xl border border-input bg-card px-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-[hsl(var(--emerald-soft))]">
             <Search className="h-4 w-4 text-muted-foreground" />
             <input
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder="Numéro, titre, prospect, société, email..."
-              className="w-full bg-transparent py-2 text-sm outline-none"
+              className="w-full bg-transparent py-2.5 text-sm outline-none"
             />
           </div>
         </div>
 
         <div>
-          <label className="text-sm font-medium">Trier par</label>
+          <label className="text-[13px] font-semibold">Trier par</label>
           <select
             value={sortKey}
             onChange={(event) => setSortKey(event.target.value as SortKey)}
-            className="mt-2 w-full rounded-md border bg-background px-3 py-2 text-sm"
+            className="mt-2 w-full rounded-xl border border-input bg-card px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-[hsl(var(--emerald-soft))]"
           >
             <option value="createdAt">Date de création</option>
             <option value="amount">Montant</option>
@@ -288,13 +348,13 @@ export default function QuotesPage() {
         </div>
 
         <div>
-          <label className="text-sm font-medium">Ordre</label>
+          <label className="text-[13px] font-semibold">Ordre</label>
           <select
             value={sortDirection}
             onChange={(event) =>
               setSortDirection(event.target.value as SortDirection)
             }
-            className="mt-2 w-full rounded-md border bg-background px-3 py-2 text-sm"
+            className="mt-2 w-full rounded-xl border border-input bg-card px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-[hsl(var(--emerald-soft))]"
           >
             <option value="desc">Décroissant</option>
             <option value="asc">Croissant</option>
@@ -303,20 +363,28 @@ export default function QuotesPage() {
       </div>
 
       {!loading && !error && (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm font-medium text-muted-foreground">
           {quoteCountLabel(filteredQuotes.length)}
         </p>
       )}
 
       {loading && (
-        <p className="text-sm text-muted-foreground">Chargement…</p>
+        <div className="rounded-2xl border border-border bg-card p-5 text-sm text-muted-foreground shadow-[var(--surface-shadow)]">
+          Chargement…
+        </div>
       )}
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && (
+        <p className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4 text-sm font-medium text-destructive">
+          {error}
+        </p>
+      )}
 
       {!loading && !error && filteredQuotes.length === 0 && (
-        <div className="rounded-lg border bg-card px-5 py-10 text-center">
-          <FileText className="mx-auto h-8 w-8 text-muted-foreground" />
+        <div className="rounded-2xl border border-dashed border-border bg-[hsl(var(--emerald-tint))]/60 px-5 py-10 text-center shadow-[var(--surface-shadow)]">
+          <span className="mx-auto grid h-11 w-11 place-items-center rounded-xl border border-[hsl(var(--emerald-soft))] bg-card text-primary">
+            <FileText className="h-5 w-5" />
+          </span>
           <p className="mt-4 text-sm text-muted-foreground">
             {emptyQuotesMessage(displayFilter)}
           </p>
@@ -324,57 +392,61 @@ export default function QuotesPage() {
       )}
 
       {!loading && !error && filteredQuotes.length > 0 && (
-        <div className="overflow-x-auto rounded-lg border bg-card">
+        <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-[var(--surface-shadow)]">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b bg-muted/50 text-left">
-                <th className="px-4 py-3 font-medium">Numéro</th>
-                <th className="px-4 py-3 font-medium">
+              <tr className="border-b bg-[hsl(var(--emerald-tint))] text-left">
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
+                  Numéro
+                </th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
                   <button
                     type="button"
                     onClick={() => toggleSort("title")}
-                    className="hover:underline"
+                    className="hover:text-primary/80"
                   >
                     Titre{sortLabel("title")}
                   </button>
                 </th>
-                <th className="px-4 py-3 font-medium">
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
                   <button
                     type="button"
                     onClick={() => toggleSort("prospect")}
-                    className="hover:underline"
+                    className="hover:text-primary/80"
                   >
                     Prospect{sortLabel("prospect")}
                   </button>
                 </th>
-                <th className="px-4 py-3 font-medium">
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
                   <button
                     type="button"
                     onClick={() => toggleSort("amount")}
-                    className="hover:underline"
+                    className="hover:text-primary/80"
                   >
                     Montant{sortLabel("amount")}
                   </button>
                 </th>
-                <th className="px-4 py-3 font-medium">
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
                   <button
                     type="button"
                     onClick={() => toggleSort("status")}
-                    className="hover:underline"
+                    className="hover:text-primary/80"
                   >
                     Statut{sortLabel("status")}
                   </button>
                 </th>
-                <th className="px-4 py-3 font-medium">
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
                   <button
                     type="button"
                     onClick={() => toggleSort("createdAt")}
-                    className="hover:underline"
+                    className="hover:text-primary/80"
                   >
                     Créé le{sortLabel("createdAt")}
                   </button>
                 </th>
-                <th className="px-4 py-3 font-medium">Validité</th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
+                  Validité
+                </th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
@@ -383,7 +455,7 @@ export default function QuotesPage() {
               {filteredQuotes.map((quote) => (
                 <tr
                   key={quote.id}
-                  className="border-b last:border-0 hover:bg-muted/30"
+                  className="border-b transition last:border-0 hover:bg-[hsl(var(--emerald-tint))]/70"
                 >
                   <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
                     {quote.quoteNumber ?? "—"}
@@ -392,7 +464,7 @@ export default function QuotesPage() {
                   <td className="px-4 py-3 font-medium">
                     <Link
                       href={`/quotes/${quote.id}`}
-                      className="hover:underline"
+                      className="font-semibold hover:text-primary"
                     >
                       {quote.title}
                     </Link>
@@ -401,7 +473,7 @@ export default function QuotesPage() {
                   <td className="px-4 py-3 text-muted-foreground">
                     <Link
                       href={`/prospects/${quote.prospect.id}`}
-                      className="hover:text-foreground hover:underline"
+                      className="font-medium hover:text-primary"
                     >
                       {prospectDisplayName(quote)}
                     </Link>
@@ -412,9 +484,7 @@ export default function QuotesPage() {
                   </td>
 
                   <td className="px-4 py-3">
-                    <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
-                      {quoteStatusLabel(quote.status)}
-                    </span>
+                    <StatusBadge status={quote.status} />
                   </td>
 
                   <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
@@ -428,7 +498,7 @@ export default function QuotesPage() {
                   <td className="whitespace-nowrap px-4 py-3 text-right">
                     <Link
                       href={`/quotes/${quote.id}`}
-                      className="text-sm font-medium text-primary hover:underline"
+                      className="text-sm font-semibold text-primary hover:underline"
                     >
                       Voir →
                     </Link>

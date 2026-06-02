@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { compareText, formatDate } from "@/lib/formatters";
 import {
   PROSPECT_STATUS_LABELS,
@@ -28,6 +28,45 @@ const DISPLAY_FILTER_LABELS: Record<DisplayFilter, string> = {
   ARCHIVED: "Archivés",
   ALL: "Tous",
 };
+
+function statusTone(status: string) {
+  switch (status) {
+    case "CONTACTED":
+      return "bg-sky-50 text-sky-700";
+    case "QUALIFIED":
+      return "bg-[hsl(var(--emerald-soft))] text-primary";
+    case "WON":
+      return "bg-primary text-primary-foreground";
+    case "LOST":
+      return "bg-red-50 text-red-700";
+    case "ARCHIVED":
+      return "bg-slate-100 text-slate-600";
+    case "NEW":
+    default:
+      return "bg-slate-100 text-slate-600";
+  }
+}
+
+function StatusBadge({ status }: { status: string }) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${statusTone(
+        status,
+      )}`}
+    >
+      <span className="h-1.5 w-1.5 rounded-full bg-current" />
+      {prospectStatusLabel(status)}
+    </span>
+  );
+}
+
+function EmptyPanel({ message }: { message: string }) {
+  return (
+    <div className="rounded-2xl border border-dashed border-border bg-[hsl(var(--emerald-tint))]/60 px-5 py-10 text-center text-sm text-muted-foreground shadow-[var(--surface-shadow)]">
+      {message}
+    </div>
+  );
+}
 
 function prospectSearchText(prospect: Prospect) {
   return [
@@ -145,11 +184,14 @@ export default function ProspectsPage() {
 
   return (
     <section className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Prospects</h1>
+          <p className="text-xs font-medium text-muted-foreground">
+            Pilotage
+          </p>
+          <h1 className="mt-1 text-2xl font-bold">Prospects</h1>
           {!loading && !error && (
-            <p className="mt-2 text-sm text-muted-foreground">
+            <p className="mt-1 text-sm font-medium text-muted-foreground">
               {filteredProspects.length} prospect
               {filteredProspects.length > 1 ? "s" : ""} affiché
               {filteredProspects.length > 1 ? "s" : ""} ·{" "}
@@ -159,34 +201,35 @@ export default function ProspectsPage() {
         </div>
         <Link
           href="/prospects/new"
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-[var(--surface-shadow)] hover:bg-primary/90"
         >
+          <Plus className="h-4 w-4" />
           Nouveau prospect
         </Link>
       </div>
 
-      <div className="grid gap-4 rounded-lg border bg-card p-5 lg:grid-cols-[1fr_160px_180px_180px_180px]">
+      <div className="grid gap-4 rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)] lg:grid-cols-[1fr_160px_180px_180px_180px]">
         <div>
-          <label className="text-sm font-medium">Recherche</label>
-          <div className="mt-2 flex items-center gap-2 rounded-md border bg-background px-3">
+          <label className="text-[13px] font-semibold">Recherche</label>
+          <div className="mt-2 flex items-center gap-2 rounded-xl border border-input bg-card px-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-[hsl(var(--emerald-soft))]">
             <Search className="h-4 w-4 text-muted-foreground" />
             <input
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder="Nom, société, email, téléphone, statut..."
-              className="w-full bg-transparent py-2 text-sm outline-none"
+              className="w-full bg-transparent py-2.5 text-sm outline-none"
             />
           </div>
         </div>
 
         <div>
-          <label className="text-sm font-medium">Affichage</label>
+          <label className="text-[13px] font-semibold">Affichage</label>
           <select
             value={displayFilter}
             onChange={(event) =>
               setDisplayFilter(event.target.value as DisplayFilter)
             }
-            className="mt-2 w-full rounded-md border bg-background px-3 py-2 text-sm"
+            className="mt-2 w-full rounded-xl border border-input bg-card px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-[hsl(var(--emerald-soft))]"
           >
             <option value="ACTIVE">Actifs</option>
             <option value="ARCHIVED">Archivés</option>
@@ -195,11 +238,11 @@ export default function ProspectsPage() {
         </div>
 
         <div>
-          <label className="text-sm font-medium">Statut</label>
+          <label className="text-[13px] font-semibold">Statut</label>
           <select
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value)}
-            className="mt-2 w-full rounded-md border bg-background px-3 py-2 text-sm"
+            className="mt-2 w-full rounded-xl border border-input bg-card px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-[hsl(var(--emerald-soft))]"
           >
             <option value="ALL">Tous les statuts</option>
             {Object.entries(PROSPECT_STATUS_LABELS).map(([status, label]) => (
@@ -211,11 +254,11 @@ export default function ProspectsPage() {
         </div>
 
         <div>
-          <label className="text-sm font-medium">Trier par</label>
+          <label className="text-[13px] font-semibold">Trier par</label>
           <select
             value={sortKey}
             onChange={(event) => setSortKey(event.target.value as SortKey)}
-            className="mt-2 w-full rounded-md border bg-background px-3 py-2 text-sm"
+            className="mt-2 w-full rounded-xl border border-input bg-card px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-[hsl(var(--emerald-soft))]"
           >
             <option value="createdAt">Date de création</option>
             <option value="name">Nom</option>
@@ -225,13 +268,13 @@ export default function ProspectsPage() {
         </div>
 
         <div>
-          <label className="text-sm font-medium">Ordre</label>
+          <label className="text-[13px] font-semibold">Ordre</label>
           <select
             value={sortDirection}
             onChange={(event) =>
               setSortDirection(event.target.value as SortDirection)
             }
-            className="mt-2 w-full rounded-md border bg-background px-3 py-2 text-sm"
+            className="mt-2 w-full rounded-xl border border-input bg-card px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-[hsl(var(--emerald-soft))]"
           >
             <option value="desc">Décroissant</option>
             <option value="asc">Croissant</option>
@@ -239,61 +282,67 @@ export default function ProspectsPage() {
         </div>
       </div>
 
-      {loading && <p className="text-sm text-muted-foreground">Chargement…</p>}
+      {loading && (
+        <div className="rounded-2xl border border-border bg-card p-5 text-sm text-muted-foreground shadow-[var(--surface-shadow)]">
+          Chargement…
+        </div>
+      )}
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && (
+        <p className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4 text-sm font-medium text-destructive">
+          {error}
+        </p>
+      )}
 
       {!loading && !error && prospects.length === 0 && (
-        <p className="text-sm text-muted-foreground">
-          Aucun prospect pour l&apos;instant.
-        </p>
+        <EmptyPanel message="Aucun prospect pour l'instant." />
       )}
 
-      {hasNoFilteredProspects && (
-        <p className="rounded-lg border bg-card px-5 py-10 text-center text-sm text-muted-foreground">
-          {emptyFilteredMessage}
-        </p>
-      )}
+      {hasNoFilteredProspects && <EmptyPanel message={emptyFilteredMessage} />}
 
       {!loading && !error && filteredProspects.length > 0 && (
-        <div className="overflow-x-auto rounded-lg border bg-card">
+        <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-[var(--surface-shadow)]">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b bg-muted/50 text-left">
-                <th className="px-4 py-3 font-medium">
+              <tr className="border-b bg-[hsl(var(--emerald-tint))] text-left">
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
                   <button
                     type="button"
                     onClick={() => toggleSort("name")}
-                    className="hover:underline"
+                    className="hover:text-primary/80"
                   >
                     Nom{sortLabel("name")}
                   </button>
                 </th>
-                <th className="px-4 py-3 font-medium">Email</th>
-                <th className="px-4 py-3 font-medium">Téléphone</th>
-                <th className="px-4 py-3 font-medium">
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
+                  Email
+                </th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
+                  Téléphone
+                </th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
                   <button
                     type="button"
                     onClick={() => toggleSort("company")}
-                    className="hover:underline"
+                    className="hover:text-primary/80"
                   >
                     Société{sortLabel("company")}
                   </button>
                 </th>
-                <th className="px-4 py-3 font-medium">
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
                   <button
                     type="button"
                     onClick={() => toggleSort("status")}
-                    className="hover:underline"
+                    className="hover:text-primary/80"
                   >
                     Statut{sortLabel("status")}
                   </button>
                 </th>
-                <th className="px-4 py-3 font-medium">
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
                   <button
                     type="button"
                     onClick={() => toggleSort("createdAt")}
-                    className="hover:underline"
+                    className="hover:text-primary/80"
                   >
                     Créé le{sortLabel("createdAt")}
                   </button>
@@ -305,12 +354,12 @@ export default function ProspectsPage() {
               {filteredProspects.map((p) => (
                 <tr
                   key={p.id}
-                  className="border-b last:border-0 hover:bg-muted/30"
+                  className="border-b transition last:border-0 hover:bg-[hsl(var(--emerald-tint))]/70"
                 >
                   <td className="px-4 py-3 font-medium">
                     <Link
                       href={`/prospects/${p.id}`}
-                      className="hover:underline"
+                      className="font-semibold hover:text-primary"
                     >
                       {p.name}
                     </Link>
@@ -325,9 +374,7 @@ export default function ProspectsPage() {
                     {p.company ?? "—"}
                   </td>
                   <td className="px-4 py-3">
-                    <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
-                      {prospectStatusLabel(p.status)}
-                    </span>
+                    <StatusBadge status={p.status} />
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
                     {formatDate(p.createdAt)}
@@ -335,7 +382,7 @@ export default function ProspectsPage() {
                   <td className="px-4 py-3 text-right">
                     <Link
                       href={`/prospects/${p.id}`}
-                      className="text-sm font-medium text-primary hover:underline"
+                      className="text-sm font-semibold text-primary hover:underline"
                     >
                       Voir →
                     </Link>
