@@ -4,12 +4,17 @@ import { useEffect, useState } from "react";
 import type { ComponentType, ReactNode } from "react";
 import Link from "next/link";
 import {
+  ArrowUpRight,
+  Bell,
+  CheckCircle2,
+  Clock,
   Euro,
   FileText,
   Inbox,
   Percent,
   Plus,
   Users,
+  XCircle,
 } from "lucide-react";
 import {
   Bar,
@@ -103,23 +108,33 @@ function StatCard({
   value,
   helper,
   icon: Icon,
+  accent = false,
 }: {
   label: string;
   value: string | number;
   helper?: string;
   icon: ComponentType<{ className?: string }>;
+  accent?: boolean;
 }) {
   return (
-    <div className="rounded-lg border bg-card p-4">
-      <div className="flex items-center justify-between gap-4">
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)]">
+      <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-sm text-muted-foreground">{label}</p>
-          <p className="mt-1 truncate text-2xl font-semibold">{value}</p>
+          <p className="text-[13px] font-medium text-muted-foreground">
+            {label}
+          </p>
+          <p
+            className={`mt-1.5 truncate text-3xl font-bold leading-none ${
+              accent ? "text-primary" : ""
+            }`}
+          >
+            {value}
+          </p>
           {helper && (
-            <p className="mt-1 text-xs text-muted-foreground">{helper}</p>
+            <p className="mt-2 text-xs text-muted-foreground">{helper}</p>
           )}
         </div>
-        <span className="rounded-md bg-muted p-2 text-primary">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))] text-primary">
           <Icon className="h-5 w-5" />
         </span>
       </div>
@@ -127,9 +142,40 @@ function StatCard({
   );
 }
 
-function StatusBadge({ label }: { label: string }) {
+function statusTone(status: string) {
+  switch (status) {
+    case "ACCEPTED":
+    case "QUALIFIED":
+    case "SENT":
+    case "WON":
+      return "bg-[hsl(var(--emerald-soft))] text-primary";
+    case "APPROVED":
+    case "CONTACTED":
+    case "SCHEDULED":
+      return "bg-sky-50 text-sky-700";
+    case "DRAFT":
+    case "NEW":
+    case "PENDING_APPROVAL":
+      return "bg-amber-50 text-amber-700";
+    case "CANCELLED":
+    case "EXPIRED":
+    case "FAILED":
+    case "LOST":
+    case "REJECTED":
+      return "bg-red-50 text-red-700";
+    default:
+      return "bg-slate-100 text-slate-600";
+  }
+}
+
+function StatusBadge({ label, status }: { label: string; status: string }) {
   return (
-    <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium">
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${statusTone(
+        status,
+      )}`}
+    >
+      <span className="h-1.5 w-1.5 rounded-full bg-current" />
       {label}
     </span>
   );
@@ -145,12 +191,12 @@ function ChartCard({
   children: ReactNode;
 }) {
   return (
-    <div className="rounded-lg border bg-card p-4">
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)]">
       <div>
-        <h3 className="font-semibold">{title}</h3>
+        <h3 className="text-[15px] font-bold">{title}</h3>
         <p className="mt-1 text-sm text-muted-foreground">{description}</p>
       </div>
-      <div className="mt-3 h-40">{children}</div>
+      <div className="mt-4 h-48">{children}</div>
     </div>
   );
 }
@@ -167,20 +213,91 @@ function EmptyState({
   actionLabel?: string;
 }) {
   return (
-    <div className="flex h-full flex-col items-center justify-center rounded-md bg-muted/40 px-4 py-6 text-center">
-      <Inbox className="h-6 w-6 text-muted-foreground" />
-      <p className="mt-3 text-sm font-medium">{title}</p>
+    <div className="flex h-full flex-col items-center justify-center rounded-xl border border-dashed border-border bg-[hsl(var(--emerald-tint))]/60 px-4 py-8 text-center">
+      <span className="grid h-11 w-11 place-items-center rounded-xl border border-[hsl(var(--emerald-soft))] bg-card text-primary">
+        <Inbox className="h-5 w-5" />
+      </span>
+      <p className="mt-4 text-sm font-semibold">{title}</p>
       <p className="mt-1 max-w-sm text-sm text-muted-foreground">
         {description}
       </p>
       {href && actionLabel && (
         <Link
           href={href}
-          className="mt-4 rounded-md border bg-background px-3 py-1.5 text-sm font-medium hover:bg-muted"
+          className="mt-5 inline-flex items-center gap-2 rounded-xl border bg-card px-3.5 py-2 text-sm font-semibold hover:border-primary hover:text-primary"
         >
           {actionLabel}
+          <ArrowUpRight className="h-3.5 w-3.5" />
         </Link>
       )}
+    </div>
+  );
+}
+
+function SectionHeading({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
+  return (
+    <div>
+      <h2 className="text-[17px] font-bold">{title}</h2>
+      <p className="mt-1 text-[13px] text-muted-foreground">{description}</p>
+    </div>
+  );
+}
+
+function ReminderMetric({
+  label,
+  value,
+  tone,
+  icon: Icon,
+}: {
+  label: string;
+  value: number;
+  tone: "amber" | "blue" | "green" | "red";
+  icon: ComponentType<{ className?: string }>;
+}) {
+  const toneClasses = {
+    amber: {
+      text: "text-amber-700",
+      box: "border-amber-200 text-amber-700 bg-amber-50",
+    },
+    blue: {
+      text: "text-sky-700",
+      box: "border-sky-200 text-sky-700 bg-sky-50",
+    },
+    green: {
+      text: "text-primary",
+      box: "border-[hsl(var(--emerald-soft))] text-primary bg-[hsl(var(--emerald-tint))]",
+    },
+    red: {
+      text: "text-red-700",
+      box: "border-red-200 text-red-700 bg-red-50",
+    },
+  }[tone];
+
+  return (
+    <div className="rounded-xl border border-border bg-card p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[13px] font-medium text-muted-foreground">
+            {label}
+          </p>
+          <p
+            className={`mt-1 text-3xl font-bold leading-none ${toneClasses.text}`}
+          >
+            {value}
+          </p>
+        </div>
+        <span
+          className={`grid h-9 w-9 place-items-center rounded-xl border ${toneClasses.box}`}
+        >
+          <Icon className="h-4 w-4" />
+        </span>
+      </div>
     </div>
   );
 }
@@ -234,18 +351,30 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <section>
-        <h1 className="text-2xl font-semibold">Tableau de bord</h1>
-        <p className="mt-6 text-sm text-muted-foreground">Chargement…</p>
+      <section className="space-y-6">
+        <div>
+          <p className="text-xs font-medium text-muted-foreground">
+            Espace de travail
+          </p>
+          <h1 className="mt-1 text-2xl font-bold">Tableau de bord</h1>
+        </div>
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-[var(--surface-shadow)]">
+          <p className="text-sm text-muted-foreground">Chargement…</p>
+        </div>
       </section>
     );
   }
 
   if (error || !stats) {
     return (
-      <section>
-        <h1 className="text-2xl font-semibold">Tableau de bord</h1>
-        <p className="mt-6 text-sm text-destructive">
+      <section className="space-y-6">
+        <div>
+          <p className="text-xs font-medium text-muted-foreground">
+            Espace de travail
+          </p>
+          <h1 className="mt-1 text-2xl font-bold">Tableau de bord</h1>
+        </div>
+        <p className="rounded-2xl border border-destructive/20 bg-destructive/5 p-5 text-sm font-medium text-destructive">
           {error ?? "Impossible de charger le dashboard"}
         </p>
       </section>
@@ -278,11 +407,14 @@ export default function DashboardPage() {
   const hasReminderData = reminderData.some((item) => item.value > 0);
 
   return (
-    <section className="space-y-8">
+    <section className="space-y-7">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Tableau de bord</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <p className="text-xs font-medium text-muted-foreground">
+            Espace de travail
+          </p>
+          <h1 className="mt-1 text-2xl font-bold">Tableau de bord</h1>
+          <p className="mt-1 text-sm font-medium text-muted-foreground">
             Vue rapide de vos prospects, devis, montants et relances.
           </p>
         </div>
@@ -290,22 +422,24 @@ export default function DashboardPage() {
         <div className="flex flex-wrap gap-2">
           <Link
             href="/prospects/new"
-            className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-[var(--surface-shadow)] hover:bg-primary/90"
           >
             <Plus className="h-4 w-4" />
             Nouveau prospect
           </Link>
           <Link
             href="/prospects"
-            className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
+            className="inline-flex items-center gap-2 rounded-xl border bg-card px-4 py-2.5 text-sm font-semibold shadow-[var(--surface-shadow)] hover:border-primary hover:text-primary"
           >
             Voir les prospects
+            <ArrowUpRight className="h-3.5 w-3.5" />
           </Link>
           <Link
             href="/reminders"
-            className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
+            className="inline-flex items-center gap-2 rounded-xl border bg-card px-4 py-2.5 text-sm font-semibold shadow-[var(--surface-shadow)] hover:border-primary hover:text-primary"
           >
             Voir les relances
+            <ArrowUpRight className="h-3.5 w-3.5" />
           </Link>
         </div>
       </div>
@@ -330,22 +464,22 @@ export default function DashboardPage() {
           value={formatAmount(stats.totalQuoteAmount)}
           helper="Tous statuts confondus"
           icon={Euro}
+          accent
         />
         <StatCard
           label="Taux d'acceptation"
           value={`${stats.acceptanceRate} %`}
           helper="Sur les devis sortis du brouillon"
           icon={Percent}
+          accent
         />
       </div>
 
-      <div className="space-y-4">
-        <div>
-          <h2 className="text-lg font-semibold">Performance commerciale</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Suivi des devis envoyés, acceptés et refusés.
-          </p>
-        </div>
+      <div className="space-y-3.5">
+        <SectionHeading
+          title="Performance commerciale"
+          description="Suivi des devis envoyés, acceptés et refusés."
+        />
 
         <div className="grid gap-4 xl:grid-cols-2">
           <ChartCard
@@ -455,12 +589,37 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="space-y-4">
-        <div>
-          <h2 className="text-lg font-semibold">Relances</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            État des relances à valider, planifiées, envoyées ou en échec.
-          </p>
+      <div className="space-y-3.5">
+        <SectionHeading
+          title="Relances"
+          description="État des relances à valider, planifiées, envoyées ou en échec."
+        />
+
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <ReminderMetric
+            label="À approuver"
+            value={stats.pendingReminders}
+            tone="amber"
+            icon={Clock}
+          />
+          <ReminderMetric
+            label="Programmées"
+            value={stats.scheduledReminders}
+            tone="blue"
+            icon={Bell}
+          />
+          <ReminderMetric
+            label="Envoyées"
+            value={stats.sentReminders}
+            tone="green"
+            icon={CheckCircle2}
+          />
+          <ReminderMetric
+            label="En échec"
+            value={stats.failedReminders}
+            tone="red"
+            icon={XCircle}
+          />
         </div>
 
         <ChartCard
@@ -515,9 +674,9 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 xl:grid-cols-3">
-        <div className="rounded-lg border bg-card">
-          <div className="border-b px-5 py-4">
-            <h2 className="font-semibold">5 derniers prospects</h2>
+        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[var(--surface-shadow)]">
+          <div className="border-b bg-[hsl(var(--emerald-tint))]/45 px-5 py-4">
+            <h2 className="text-[15px] font-bold">5 derniers prospects</h2>
           </div>
 
           {stats.latestProspects.length === 0 ? (
@@ -535,12 +694,14 @@ export default function DashboardPage() {
                 <Link
                   key={prospect.id}
                   href={`/prospects/${prospect.id}`}
-                  className="block px-5 py-3.5 hover:bg-muted/40"
+                  className="block px-5 py-4 transition hover:bg-[hsl(var(--emerald-tint))]"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
-                      <p className="truncate font-medium">{prospect.name}</p>
-                      <p className="mt-1 truncate text-sm text-muted-foreground">
+                      <p className="truncate text-sm font-semibold">
+                        {prospect.name}
+                      </p>
+                      <p className="mt-1 truncate text-[13px] text-muted-foreground">
                         {prospect.company ??
                           prospect.email ??
                           prospect.phone ??
@@ -548,7 +709,10 @@ export default function DashboardPage() {
                       </p>
                     </div>
                     <div className="shrink-0 text-right">
-                      <StatusBadge label={prospectStatusLabel(prospect.status)} />
+                      <StatusBadge
+                        label={prospectStatusLabel(prospect.status)}
+                        status={prospect.status}
+                      />
                       <p className="mt-2 text-xs text-muted-foreground">
                         {formatDate(prospect.createdAt)}
                       </p>
@@ -560,9 +724,9 @@ export default function DashboardPage() {
           )}
         </div>
 
-        <div className="rounded-lg border bg-card">
-          <div className="border-b px-5 py-4">
-            <h2 className="font-semibold">5 derniers devis</h2>
+        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[var(--surface-shadow)]">
+          <div className="border-b bg-[hsl(var(--emerald-tint))]/45 px-5 py-4">
+            <h2 className="text-[15px] font-bold">5 derniers devis</h2>
           </div>
 
           {stats.latestQuotes.length === 0 ? (
@@ -580,12 +744,14 @@ export default function DashboardPage() {
                 <Link
                   key={quote.id}
                   href={`/quotes/${quote.id}`}
-                  className="block px-5 py-3.5 hover:bg-muted/40"
+                  className="block px-5 py-4 transition hover:bg-[hsl(var(--emerald-tint))]"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
-                      <p className="truncate font-medium">{quote.title}</p>
-                      <p className="mt-1 truncate text-sm text-muted-foreground">
+                      <p className="truncate text-sm font-semibold">
+                        {quote.title}
+                      </p>
+                      <p className="mt-1 truncate text-[13px] text-muted-foreground">
                         {quote.prospect.company ?? quote.prospect.name}
                       </p>
                       <p className="mt-1 truncate text-xs text-muted-foreground">
@@ -594,8 +760,11 @@ export default function DashboardPage() {
                       </p>
                     </div>
                     <div className="shrink-0 text-right">
-                      <StatusBadge label={quoteStatusLabel(quote.status)} />
-                      <p className="mt-2 text-sm font-medium">
+                      <StatusBadge
+                        label={quoteStatusLabel(quote.status)}
+                        status={quote.status}
+                      />
+                      <p className="mt-2 text-sm font-semibold">
                         {formatAmount(quote.totalAmount, quote.currency)}
                       </p>
                     </div>
@@ -606,9 +775,9 @@ export default function DashboardPage() {
           )}
         </div>
 
-        <div className="rounded-lg border bg-card">
-          <div className="border-b px-5 py-4">
-            <h2 className="font-semibold">5 relances à approuver</h2>
+        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[var(--surface-shadow)]">
+          <div className="border-b bg-[hsl(var(--emerald-tint))]/45 px-5 py-4">
+            <h2 className="text-[15px] font-bold">5 relances à approuver</h2>
           </div>
 
           {stats.latestPendingReminders.length === 0 ? (
@@ -626,14 +795,14 @@ export default function DashboardPage() {
                 <Link
                   key={reminder.id}
                   href={`/quotes/${reminder.quote.id}`}
-                  className="block px-5 py-3.5 hover:bg-muted/40"
+                  className="block px-5 py-4 transition hover:bg-[hsl(var(--emerald-tint))]"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
-                      <p className="truncate font-medium">
+                      <p className="truncate text-sm font-semibold">
                         {reminder.quote.prospect.name}
                       </p>
-                      <p className="mt-1 truncate text-sm text-muted-foreground">
+                      <p className="mt-1 truncate text-[13px] text-muted-foreground">
                         {reminder.subject}
                       </p>
                       <p className="mt-1 truncate text-xs text-muted-foreground">
@@ -643,9 +812,15 @@ export default function DashboardPage() {
                           : ""}
                       </p>
                     </div>
-                    <p className="shrink-0 text-xs text-muted-foreground">
-                      {formatDate(reminder.createdAt)}
-                    </p>
+                    <div className="shrink-0 text-right">
+                      <StatusBadge
+                        label="À approuver"
+                        status={reminder.status}
+                      />
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        {formatDate(reminder.createdAt)}
+                      </p>
+                    </div>
                   </div>
                 </Link>
               ))}
