@@ -16,7 +16,7 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
-  Legend,
+  LabelList,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -112,14 +112,20 @@ function StatCard({
   accent?: boolean;
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-card px-5 py-[18px] shadow-[var(--surface-shadow)]">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <p className="text-[13px] font-medium text-muted-foreground">
+    <div className="min-h-[150px] rounded-2xl border border-border bg-card px-5 py-5 shadow-[0_1px_2px_rgba(7,55,42,0.06),0_1px_1px_rgba(7,55,42,0.04)]">
+      <div className="flex h-full flex-col justify-between gap-5">
+        <div className="flex items-start justify-between gap-4">
+          <p className="max-w-[150px] text-[13px] font-medium leading-5 text-muted-foreground">
             {label}
           </p>
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-[13px] border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))] text-primary">
+            <Icon className="h-[23px] w-[23px]" />
+          </span>
+        </div>
+
+        <div className="min-w-0">
           <p
-            className={`mt-1.5 truncate text-[28px] font-bold leading-none tracking-normal ${
+            className={`truncate text-[clamp(30px,3.4vw,38px)] font-bold leading-none tracking-normal ${
               accent ? "text-primary" : ""
             }`}
           >
@@ -129,9 +135,6 @@ function StatCard({
             <p className="mt-2 text-xs text-muted-foreground">{helper}</p>
           )}
         </div>
-        <span className="grid h-[38px] w-[38px] shrink-0 place-items-center rounded-[10px] border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))] text-primary">
-          <Icon className="h-[19px] w-[19px]" />
-        </span>
       </div>
     </div>
   );
@@ -176,7 +179,7 @@ function StatusBadge({ label, status }: { label: string; status: string }) {
   );
 }
 
-function ChartCard({
+function PanelCard({
   title,
   description,
   children,
@@ -186,14 +189,14 @@ function ChartCard({
   children: ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-card px-6 py-[22px] shadow-[var(--surface-shadow)]">
+    <div className="rounded-2xl border border-border bg-card px-6 py-[22px] shadow-[0_14px_40px_-18px_rgba(7,55,42,0.18),0_1px_2px_rgba(7,55,42,0.06)]">
       <div>
         <h3 className="text-[15px] font-bold">{title}</h3>
         <p className="mt-1 text-[13px] text-muted-foreground">
           {description}
         </p>
       </div>
-      <div className="mt-4 h-[176px]">{children}</div>
+      {children}
     </div>
   );
 }
@@ -275,11 +278,44 @@ function ReminderMetric({
   }[tone];
 
   return (
-    <div className={`border-l-2 pl-3.5 ${toneClasses.border}`}>
+    <div className={`min-w-0 border-l-2 pl-3.5 ${toneClasses.border}`}>
       <p className="text-[13px] text-muted-foreground">{label}</p>
-      <p className={`mt-1 text-[26px] font-bold leading-none ${toneClasses.text}`}>
+      <p
+        className={`mt-1 text-[clamp(25px,3vw,32px)] font-bold leading-none tracking-normal ${toneClasses.text}`}
+      >
         {value}
       </p>
+    </div>
+  );
+}
+
+function DonutLegend({
+  data,
+  total,
+}: {
+  data: Array<{ name: string; value: number }>;
+  total: number;
+}) {
+  return (
+    <div className="grid gap-2.5 text-[13px]">
+      {data.map((item, index) => (
+        <div key={item.name} className="flex items-center gap-2.5">
+          <span
+            className="h-2.5 w-2.5 shrink-0 rounded-[3px]"
+            style={{
+              backgroundColor:
+                chartGreenPalette[index % chartGreenPalette.length],
+            }}
+          />
+          <span className="min-w-0 flex-1 truncate text-muted-foreground">
+            {item.name}
+          </span>
+          <span className="font-semibold text-foreground">{item.value}</span>
+        </div>
+      ))}
+      <div className="mt-1 border-t border-border pt-2 text-xs text-muted-foreground">
+        Total affiché : <span className="font-semibold text-foreground">{total}</span>
+      </div>
     </div>
   );
 }
@@ -294,15 +330,11 @@ const chartTooltipStyle = {
 };
 const chartGreenPalette = [
   "hsl(var(--primary))",
-  "hsl(167 56% 36%)",
-  "hsl(158 48% 42%)",
-  "hsl(149 38% 50%)",
-  "hsl(168 28% 62%)",
+  "#2f9c78",
+  "#5cae8e",
+  "#8fc7b1",
+  "#c2ddd2",
 ];
-const chartLegendStyle = {
-  color: chartTextColor,
-  fontSize: "0.75rem",
-};
 
 function compactAmount(value: number) {
   if (value >= 1000) {
@@ -385,10 +417,18 @@ export default function DashboardPage() {
   const hasQuoteStatusData = quoteStatusData.some((item) => item.value > 0);
   const hasQuoteAmountData = quoteAmountData.some((item) => item.value > 0);
   const hasReminderData = reminderData.some((item) => item.value > 0);
+  const totalVisibleQuoteStatuses = quoteStatusData.reduce(
+    (total, item) => total + item.value,
+    0,
+  );
+  const totalVisibleReminders = reminderData.reduce(
+    (total, item) => total + item.value,
+    0,
+  );
 
   return (
-    <section className="space-y-[22px]">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <section className="space-y-7">
+      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="Prospects"
           value={stats.totalProspects}
@@ -425,47 +465,61 @@ export default function DashboardPage() {
           description="Suivi des devis envoyés, acceptés et refusés."
         />
 
-        <div className="mt-3.5 grid gap-4 xl:grid-cols-2">
-          <ChartCard
+        <div className="mt-3.5 grid gap-5 xl:grid-cols-2">
+          <PanelCard
             title="Devis par statut"
             description="Répartition des devis sortis du brouillon."
           >
             {hasQuoteStatusData ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart margin={{ top: 0, right: 8, bottom: 0, left: 8 }}>
-                  <Tooltip
-                    contentStyle={chartTooltipStyle}
-                    formatter={(value) => [Number(value), "Devis"]}
-                  />
-                  <Pie
-                    dataKey="value"
-                    data={quoteStatusData}
-                    cx="50%"
-                    cy="44%"
-                    innerRadius={42}
-                    outerRadius={64}
-                    paddingAngle={2}
-                    nameKey="name"
-                    stroke="hsl(var(--card))"
-                    strokeWidth={3}
-                  >
-                    {quoteStatusData.map((entry, index) => (
-                      <Cell
-                        key={entry.name}
-                        fill={
-                          chartGreenPalette[index % chartGreenPalette.length]
-                        }
+              <div className="mt-5 grid items-center gap-6 sm:grid-cols-[190px_1fr]">
+                <div className="relative h-[178px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                      <Tooltip
+                        contentStyle={chartTooltipStyle}
+                        formatter={(value) => [Number(value), "Devis"]}
                       />
-                    ))}
-                  </Pie>
-                  <Legend
-                    iconSize={8}
-                    iconType="circle"
-                    verticalAlign="bottom"
-                    wrapperStyle={chartLegendStyle}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+                      <Pie
+                        dataKey="value"
+                        data={quoteStatusData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={48}
+                        outerRadius={76}
+                        paddingAngle={2}
+                        nameKey="name"
+                        stroke="hsl(var(--card))"
+                        strokeWidth={4}
+                      >
+                        {quoteStatusData.map((entry, index) => (
+                          <Cell
+                            key={entry.name}
+                            fill={
+                              chartGreenPalette[
+                                index % chartGreenPalette.length
+                              ]
+                            }
+                          />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="pointer-events-none absolute inset-0 grid place-items-center text-center">
+                    <div>
+                      <div className="text-[24px] font-bold leading-none">
+                        {totalVisibleQuoteStatuses}
+                      </div>
+                      <div className="mt-1 text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
+                        devis
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <DonutLegend
+                  data={quoteStatusData}
+                  total={totalVisibleQuoteStatuses}
+                />
+              </div>
             ) : (
               <EmptyState
                 title="Aucun devis envoyé"
@@ -474,53 +528,71 @@ export default function DashboardPage() {
                 actionLabel="Voir les devis"
               />
             )}
-          </ChartCard>
+          </PanelCard>
 
-          <ChartCard
+          <PanelCard
             title="Montants des devis"
             description="Volume financier envoyé, accepté et refusé."
           >
             {hasQuoteAmountData ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={quoteAmountData}
-                  margin={{ top: 8, right: 8, bottom: 0, left: 4 }}
-                  barSize={24}
-                >
-                  <CartesianGrid
-                    stroke={chartGridColor}
-                    strokeDasharray="3 3"
-                    vertical={false}
-                  />
-                  <XAxis
-                    dataKey="name"
-                    axisLine={false}
-                    tickLine={false}
-                    tickMargin={10}
-                    tick={{ fill: chartTextColor, fontSize: 12 }}
-                    interval={0}
-                  />
-                  <YAxis
-                    axisLine={false}
-                    tickFormatter={compactAmount}
-                    tickLine={false}
-                    tick={{ fill: chartTextColor, fontSize: 12 }}
-                  />
-                  <Tooltip
-                    cursor={{ fill: "hsl(var(--muted))", opacity: 0.45 }}
-                    contentStyle={chartTooltipStyle}
-                    formatter={(value) => [
-                      formatAmount(Number(value)),
-                      "Montant",
-                    ]}
-                  />
-                  <Bar
-                    dataKey="value"
-                    fill="hsl(167 56% 36%)"
-                    radius={[6, 6, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+              <div className="mt-5 h-[190px] px-1">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={quoteAmountData}
+                    margin={{ top: 26, right: 8, bottom: 0, left: 0 }}
+                    barSize={46}
+                  >
+                    <CartesianGrid
+                      stroke={chartGridColor}
+                      strokeDasharray="3 3"
+                      vertical={false}
+                    />
+                    <XAxis
+                      dataKey="name"
+                      axisLine={false}
+                      tickLine={false}
+                      tickMargin={10}
+                      tick={{ fill: chartTextColor, fontSize: 12 }}
+                      interval={0}
+                    />
+                    <YAxis
+                      axisLine={false}
+                      hide
+                      tickFormatter={compactAmount}
+                      tickLine={false}
+                    />
+                    <Tooltip
+                      cursor={{ fill: "hsl(var(--emerald-tint))", opacity: 0.8 }}
+                      contentStyle={chartTooltipStyle}
+                      formatter={(value) => [
+                        formatAmount(Number(value)),
+                        "Montant",
+                      ]}
+                    />
+                    <Bar
+                      dataKey="value"
+                      radius={[8, 8, 0, 0]}
+                    >
+                      {quoteAmountData.map((entry, index) => (
+                        <Cell
+                          key={entry.name}
+                          fill={
+                            chartGreenPalette[index % chartGreenPalette.length]
+                          }
+                        />
+                      ))}
+                      <LabelList
+                        dataKey="value"
+                        position="top"
+                        formatter={(value) => compactAmount(Number(value ?? 0))}
+                        fill="#364740"
+                        fontSize={12}
+                        fontWeight={600}
+                      />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             ) : (
               <EmptyState
                 title="Aucun montant à comparer"
@@ -529,7 +601,7 @@ export default function DashboardPage() {
                 actionLabel="Préparer un devis"
               />
             )}
-          </ChartCard>
+          </PanelCard>
         </div>
       </div>
 
@@ -539,9 +611,9 @@ export default function DashboardPage() {
           description="État des relances à valider, planifiées, envoyées ou en échec."
         />
 
-        <div className="mt-3.5 grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
-          <div className="rounded-2xl border border-border bg-card px-6 py-[22px] shadow-[var(--surface-shadow)]">
-            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-3.5 rounded-2xl border border-border bg-card px-6 py-[22px] shadow-[0_14px_40px_-18px_rgba(7,55,42,0.18),0_1px_2px_rgba(7,55,42,0.06)]">
+          <div className="grid items-center gap-7 xl:grid-cols-[1fr_310px]">
+            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
               <ReminderMetric
                 label="À approuver"
                 value={stats.pendingReminders}
@@ -563,61 +635,69 @@ export default function DashboardPage() {
                 tone="red"
               />
             </div>
-          </div>
 
-          <ChartCard
-            title="Relances par statut"
-            description="Vue d'ensemble des relances."
-          >
             {hasReminderData ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart margin={{ top: 0, right: 8, bottom: 0, left: 8 }}>
-                  <Tooltip
-                    contentStyle={chartTooltipStyle}
-                    formatter={(value) => [Number(value), "Relances"]}
-                  />
-                  <Pie
-                    dataKey="value"
-                    data={reminderData}
-                    cx="50%"
-                    cy="44%"
-                    innerRadius={42}
-                    outerRadius={64}
-                    paddingAngle={2}
-                    nameKey="name"
-                    stroke="hsl(var(--card))"
-                    strokeWidth={3}
-                  >
-                    {reminderData.map((entry, index) => (
-                      <Cell
-                        key={entry.name}
-                        fill={
-                          chartGreenPalette[index % chartGreenPalette.length]
-                        }
+              <div className="grid items-center gap-4 sm:grid-cols-[150px_1fr] xl:grid-cols-[132px_1fr]">
+                <div className="relative h-[132px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                      <Tooltip
+                        contentStyle={chartTooltipStyle}
+                        formatter={(value) => [Number(value), "Relances"]}
                       />
-                    ))}
-                  </Pie>
-                  <Legend
-                    iconSize={8}
-                    iconType="circle"
-                    verticalAlign="bottom"
-                    wrapperStyle={chartLegendStyle}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+                      <Pie
+                        dataKey="value"
+                        data={reminderData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={35}
+                        outerRadius={56}
+                        paddingAngle={2}
+                        nameKey="name"
+                        stroke="hsl(var(--card))"
+                        strokeWidth={3}
+                      >
+                        {reminderData.map((entry, index) => (
+                          <Cell
+                            key={entry.name}
+                            fill={
+                              chartGreenPalette[
+                                index % chartGreenPalette.length
+                              ]
+                            }
+                          />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="pointer-events-none absolute inset-0 grid place-items-center text-center">
+                    <div>
+                      <div className="text-[20px] font-bold leading-none">
+                        {totalVisibleReminders}
+                      </div>
+                      <div className="mt-0.5 text-[9px] uppercase tracking-[0.08em] text-muted-foreground">
+                        relances
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <DonutLegend data={reminderData} total={totalVisibleReminders} />
+              </div>
             ) : (
-              <EmptyState
-                title="Aucune relance suivie"
-                description="Générez une relance depuis un devis pour suivre les validations et les envois."
-                href="/reminders"
-                actionLabel="Voir les relances"
-              />
+              <div className="min-h-[132px]">
+                <EmptyState
+                  title="Aucune relance suivie"
+                  description="Générez une relance depuis un devis pour suivre les validations et les envois."
+                  href="/reminders"
+                  actionLabel="Voir les relances"
+                />
+              </div>
             )}
-          </ChartCard>
+          </div>
         </div>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-3">
+      <div className="grid gap-5 xl:grid-cols-3">
         <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[var(--surface-shadow)]">
           <div className="border-b border-border px-5 py-4">
             <h2 className="text-[15px] font-bold">5 derniers prospects</h2>
@@ -633,14 +713,14 @@ export default function DashboardPage() {
               />
             </div>
           ) : (
-            <div className="divide-y">
+            <div className="space-y-2 p-2.5">
               {stats.latestProspects.map((prospect) => (
                 <Link
                   key={prospect.id}
                   href={`/prospects/${prospect.id}`}
-                  className="block px-5 py-[13px] transition hover:bg-[hsl(var(--emerald-tint))]"
+                  className="block rounded-xl border border-border bg-card px-3 py-2.5 transition hover:border-[hsl(var(--emerald-soft))] hover:bg-[hsl(var(--emerald-tint))]"
                 >
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold">
                         {prospect.name}
@@ -657,7 +737,7 @@ export default function DashboardPage() {
                         label={prospectStatusLabel(prospect.status)}
                         status={prospect.status}
                       />
-                      <p className="mt-2 text-xs text-muted-foreground">
+                      <p className="mt-1.5 text-xs text-muted-foreground">
                         {formatDate(prospect.createdAt)}
                       </p>
                     </div>
@@ -683,14 +763,14 @@ export default function DashboardPage() {
               />
             </div>
           ) : (
-            <div className="divide-y">
+            <div className="space-y-2 p-2.5">
               {stats.latestQuotes.map((quote) => (
                 <Link
                   key={quote.id}
                   href={`/quotes/${quote.id}`}
-                  className="block px-5 py-[13px] transition hover:bg-[hsl(var(--emerald-tint))]"
+                  className="block rounded-xl border border-border bg-card px-3 py-2.5 transition hover:border-[hsl(var(--emerald-soft))] hover:bg-[hsl(var(--emerald-tint))]"
                 >
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold">
                         {quote.title}
@@ -708,7 +788,7 @@ export default function DashboardPage() {
                         label={quoteStatusLabel(quote.status)}
                         status={quote.status}
                       />
-                      <p className="mt-2 text-sm font-semibold">
+                      <p className="mt-1.5 text-sm font-semibold">
                         {formatAmount(quote.totalAmount, quote.currency)}
                       </p>
                     </div>
@@ -734,14 +814,14 @@ export default function DashboardPage() {
               />
             </div>
           ) : (
-            <div className="divide-y">
+            <div className="space-y-2 p-2.5">
               {stats.latestPendingReminders.map((reminder) => (
                 <Link
                   key={reminder.id}
                   href={`/quotes/${reminder.quote.id}`}
-                  className="block px-5 py-[13px] transition hover:bg-[hsl(var(--emerald-tint))]"
+                  className="block rounded-xl border border-border bg-card px-3 py-2.5 transition hover:border-[hsl(var(--emerald-soft))] hover:bg-[hsl(var(--emerald-tint))]"
                 >
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold">
                         {reminder.quote.prospect.name}
@@ -761,7 +841,7 @@ export default function DashboardPage() {
                         label="À approuver"
                         status={reminder.status}
                       />
-                      <p className="mt-2 text-xs text-muted-foreground">
+                      <p className="mt-1.5 text-xs text-muted-foreground">
                         {formatDate(reminder.createdAt)}
                       </p>
                     </div>
