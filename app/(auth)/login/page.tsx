@@ -31,12 +31,16 @@ export default function LoginPage() {
   }
 
   return (
-    <section className="rounded-lg border bg-card p-6 shadow-sm">
-      <h1 className="text-2xl font-semibold">Connexion</h1>
+    <section className="rounded-2xl border border-border bg-card p-6 shadow-[var(--surface-shadow)]">
+      <h1 className="text-2xl font-bold">Connexion</h1>
       <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-        {error && <p className="text-sm text-destructive">{error}</p>}
+        {error && (
+          <p className="rounded-xl border border-destructive/20 bg-destructive/5 p-3 text-sm font-medium text-destructive">
+            {error}
+          </p>
+        )}
         <div>
-          <label htmlFor="email" className="block text-sm font-medium">
+          <label htmlFor="email" className="block text-sm font-semibold">
             Email
           </label>
           <input
@@ -45,11 +49,11 @@ export default function LoginPage() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+            className="mt-1.5 w-full rounded-xl border border-input bg-card px-3 py-2.5 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-[hsl(var(--emerald-soft))]"
           />
         </div>
         <div>
-          <label htmlFor="password" className="block text-sm font-medium">
+          <label htmlFor="password" className="block text-sm font-semibold">
             Mot de passe
           </label>
           <input
@@ -58,13 +62,13 @@ export default function LoginPage() {
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
+            className="mt-1.5 w-full rounded-xl border border-input bg-card px-3 py-2.5 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-[hsl(var(--emerald-soft))]"
           />
         </div>
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          className="w-full rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-[var(--surface-shadow)] hover:bg-primary/90 disabled:opacity-50"
         >
           {loading ? "Connexion…" : "Se connecter"}
         </button>

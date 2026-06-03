@@ -50,7 +50,7 @@ export default function LegalPage() {
           </Link>
         </header>
 
-        <section className="mt-12 rounded-lg border bg-card p-6 shadow-sm sm:p-8">
+        <section className="mt-12 rounded-2xl border border-border bg-card p-6 shadow-[var(--surface-shadow)] sm:p-8">
           <p className="text-sm font-medium uppercase tracking-wide text-primary">
             Mentions légales
           </p>
@@ -66,7 +66,10 @@ export default function LegalPage() {
 
         <div className="mt-6 space-y-4">
           {sections.map((section) => (
-            <section key={section.title} className="rounded-lg border bg-card p-6">
+            <section
+              key={section.title}
+              className="rounded-2xl border border-border bg-card p-6 shadow-[var(--surface-shadow)]"
+            >
               <h2 className="text-xl font-semibold">{section.title}</h2>
               <div className="mt-3 space-y-2 text-sm leading-6 text-muted-foreground">
                 {section.content.map((line) => (

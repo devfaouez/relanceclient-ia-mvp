@@ -91,8 +91,11 @@ export default function ActivityPage() {
     <section className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Activité</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <p className="text-xs font-medium text-muted-foreground">
+            Pilotage
+          </p>
+          <h1 className="mt-1 text-2xl font-bold">Activité</h1>
+          <p className="mt-1 text-sm font-medium text-muted-foreground">
             Historique chronologique de vos prospects, devis et relances.
           </p>
         </div>
@@ -106,8 +109,8 @@ export default function ActivityPage() {
         )}
       </div>
 
-      <div className="rounded-lg border bg-card p-5">
-        <label className="text-sm font-medium">Type d&apos;activité</label>
+      <div className="rounded-2xl border border-border bg-card p-4 shadow-[var(--surface-shadow)] sm:p-5">
+        <label className="text-[13px] font-semibold">Type d&apos;activité</label>
         <div className="mt-3 flex flex-wrap gap-2">
           {filters.map((item) => (
             <button
@@ -116,8 +119,8 @@ export default function ActivityPage() {
               onClick={() => setFilter(item.value)}
               className={
                 filter === item.value
-                  ? "rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground"
-                  : "rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted"
+                  ? "rounded-xl bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground"
+                  : "rounded-xl border bg-card px-3 py-2 text-sm font-semibold hover:border-primary hover:text-primary"
               }
             >
               {item.label}
@@ -126,12 +129,20 @@ export default function ActivityPage() {
         </div>
       </div>
 
-      {loading && <p className="text-sm text-muted-foreground">Chargement…</p>}
+      {loading && (
+        <p className="rounded-2xl border border-border bg-card p-5 text-sm text-muted-foreground shadow-[var(--surface-shadow)]">
+          Chargement…
+        </p>
+      )}
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && (
+        <p className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4 text-sm font-medium text-destructive">
+          {error}
+        </p>
+      )}
 
       {!loading && !error && events.length === 0 && (
-        <div className="rounded-lg border bg-card px-5 py-10 text-center">
+        <div className="rounded-2xl border border-dashed border-border bg-[hsl(var(--emerald-tint))]/60 px-5 py-10 text-center shadow-[var(--surface-shadow)]">
           <CalendarClock className="mx-auto h-8 w-8 text-muted-foreground" />
           <p className="mt-4 text-sm text-muted-foreground">
             Aucune activité pour l&apos;instant.
@@ -140,13 +151,13 @@ export default function ActivityPage() {
       )}
 
       {!loading && !error && events.length > 0 && filteredEvents.length === 0 && (
-        <p className="rounded-lg border bg-card px-5 py-8 text-sm text-muted-foreground">
+        <p className="rounded-2xl border border-dashed border-border bg-[hsl(var(--emerald-tint))]/60 px-5 py-8 text-sm text-muted-foreground shadow-[var(--surface-shadow)]">
           Aucun événement ne correspond à ce filtre.
         </p>
       )}
 
       {!loading && !error && filteredEvents.length > 0 && (
-        <div className="rounded-lg border bg-card p-5">
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)]">
           <ol className="space-y-0">
             {filteredEvents.map((event, index) => (
               <li key={event.id} className="relative flex gap-4 pb-6 last:pb-0">
