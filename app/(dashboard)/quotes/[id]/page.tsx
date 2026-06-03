@@ -906,7 +906,7 @@ export default function QuotePreviewPage({
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-2 xl:justify-end">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap xl:justify-end">
             <button
               type="button"
               onClick={() => window.print()}
@@ -928,7 +928,7 @@ export default function QuotePreviewPage({
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 rounded-2xl border border-border bg-card p-3 shadow-[var(--surface-shadow)] print:hidden">
+      <div className="flex flex-col gap-2 rounded-2xl border border-border bg-card p-3 shadow-[var(--surface-shadow)] print:hidden sm:flex-row sm:flex-wrap">
         <button
           type="button"
           onClick={() => {
@@ -1308,7 +1308,7 @@ export default function QuotePreviewPage({
           )}
         </div>
 
-        <aside className="quote-print-hidden space-y-4 print:hidden xl:sticky xl:top-24 xl:self-start">
+        <aside className="quote-print-hidden min-w-0 space-y-4 print:hidden xl:sticky xl:top-24 xl:self-start">
           <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)]">
             <h2 className="text-[17px] font-bold">Relances liées au devis</h2>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -1507,7 +1507,7 @@ export default function QuotePreviewPage({
                               type="button"
                               onClick={() => handleUpdateReminder(reminder.id)}
                               disabled={saving}
-                              className="inline-flex items-center justify-center rounded-[9px] bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                              className="inline-flex flex-1 items-center justify-center rounded-[9px] bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 sm:flex-none"
                             >
                               Enregistrer
                             </button>
@@ -1516,7 +1516,7 @@ export default function QuotePreviewPage({
                               type="button"
                               onClick={cancelEditingReminder}
                               disabled={saving}
-                              className={smallSecondaryButtonClass}
+                              className={`${smallSecondaryButtonClass} flex-1 sm:flex-none`}
                             >
                               Annuler
                             </button>
@@ -1529,7 +1529,7 @@ export default function QuotePreviewPage({
                                 handleScheduleReminder(reminder.id)
                               }
                               disabled={saving}
-                              className="inline-flex items-center justify-center rounded-[9px] bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                              className="inline-flex flex-1 items-center justify-center rounded-[9px] bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 sm:flex-none"
                             >
                               Enregistrer
                             </button>
@@ -1538,7 +1538,7 @@ export default function QuotePreviewPage({
                               type="button"
                               onClick={cancelSchedulingReminder}
                               disabled={saving}
-                              className={smallSecondaryButtonClass}
+                              className={`${smallSecondaryButtonClass} flex-1 sm:flex-none`}
                             >
                               Annuler
                             </button>
@@ -1550,7 +1550,7 @@ export default function QuotePreviewPage({
                                 type="button"
                                 onClick={() => startEditingReminder(reminder)}
                                 disabled={saving}
-                                className={smallSecondaryButtonClass}
+                                className={`${smallSecondaryButtonClass} flex-1 sm:flex-none`}
                               >
                                 Modifier
                               </button>
@@ -1563,7 +1563,7 @@ export default function QuotePreviewPage({
                                   startSchedulingReminder(reminder)
                                 }
                                 disabled={saving}
-                                className={smallSecondaryButtonClass}
+                                className={`${smallSecondaryButtonClass} flex-1 sm:flex-none`}
                               >
                                 {isScheduled
                                   ? "Modifier la programmation"
@@ -1578,7 +1578,7 @@ export default function QuotePreviewPage({
                                   handleCancelScheduledReminder(reminder.id)
                                 }
                                 disabled={saving}
-                                className="inline-flex items-center justify-center rounded-[9px] border border-input bg-card px-3 py-1.5 text-xs font-semibold text-destructive transition hover:border-destructive hover:bg-destructive/10 disabled:opacity-50"
+                                className="inline-flex flex-1 items-center justify-center rounded-[9px] border border-input bg-card px-3 py-1.5 text-xs font-semibold text-destructive transition hover:border-destructive hover:bg-destructive/10 disabled:opacity-50 sm:flex-none"
                               >
                                 Annuler la programmation
                               </button>
@@ -1591,7 +1591,7 @@ export default function QuotePreviewPage({
                                   handleApproveReminder(reminder.id)
                                 }
                                 disabled={saving}
-                                className={smallSecondaryButtonClass}
+                                className={`${smallSecondaryButtonClass} flex-1 sm:flex-none`}
                               >
                                 Approuver
                               </button>
@@ -1602,7 +1602,7 @@ export default function QuotePreviewPage({
                                 type="button"
                                 onClick={() => setSendConfirmReminder(reminder)}
                                 disabled={saving}
-                                className="inline-flex items-center justify-center gap-1.5 rounded-[9px] bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                                className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-[9px] bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 sm:flex-none"
                               >
                                 <Send className="h-3.5 w-3.5" />
                                 Envoyer
@@ -1614,7 +1614,7 @@ export default function QuotePreviewPage({
                                 type="button"
                                 onClick={() => handleSendReminder(reminder.id)}
                                 disabled={saving}
-                                className="inline-flex items-center justify-center rounded-[9px] bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                                className="inline-flex flex-1 items-center justify-center rounded-[9px] bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 sm:flex-none"
                               >
                                 {saving ? "Réessai…" : "Réessayer l’envoi"}
                               </button>
@@ -1889,8 +1889,8 @@ export default function QuotePreviewPage({
       </ConfirmModal>
 
       {sendConfirmReminder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4 print:hidden">
-          <div className="w-full max-w-lg rounded-2xl border border-border bg-background p-6 shadow-lg">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 px-4 py-6 print:hidden">
+          <div className="w-full max-w-lg rounded-2xl border border-border bg-background p-5 shadow-lg sm:p-6">
             <h2 className="text-xl font-bold">Confirmer l’envoi</h2>
             <p className="mt-2 text-sm text-muted-foreground">
               Cette relance sera envoyée par email au client du devis.
@@ -1916,7 +1916,7 @@ export default function QuotePreviewPage({
               </div>
             </div>
 
-            <div className="mt-5 flex justify-end gap-2">
+            <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <button
                 type="button"
                 onClick={() => setSendConfirmReminder(null)}

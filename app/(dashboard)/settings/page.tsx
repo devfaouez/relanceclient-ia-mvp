@@ -336,7 +336,7 @@ export default function SettingsPage() {
               type="submit"
               form="company-settings-form"
               disabled={savingCompany}
-              className={primaryButtonClass}
+              className={`${primaryButtonClass} w-full sm:w-auto`}
             >
               {savingCompany ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -565,7 +565,7 @@ export default function SettingsPage() {
               <button
                 type="submit"
                 disabled={savingCompany}
-                className={primaryButtonClass}
+                className={`${primaryButtonClass} w-full sm:w-auto`}
               >
                 {savingCompany ? (
                   <Loader2 className="h-4 w-4 animate-spin" />

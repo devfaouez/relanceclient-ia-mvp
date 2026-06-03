@@ -201,14 +201,14 @@ export default function ProspectsPage() {
         </div>
         <Link
           href="/prospects/new"
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-[var(--surface-shadow)] hover:bg-primary/90"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-[var(--surface-shadow)] hover:bg-primary/90 sm:w-auto"
         >
           <Plus className="h-4 w-4" />
           Nouveau prospect
         </Link>
       </div>
 
-      <div className="grid gap-4 rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)] lg:grid-cols-[1fr_160px_180px_180px_180px]">
+      <div className="grid gap-4 rounded-2xl border border-border bg-card p-4 shadow-[var(--surface-shadow)] sm:p-5 lg:grid-cols-[1fr_160px_180px_180px_180px]">
         <div>
           <label className="text-[13px] font-semibold">Recherche</label>
           <div className="mt-2 flex items-center gap-2 rounded-xl border border-input bg-card px-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-[hsl(var(--emerald-soft))]">
@@ -302,7 +302,7 @@ export default function ProspectsPage() {
 
       {!loading && !error && filteredProspects.length > 0 && (
         <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-[var(--surface-shadow)]">
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[820px] text-sm">
             <thead>
               <tr className="border-b bg-[hsl(var(--emerald-tint))] text-left">
                 <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">

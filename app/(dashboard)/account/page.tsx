@@ -390,7 +390,7 @@ export default function AccountPage() {
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))] text-primary">
               <ShieldCheck className="h-5 w-5" />
             </span>
-            <div>
+            <div className="min-w-0">
               <h2 className="text-[17px] font-bold">Gestion Stripe</h2>
               <p className="mt-1 text-sm leading-6 text-muted-foreground">
                 Checkout sécurisé pour passer Pro, portail client pour gérer
@@ -433,7 +433,7 @@ export default function AccountPage() {
               type="button"
               onClick={openBillingPortal}
               disabled={portalLoading}
-              className={`mt-5 ${primaryButtonClass}`}
+              className={`mt-5 w-full ${primaryButtonClass} sm:w-auto lg:w-full`}
             >
               {portalLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

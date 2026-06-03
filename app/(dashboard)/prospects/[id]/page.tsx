@@ -733,7 +733,7 @@ export default function ProspectDetailPage({
 
         <Link
           href="/prospects"
-          className="inline-flex items-center justify-center gap-2 rounded-xl border bg-card px-4 py-2.5 text-sm font-semibold shadow-[var(--surface-shadow)] hover:border-primary hover:text-primary"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl border bg-card px-4 py-2.5 text-sm font-semibold shadow-[var(--surface-shadow)] hover:border-primary hover:text-primary sm:w-auto"
         >
           <ArrowLeft className="h-4 w-4" />
           Retour aux prospects
@@ -749,7 +749,7 @@ export default function ProspectDetailPage({
                 Coordonnées et statut commercial.
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
               <StatusBadge
                 label={prospectStatusLabel(prospect.status)}
                 status={prospect.status}
@@ -759,7 +759,7 @@ export default function ProspectDetailPage({
                   type="button"
                   onClick={startEditingProspect}
                   disabled={archivingProspect || restoringProspect}
-                  className="rounded-lg border bg-card px-3 py-1.5 text-xs font-semibold hover:border-primary hover:text-primary disabled:opacity-50"
+                  className="flex-1 rounded-lg border bg-card px-3 py-1.5 text-xs font-semibold hover:border-primary hover:text-primary disabled:opacity-50 sm:flex-none"
                 >
                   Modifier le prospect
                 </button>
@@ -769,7 +769,7 @@ export default function ProspectDetailPage({
                   type="button"
                   onClick={() => setProspectConfirmAction("RESTORE")}
                   disabled={restoringProspect || savingProspect}
-                  className="rounded-lg border bg-card px-3 py-1.5 text-xs font-semibold hover:border-primary hover:text-primary disabled:opacity-50"
+                  className="flex-1 rounded-lg border bg-card px-3 py-1.5 text-xs font-semibold hover:border-primary hover:text-primary disabled:opacity-50 sm:flex-none"
                 >
                   {restoringProspect
                     ? "Restauration…"
@@ -782,7 +782,7 @@ export default function ProspectDetailPage({
                   disabled={
                     archivingProspect || restoringProspect || savingProspect
                   }
-                  className="rounded-lg border bg-card px-3 py-1.5 text-xs font-semibold text-destructive hover:border-destructive disabled:opacity-50"
+                  className="flex-1 rounded-lg border bg-card px-3 py-1.5 text-xs font-semibold text-destructive hover:border-destructive disabled:opacity-50 sm:flex-none"
                 >
                   {archivingProspect
                     ? "Archivage…"
@@ -959,7 +959,7 @@ export default function ProspectDetailPage({
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-3 pt-1">
+              <div className="flex flex-col-reverse gap-3 pt-1 sm:flex-row">
                 <button
                   type="submit"
                   disabled={savingProspect}
@@ -1023,7 +1023,7 @@ export default function ProspectDetailPage({
 
         {!loadingQuotes && quotes.length > 0 && (
           <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-[var(--surface-shadow)]">
-            <table className="w-full text-sm">
+            <table className="w-full min-w-[760px] text-sm">
               <thead>
                 <tr className="border-b bg-[hsl(var(--emerald-tint))] text-left">
                   <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
@@ -1136,7 +1136,7 @@ export default function ProspectDetailPage({
                   key={r.id}
                   className="rounded-2xl border border-border bg-card p-4 text-sm shadow-[var(--surface-shadow)]"
                 >
-                  <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0 flex-1 space-y-1">
                       {editingReminderId === r.id ? (
                         <div className="space-y-3">
@@ -1267,7 +1267,7 @@ export default function ProspectDetailPage({
                       )}
                     </div>
 
-                    <div className="flex shrink-0 flex-col items-end gap-2">
+                    <div className="flex w-full shrink-0 flex-wrap gap-2 sm:w-auto sm:flex-col sm:items-end">
                       {editingReminderId === r.id && (
                         <StatusBadge
                           label={reminderStatusLabel(r.status)}
@@ -1281,7 +1281,7 @@ export default function ProspectDetailPage({
                             type="button"
                             onClick={() => handleUpdateReminder(r.id)}
                             disabled={pending.has(`edit-${r.id}`)}
-                            className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                            className="flex-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 sm:flex-none"
                           >
                             {pending.has(`edit-${r.id}`)
                               ? "Enregistrement…"
@@ -1292,7 +1292,7 @@ export default function ProspectDetailPage({
                             type="button"
                             onClick={cancelEditingReminder}
                             disabled={pending.has(`edit-${r.id}`)}
-                            className="rounded-lg border bg-card px-3 py-1.5 text-xs font-semibold hover:border-primary hover:text-primary disabled:opacity-50"
+                            className="flex-1 rounded-lg border bg-card px-3 py-1.5 text-xs font-semibold hover:border-primary hover:text-primary disabled:opacity-50 sm:flex-none"
                           >
                             Annuler
                           </button>
@@ -1305,7 +1305,7 @@ export default function ProspectDetailPage({
                               <button
                                 type="button"
                                 onClick={() => startEditingReminder(r)}
-                                className="rounded-lg border bg-card px-3 py-1.5 text-xs font-semibold hover:border-primary hover:text-primary"
+                                className="flex-1 rounded-lg border bg-card px-3 py-1.5 text-xs font-semibold hover:border-primary hover:text-primary sm:flex-none"
                               >
                                 Modifier
                               </button>
@@ -1319,7 +1319,7 @@ export default function ProspectDetailPage({
                                 type="button"
                                 onClick={() => handleApproveReminder(r.id)}
                                 disabled={pending.has(`approve-${r.id}`)}
-                                className="rounded-lg border bg-card px-3 py-1.5 text-xs font-semibold hover:border-primary hover:text-primary disabled:opacity-50"
+                                className="flex-1 rounded-lg border bg-card px-3 py-1.5 text-xs font-semibold hover:border-primary hover:text-primary disabled:opacity-50 sm:flex-none"
                               >
                                 {pending.has(`approve-${r.id}`)
                                   ? "…"
@@ -1332,7 +1332,7 @@ export default function ProspectDetailPage({
                               type="button"
                               onClick={() => setSendConfirmReminder(r)}
                               disabled={pending.has(`send-${r.id}`)}
-                              className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                              className="flex-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 sm:flex-none"
                             >
                               {pending.has(`send-${r.id}`)
                                 ? "Envoi…"
@@ -1351,7 +1351,7 @@ export default function ProspectDetailPage({
       </section>
 
       {generateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 px-4 py-6">
           <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-border bg-card shadow-lg">
             <div className="border-b bg-[hsl(var(--emerald-tint))]/45 px-5 py-4">
               <h2 className="text-[17px] font-bold">Générer une relance IA</h2>
@@ -1405,7 +1405,7 @@ export default function ProspectDetailPage({
                 </p>
               </div>
 
-              <div className="flex justify-end gap-2 pt-2">
+              <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
                 <button
                   type="button"
                   onClick={() => {
@@ -1421,7 +1421,7 @@ export default function ProspectDetailPage({
                 <button
                   type="submit"
                   disabled={pending.has(`gen-${generateModal.quoteId}`)}
-                  className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-[var(--surface-shadow)] hover:bg-primary/90 disabled:opacity-50"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-[var(--surface-shadow)] hover:bg-primary/90 disabled:opacity-50"
                 >
                   <Sparkles className="h-4 w-4" />
                   {pending.has(`gen-${generateModal.quoteId}`)
@@ -1435,7 +1435,7 @@ export default function ProspectDetailPage({
       )}
 
       {sendConfirmReminder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 px-4 py-6">
           <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-border bg-card shadow-lg">
             <div className="border-b bg-[hsl(var(--emerald-tint))]/45 px-5 py-4">
               <h2 className="text-[17px] font-bold">
@@ -1465,7 +1465,7 @@ export default function ProspectDetailPage({
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 border-t bg-muted/30 px-5 py-4">
+            <div className="flex flex-col-reverse gap-2 border-t bg-muted/30 px-5 py-4 sm:flex-row sm:justify-end">
               <button
                 type="button"
                 onClick={() => setSendConfirmReminder(null)}

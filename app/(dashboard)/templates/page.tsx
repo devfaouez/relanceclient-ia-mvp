@@ -590,7 +590,7 @@ export default function TemplatesPage() {
       )}
 
       <div
-        className={`${cardClass} grid gap-4 p-5 lg:grid-cols-[minmax(0,1fr)_180px_180px_180px]`}
+        className={`${cardClass} grid gap-4 p-4 sm:p-5 lg:grid-cols-[minmax(0,1fr)_180px_180px_180px]`}
       >
         <div>
           <label className="text-[13px] font-semibold">Recherche</label>

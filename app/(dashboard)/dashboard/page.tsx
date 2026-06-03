@@ -419,24 +419,24 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
           <Link
             href="/prospects/new"
-            className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-[var(--surface-shadow)] hover:bg-primary/90"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-[var(--surface-shadow)] hover:bg-primary/90"
           >
             <Plus className="h-4 w-4" />
             Nouveau prospect
           </Link>
           <Link
             href="/prospects"
-            className="inline-flex items-center gap-2 rounded-xl border bg-card px-4 py-2.5 text-sm font-semibold shadow-[var(--surface-shadow)] hover:border-primary hover:text-primary"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border bg-card px-4 py-2.5 text-sm font-semibold shadow-[var(--surface-shadow)] hover:border-primary hover:text-primary"
           >
             Voir les prospects
             <ArrowUpRight className="h-3.5 w-3.5" />
           </Link>
           <Link
             href="/reminders"
-            className="inline-flex items-center gap-2 rounded-xl border bg-card px-4 py-2.5 text-sm font-semibold shadow-[var(--surface-shadow)] hover:border-primary hover:text-primary"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border bg-card px-4 py-2.5 text-sm font-semibold shadow-[var(--surface-shadow)] hover:border-primary hover:text-primary"
           >
             Voir les relances
             <ArrowUpRight className="h-3.5 w-3.5" />

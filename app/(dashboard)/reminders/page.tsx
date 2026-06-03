@@ -547,7 +547,7 @@ export default function RemindersPage() {
           type="button"
           onClick={loadReminders}
           disabled={loading}
-          className="inline-flex items-center justify-center gap-2 rounded-xl border bg-card px-4 py-2.5 text-sm font-semibold shadow-[var(--surface-shadow)] hover:border-primary hover:text-primary disabled:opacity-50"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl border bg-card px-4 py-2.5 text-sm font-semibold shadow-[var(--surface-shadow)] hover:border-primary hover:text-primary disabled:opacity-50 sm:w-auto"
         >
           <RefreshCw className="h-4 w-4" />
           Rafraîchir
@@ -587,7 +587,7 @@ export default function RemindersPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)] lg:grid-cols-[1fr_220px_220px_180px]">
+      <div className="grid gap-4 rounded-2xl border border-border bg-card p-4 shadow-[var(--surface-shadow)] sm:p-5 lg:grid-cols-[1fr_220px_220px_180px]">
         <div>
           <label className="text-[13px] font-semibold">Recherche</label>
           <div className="mt-2 flex items-center gap-2 rounded-xl border border-input bg-card px-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-[hsl(var(--emerald-soft))]">
@@ -679,7 +679,7 @@ export default function RemindersPage() {
               className="overflow-hidden rounded-2xl border border-border bg-card shadow-[var(--surface-shadow)]"
             >
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
+                <table className="w-full min-w-[1120px] text-sm">
                   <thead>
                     <tr className="border-b bg-[hsl(var(--emerald-tint))] text-left">
                       <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
@@ -790,7 +790,7 @@ export default function RemindersPage() {
                                 type="button"
                                 onClick={() => startSchedulingReminder(row)}
                                 disabled={actionId === row.id}
-                                className="inline-flex items-center gap-2 rounded-lg border bg-card px-3 py-1.5 text-xs font-semibold hover:border-primary hover:text-primary disabled:opacity-50"
+                                className="inline-flex items-center justify-center gap-2 rounded-lg border bg-card px-3 py-1.5 text-xs font-semibold hover:border-primary hover:text-primary disabled:opacity-50"
                               >
                                 <CalendarClock className="h-3.5 w-3.5" />
                                 Modifier
@@ -800,7 +800,7 @@ export default function RemindersPage() {
                                 type="button"
                                 onClick={() => cancelScheduledReminder(row.id)}
                                 disabled={actionId === row.id}
-                                className="inline-flex items-center gap-2 rounded-lg border bg-card px-3 py-1.5 text-xs font-semibold text-destructive hover:border-destructive disabled:opacity-50"
+                                className="inline-flex items-center justify-center gap-2 rounded-lg border bg-card px-3 py-1.5 text-xs font-semibold text-destructive hover:border-destructive disabled:opacity-50"
                               >
                                 <X className="h-3.5 w-3.5" />
                                 Annuler
@@ -813,7 +813,7 @@ export default function RemindersPage() {
                               type="button"
                               onClick={() => approveReminder(row.id)}
                               disabled={actionId === row.id}
-                              className="inline-flex items-center gap-2 rounded-lg border bg-card px-3 py-1.5 text-xs font-semibold hover:border-primary hover:text-primary disabled:opacity-50"
+                              className="inline-flex items-center justify-center gap-2 rounded-lg border bg-card px-3 py-1.5 text-xs font-semibold hover:border-primary hover:text-primary disabled:opacity-50"
                             >
                               <Check className="h-3.5 w-3.5" />
                               Approuver
@@ -825,7 +825,7 @@ export default function RemindersPage() {
                               type="button"
                               onClick={() => sendReminder(row.id)}
                               disabled={actionId === row.id}
-                              className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                              className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                             >
                               <Send className="h-3.5 w-3.5" />
                               Envoyer
@@ -837,7 +837,7 @@ export default function RemindersPage() {
                               type="button"
                               onClick={() => sendReminder(row.id)}
                               disabled={actionId === row.id}
-                              className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                              className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                             >
                               <RotateCw className="h-3.5 w-3.5" />
                               {actionId === row.id
@@ -877,7 +877,7 @@ export default function RemindersPage() {
                         type="button"
                         onClick={() => updateScheduledReminder(row.id)}
                         disabled={actionId === row.id}
-                        className="rounded-xl bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                        className="rounded-xl bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 sm:w-auto"
                       >
                         Enregistrer
                       </button>
@@ -885,7 +885,7 @@ export default function RemindersPage() {
                         type="button"
                         onClick={cancelSchedulingReminder}
                         disabled={actionId === row.id}
-                        className="rounded-xl border bg-card px-3 py-2 text-sm font-semibold hover:border-primary hover:text-primary disabled:opacity-50"
+                        className="rounded-xl border bg-card px-3 py-2 text-sm font-semibold hover:border-primary hover:text-primary disabled:opacity-50 sm:w-auto"
                       >
                         Fermer
                       </button>

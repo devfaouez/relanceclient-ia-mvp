@@ -112,15 +112,15 @@ export default async function DashboardLayout({
       <aside className="bg-[linear-gradient(180deg,#07372a_0%,#052a20_100%)] px-4 py-4 text-emerald-50 lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:px-4 lg:py-5">
         <Link
           href="/dashboard"
-          className="flex items-center gap-3 rounded-xl px-2 pb-4 pt-1 text-base font-bold tracking-normal text-white"
+          className="flex min-w-0 items-center gap-3 rounded-xl px-2 pb-4 pt-1 text-base font-bold tracking-normal text-white"
         >
           <span className="flex h-8 w-8 items-center justify-center rounded-[0.65rem] bg-primary text-primary-foreground shadow-sm shadow-black/10">
             <BarChart3 className="h-4 w-4" />
           </span>
-          <span className="whitespace-nowrap">RelanceClient IA</span>
+          <span className="truncate whitespace-nowrap">RelanceClient IA</span>
         </Link>
 
-        <div className="flex gap-2 overflow-x-auto pb-1 lg:block lg:overflow-visible lg:pb-0">
+        <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 lg:mx-0 lg:block lg:overflow-visible lg:px-0 lg:pb-0">
           <div className="flex shrink-0 gap-2 lg:block">
             <NavGroup label="Pilotage" items={pilotageNavigation} />
           </div>
@@ -150,7 +150,7 @@ export default async function DashboardLayout({
       <div className="flex min-w-0 flex-col">
         <header className="sticky top-0 z-20 border-b border-border/80 bg-background/90 px-5 py-4 backdrop-blur md:px-8">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
+            <div className="min-w-0">
               <p className="text-xs font-medium text-muted-foreground">
                 Espace de travail
               </p>
@@ -158,22 +158,22 @@ export default async function DashboardLayout({
                 Pilotage des prospects, devis et relances
               </p>
             </div>
-            <div className="flex min-w-0 items-center gap-3 lg:hidden">
+            <div className="flex min-w-0 flex-wrap items-center gap-3 lg:hidden">
               <UserInitials value={displayName} />
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">{displayName}</p>
                 <p className="truncate text-xs text-muted-foreground">
                   {displayEmail}
                 </p>
               </div>
-              <div className="rounded-md border bg-card px-3 py-2 shadow-sm [&_button]:text-sm [&_button]:font-medium [&_button]:text-muted-foreground [&_button]:transition [&_button:hover]:text-foreground">
+              <div className="shrink-0 rounded-md border bg-card px-3 py-2 shadow-sm [&_button]:text-sm [&_button]:font-medium [&_button]:text-muted-foreground [&_button]:transition [&_button:hover]:text-foreground">
                 <LogoutButton />
               </div>
             </div>
           </div>
         </header>
 
-        <main className="w-full max-w-[1180px] px-5 py-8 md:px-8">
+        <main className="w-full max-w-[1180px] px-4 py-6 sm:px-5 md:px-8 md:py-8">
           {children}
         </main>
       </div>

@@ -61,7 +61,7 @@ export default function NewProspectPage() {
 
         <Link
           href="/prospects"
-          className="inline-flex items-center justify-center gap-2 rounded-xl border bg-card px-4 py-2.5 text-sm font-semibold shadow-[var(--surface-shadow)] hover:border-primary hover:text-primary"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl border bg-card px-4 py-2.5 text-sm font-semibold shadow-[var(--surface-shadow)] hover:border-primary hover:text-primary sm:w-auto"
         >
           <ArrowLeft className="h-4 w-4" />
           Retour aux prospects
