@@ -5,16 +5,11 @@ import type { ComponentType, ReactNode } from "react";
 import Link from "next/link";
 import {
   ArrowUpRight,
-  Bell,
-  CheckCircle2,
-  Clock,
   Euro,
   FileText,
   Inbox,
   Percent,
-  Plus,
   Users,
-  XCircle,
 } from "lucide-react";
 import {
   Bar,
@@ -117,14 +112,14 @@ function StatCard({
   accent?: boolean;
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)]">
+    <div className="rounded-2xl border border-border bg-card px-5 py-[18px] shadow-[var(--surface-shadow)]">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <p className="text-[13px] font-medium text-muted-foreground">
             {label}
           </p>
           <p
-            className={`mt-1.5 truncate text-3xl font-bold leading-none ${
+            className={`mt-1.5 truncate text-[28px] font-bold leading-none tracking-normal ${
               accent ? "text-primary" : ""
             }`}
           >
@@ -134,8 +129,8 @@ function StatCard({
             <p className="mt-2 text-xs text-muted-foreground">{helper}</p>
           )}
         </div>
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))] text-primary">
-          <Icon className="h-5 w-5" />
+        <span className="grid h-[38px] w-[38px] shrink-0 place-items-center rounded-[10px] border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))] text-primary">
+          <Icon className="h-[19px] w-[19px]" />
         </span>
       </div>
     </div>
@@ -152,19 +147,19 @@ function statusTone(status: string) {
     case "APPROVED":
     case "CONTACTED":
     case "SCHEDULED":
-      return "bg-sky-50 text-sky-700";
+      return "bg-[#e3eef3] text-[#2f6f8f]";
     case "DRAFT":
     case "NEW":
     case "PENDING_APPROVAL":
-      return "bg-amber-50 text-amber-700";
+      return "bg-[#faf0df] text-[#9a6a1e]";
     case "CANCELLED":
     case "EXPIRED":
     case "FAILED":
     case "LOST":
     case "REJECTED":
-      return "bg-red-50 text-red-700";
+      return "bg-[#fbeceb] text-destructive";
     default:
-      return "bg-slate-100 text-slate-600";
+      return "bg-[#eef1ef] text-muted-foreground";
   }
 }
 
@@ -191,12 +186,14 @@ function ChartCard({
   children: ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)]">
+    <div className="rounded-2xl border border-border bg-card px-6 py-[22px] shadow-[var(--surface-shadow)]">
       <div>
         <h3 className="text-[15px] font-bold">{title}</h3>
-        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+        <p className="mt-1 text-[13px] text-muted-foreground">
+          {description}
+        </p>
       </div>
-      <div className="mt-4 h-48">{children}</div>
+      <div className="mt-4 h-[176px]">{children}</div>
     </div>
   );
 }
@@ -213,9 +210,9 @@ function EmptyState({
   actionLabel?: string;
 }) {
   return (
-    <div className="flex h-full flex-col items-center justify-center rounded-xl border border-dashed border-border bg-[hsl(var(--emerald-tint))]/60 px-4 py-8 text-center">
-      <span className="grid h-11 w-11 place-items-center rounded-xl border border-[hsl(var(--emerald-soft))] bg-card text-primary">
-        <Inbox className="h-5 w-5" />
+    <div className="flex h-full flex-col items-center justify-center rounded-xl border border-dashed border-border bg-[hsl(var(--emerald-tint))]/60 px-4 py-7 text-center">
+      <span className="grid h-[46px] w-[46px] place-items-center rounded-[13px] border border-[hsl(var(--emerald-soft))] bg-card text-primary">
+        <Inbox className="h-[22px] w-[22px]" />
       </span>
       <p className="mt-4 text-sm font-semibold">{title}</p>
       <p className="mt-1 max-w-sm text-sm text-muted-foreground">
@@ -224,7 +221,7 @@ function EmptyState({
       {href && actionLabel && (
         <Link
           href={href}
-          className="mt-5 inline-flex items-center gap-2 rounded-xl border bg-card px-3.5 py-2 text-sm font-semibold hover:border-primary hover:text-primary"
+          className="mt-5 inline-flex items-center gap-2 rounded-[11px] border border-input bg-card px-3.5 py-2 text-sm font-semibold transition hover:border-primary hover:text-primary"
         >
           {actionLabel}
           <ArrowUpRight className="h-3.5 w-3.5" />
@@ -253,51 +250,36 @@ function ReminderMetric({
   label,
   value,
   tone,
-  icon: Icon,
 }: {
   label: string;
   value: number;
   tone: "amber" | "blue" | "green" | "red";
-  icon: ComponentType<{ className?: string }>;
 }) {
   const toneClasses = {
     amber: {
-      text: "text-amber-700",
-      box: "border-amber-200 text-amber-700 bg-amber-50",
+      text: "text-[#d68a2e]",
+      border: "border-l-primary",
     },
     blue: {
-      text: "text-sky-700",
-      box: "border-sky-200 text-sky-700 bg-sky-50",
+      text: "text-[#2f6f8f]",
+      border: "border-l-input",
     },
     green: {
       text: "text-primary",
-      box: "border-[hsl(var(--emerald-soft))] text-primary bg-[hsl(var(--emerald-tint))]",
+      border: "border-l-input",
     },
     red: {
-      text: "text-red-700",
-      box: "border-red-200 text-red-700 bg-red-50",
+      text: "text-destructive",
+      border: "border-l-input",
     },
   }[tone];
 
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-[13px] font-medium text-muted-foreground">
-            {label}
-          </p>
-          <p
-            className={`mt-1 text-3xl font-bold leading-none ${toneClasses.text}`}
-          >
-            {value}
-          </p>
-        </div>
-        <span
-          className={`grid h-9 w-9 place-items-center rounded-xl border ${toneClasses.box}`}
-        >
-          <Icon className="h-4 w-4" />
-        </span>
-      </div>
+    <div className={`border-l-2 pl-3.5 ${toneClasses.border}`}>
+      <p className="text-[13px] text-muted-foreground">{label}</p>
+      <p className={`mt-1 text-[26px] font-bold leading-none ${toneClasses.text}`}>
+        {value}
+      </p>
     </div>
   );
 }
@@ -351,15 +333,19 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <section className="space-y-6">
-        <div>
-          <p className="text-xs font-medium text-muted-foreground">
-            Espace de travail
-          </p>
-          <h1 className="mt-1 text-2xl font-bold">Tableau de bord</h1>
+      <section className="space-y-[22px]">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div
+              key={index}
+              className="h-[122px] animate-pulse rounded-2xl border border-border bg-card shadow-[var(--surface-shadow)]"
+            />
+          ))}
         </div>
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-[var(--surface-shadow)]">
-          <p className="text-sm text-muted-foreground">Chargement…</p>
+        <div className="rounded-2xl border border-border bg-card px-6 py-[22px] shadow-[var(--surface-shadow)]">
+          <p className="text-sm font-medium text-muted-foreground">
+            Chargement du tableau de bord…
+          </p>
         </div>
       </section>
     );
@@ -367,14 +353,8 @@ export default function DashboardPage() {
 
   if (error || !stats) {
     return (
-      <section className="space-y-6">
-        <div>
-          <p className="text-xs font-medium text-muted-foreground">
-            Espace de travail
-          </p>
-          <h1 className="mt-1 text-2xl font-bold">Tableau de bord</h1>
-        </div>
-        <p className="rounded-2xl border border-destructive/20 bg-destructive/5 p-5 text-sm font-medium text-destructive">
+      <section>
+        <p className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-[13.5px] font-medium text-destructive">
           {error ?? "Impossible de charger le dashboard"}
         </p>
       </section>
@@ -407,43 +387,7 @@ export default function DashboardPage() {
   const hasReminderData = reminderData.some((item) => item.value > 0);
 
   return (
-    <section className="space-y-7">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <p className="text-xs font-medium text-muted-foreground">
-            Espace de travail
-          </p>
-          <h1 className="mt-1 text-2xl font-bold">Tableau de bord</h1>
-          <p className="mt-1 text-sm font-medium text-muted-foreground">
-            Vue rapide de vos prospects, devis, montants et relances.
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-          <Link
-            href="/prospects/new"
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-[var(--surface-shadow)] hover:bg-primary/90"
-          >
-            <Plus className="h-4 w-4" />
-            Nouveau prospect
-          </Link>
-          <Link
-            href="/prospects"
-            className="inline-flex items-center justify-center gap-2 rounded-xl border bg-card px-4 py-2.5 text-sm font-semibold shadow-[var(--surface-shadow)] hover:border-primary hover:text-primary"
-          >
-            Voir les prospects
-            <ArrowUpRight className="h-3.5 w-3.5" />
-          </Link>
-          <Link
-            href="/reminders"
-            className="inline-flex items-center justify-center gap-2 rounded-xl border bg-card px-4 py-2.5 text-sm font-semibold shadow-[var(--surface-shadow)] hover:border-primary hover:text-primary"
-          >
-            Voir les relances
-            <ArrowUpRight className="h-3.5 w-3.5" />
-          </Link>
-        </div>
-      </div>
-
+    <section className="space-y-[22px]">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="Prospects"
@@ -475,13 +419,13 @@ export default function DashboardPage() {
         />
       </div>
 
-      <div className="space-y-3.5">
+      <div>
         <SectionHeading
           title="Performance commerciale"
           description="Suivi des devis envoyés, acceptés et refusés."
         />
 
-        <div className="grid gap-4 xl:grid-cols-2">
+        <div className="mt-3.5 grid gap-4 xl:grid-cols-2">
           <ChartCard
             title="Devis par statut"
             description="Répartition des devis sortis du brouillon."
@@ -497,9 +441,9 @@ export default function DashboardPage() {
                     dataKey="value"
                     data={quoteStatusData}
                     cx="50%"
-                    cy="43%"
-                    innerRadius={36}
-                    outerRadius={58}
+                    cy="44%"
+                    innerRadius={42}
+                    outerRadius={64}
                     paddingAngle={2}
                     nameKey="name"
                     stroke="hsl(var(--card))"
@@ -589,93 +533,93 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="space-y-3.5">
+      <div>
         <SectionHeading
           title="Relances"
           description="État des relances à valider, planifiées, envoyées ou en échec."
         />
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <ReminderMetric
-            label="À approuver"
-            value={stats.pendingReminders}
-            tone="amber"
-            icon={Clock}
-          />
-          <ReminderMetric
-            label="Programmées"
-            value={stats.scheduledReminders}
-            tone="blue"
-            icon={Bell}
-          />
-          <ReminderMetric
-            label="Envoyées"
-            value={stats.sentReminders}
-            tone="green"
-            icon={CheckCircle2}
-          />
-          <ReminderMetric
-            label="En échec"
-            value={stats.failedReminders}
-            tone="red"
-            icon={XCircle}
-          />
-        </div>
+        <div className="mt-3.5 grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
+          <div className="rounded-2xl border border-border bg-card px-6 py-[22px] shadow-[var(--surface-shadow)]">
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+              <ReminderMetric
+                label="À approuver"
+                value={stats.pendingReminders}
+                tone="amber"
+              />
+              <ReminderMetric
+                label="Programmées"
+                value={stats.scheduledReminders}
+                tone="blue"
+              />
+              <ReminderMetric
+                label="Envoyées"
+                value={stats.sentReminders}
+                tone="green"
+              />
+              <ReminderMetric
+                label="En échec"
+                value={stats.failedReminders}
+                tone="red"
+              />
+            </div>
+          </div>
 
-        <ChartCard
-          title="Relances par statut"
-          description="Vue d'ensemble des relances à traiter et déjà envoyées."
-        >
-          {hasReminderData ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart margin={{ top: 0, right: 8, bottom: 0, left: 8 }}>
-                <Tooltip
-                  contentStyle={chartTooltipStyle}
-                  formatter={(value) => [Number(value), "Relances"]}
-                />
-                <Pie
-                  dataKey="value"
-                  data={reminderData}
-                  cx="50%"
-                  cy="43%"
-                  innerRadius={36}
-                  outerRadius={58}
-                  paddingAngle={2}
-                  nameKey="name"
-                  stroke="hsl(var(--card))"
-                  strokeWidth={3}
-                >
-                  {reminderData.map((entry, index) => (
-                    <Cell
-                      key={entry.name}
-                      fill={
-                        chartGreenPalette[index % chartGreenPalette.length]
-                      }
-                    />
-                  ))}
-                </Pie>
-                <Legend
-                  iconSize={8}
-                  iconType="circle"
-                  verticalAlign="bottom"
-                  wrapperStyle={chartLegendStyle}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          ) : (
-            <EmptyState
-              title="Aucune relance suivie"
-              description="Générez une relance depuis un devis pour suivre les validations et les envois."
-              href="/reminders"
-              actionLabel="Voir les relances"
-            />
-          )}
-        </ChartCard>
+          <ChartCard
+            title="Relances par statut"
+            description="Vue d'ensemble des relances."
+          >
+            {hasReminderData ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart margin={{ top: 0, right: 8, bottom: 0, left: 8 }}>
+                  <Tooltip
+                    contentStyle={chartTooltipStyle}
+                    formatter={(value) => [Number(value), "Relances"]}
+                  />
+                  <Pie
+                    dataKey="value"
+                    data={reminderData}
+                    cx="50%"
+                    cy="44%"
+                    innerRadius={42}
+                    outerRadius={64}
+                    paddingAngle={2}
+                    nameKey="name"
+                    stroke="hsl(var(--card))"
+                    strokeWidth={3}
+                  >
+                    {reminderData.map((entry, index) => (
+                      <Cell
+                        key={entry.name}
+                        fill={
+                          chartGreenPalette[index % chartGreenPalette.length]
+                        }
+                      />
+                    ))}
+                  </Pie>
+                  <Legend
+                    iconSize={8}
+                    iconType="circle"
+                    verticalAlign="bottom"
+                    wrapperStyle={chartLegendStyle}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <EmptyState
+                title="Aucune relance suivie"
+                description="Générez une relance depuis un devis pour suivre les validations et les envois."
+                href="/reminders"
+                actionLabel="Voir les relances"
+              />
+            )}
+          </ChartCard>
+        </div>
       </div>
 
       <div className="grid gap-4 xl:grid-cols-3">
         <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[var(--surface-shadow)]">
-          <div className="border-b bg-[hsl(var(--emerald-tint))]/45 px-5 py-4">
+          <div className="border-b border-border px-5 py-4">
             <h2 className="text-[15px] font-bold">5 derniers prospects</h2>
           </div>
 
@@ -694,7 +638,7 @@ export default function DashboardPage() {
                 <Link
                   key={prospect.id}
                   href={`/prospects/${prospect.id}`}
-                  className="block px-5 py-4 transition hover:bg-[hsl(var(--emerald-tint))]"
+                  className="block px-5 py-[13px] transition hover:bg-[hsl(var(--emerald-tint))]"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
@@ -725,7 +669,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[var(--surface-shadow)]">
-          <div className="border-b bg-[hsl(var(--emerald-tint))]/45 px-5 py-4">
+          <div className="border-b border-border px-5 py-4">
             <h2 className="text-[15px] font-bold">5 derniers devis</h2>
           </div>
 
@@ -744,7 +688,7 @@ export default function DashboardPage() {
                 <Link
                   key={quote.id}
                   href={`/quotes/${quote.id}`}
-                  className="block px-5 py-4 transition hover:bg-[hsl(var(--emerald-tint))]"
+                  className="block px-5 py-[13px] transition hover:bg-[hsl(var(--emerald-tint))]"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
@@ -776,7 +720,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[var(--surface-shadow)]">
-          <div className="border-b bg-[hsl(var(--emerald-tint))]/45 px-5 py-4">
+          <div className="border-b border-border px-5 py-4">
             <h2 className="text-[15px] font-bold">5 relances à approuver</h2>
           </div>
 
@@ -795,7 +739,7 @@ export default function DashboardPage() {
                 <Link
                   key={reminder.id}
                   href={`/quotes/${reminder.quote.id}`}
-                  className="block px-5 py-4 transition hover:bg-[hsl(var(--emerald-tint))]"
+                  className="block px-5 py-[13px] transition hover:bg-[hsl(var(--emerald-tint))]"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
