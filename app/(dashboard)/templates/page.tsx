@@ -46,7 +46,7 @@ const inputClass =
   "mt-1.5 w-full rounded-[11px] border border-input bg-card px-3 py-2.5 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-[hsl(var(--emerald-soft))] disabled:opacity-50";
 
 const filterSelectClass =
-  "mt-[7px] h-[44px] w-full rounded-full border border-input bg-card px-4 text-sm shadow-[var(--surface-shadow)] outline-none transition focus:border-primary focus:ring-[3px] focus:ring-[hsl(var(--emerald-soft))]";
+  "mt-[7px] h-[44px] w-full rounded-[20px] border border-input bg-card px-4 text-sm shadow-[var(--surface-shadow)] outline-none transition focus:border-primary focus:ring-[3px] focus:ring-[hsl(var(--emerald-soft))]";
 
 const primaryButtonClass =
   "inline-flex items-center justify-center gap-2 rounded-[11px] bg-primary px-4 py-2.5 text-sm font-semibold leading-none text-primary-foreground shadow-[var(--surface-shadow)] transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50";
@@ -597,7 +597,7 @@ export default function TemplatesPage() {
       >
         <div>
           <label className="text-[13px] font-semibold">Recherche</label>
-          <div className="mt-[7px] flex h-[44px] items-center gap-2 rounded-full border border-input bg-card px-4 shadow-[var(--surface-shadow)] transition focus-within:border-primary focus-within:ring-[3px] focus-within:ring-[hsl(var(--emerald-soft))]">
+          <div className="mt-[7px] flex h-[44px] items-center gap-2 rounded-[11px] border border-input bg-card px-4 shadow-[var(--surface-shadow)] transition focus-within:border-primary focus-within:ring-[3px] focus-within:ring-[hsl(var(--emerald-soft))]">
             <Search className="h-4 w-4 text-muted-foreground" />
             <input
               value={searchQuery}

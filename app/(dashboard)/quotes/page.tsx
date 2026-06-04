@@ -43,7 +43,7 @@ const ACTIVE_QUOTE_STATUSES = ["DRAFT", "SENT"];
 const CLOSED_QUOTE_STATUSES = ["ACCEPTED", "REJECTED", "CANCELLED"];
 
 const filterSelectClass =
-  "h-[44px] w-full rounded-full border border-input bg-card px-4 text-sm shadow-[var(--surface-shadow)] outline-none transition focus:border-primary focus:ring-[3px] focus:ring-[hsl(var(--emerald-soft))]";
+  "h-[44px] w-full rounded-[20px] border border-input bg-card px-4 text-sm shadow-[var(--surface-shadow)] outline-none transition focus:border-primary focus:ring-[3px] focus:ring-[hsl(var(--emerald-soft))]";
 
 function statusTone(status: string) {
   switch (status) {
@@ -280,7 +280,7 @@ export default function QuotesPage() {
       <div className="grid gap-4 rounded-2xl border border-border bg-card px-5 py-[22px] shadow-[var(--surface-shadow)] sm:grid-cols-2 lg:grid-cols-[minmax(300px,1fr)_190px_150px]">
         <div>
           <label className="text-[13px] font-semibold">Recherche</label>
-          <div className="mt-[7px] flex h-[44px] items-center gap-2 rounded-full border border-input bg-card px-4 focus-within:border-primary focus-within:ring-[3px] focus-within:ring-[hsl(var(--emerald-soft))]">
+          <div className="mt-[7px] flex h-[44px] items-center gap-2 rounded-[11px] border border-input bg-card px-4 focus-within:border-primary focus-within:ring-[3px] focus-within:ring-[hsl(var(--emerald-soft))]">
             <Search className="h-4 w-4 text-muted-foreground" />
             <input
               value={searchQuery}
