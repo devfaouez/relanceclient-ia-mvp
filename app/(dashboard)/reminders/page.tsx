@@ -76,16 +76,16 @@ function statusTone(status: string) {
     case "SENT":
       return "bg-[hsl(var(--emerald-soft))] text-primary";
     case "SCHEDULED":
-      return "bg-sky-50 text-sky-700";
+      return "bg-[#e3eef3] text-[#2f6f8f]";
     case "DRAFT":
     case "PENDING_APPROVAL":
-      return "bg-amber-50 text-amber-700";
+      return "bg-[#faf0df] text-[#9a6a1e]";
     case "CANCELLED":
-      return "bg-slate-100 text-slate-600";
+      return "bg-[#eef1ef] text-muted-foreground";
     case "FAILED":
-      return "bg-red-50 text-red-700";
+      return "bg-[#fbeceb] text-destructive";
     default:
-      return "bg-slate-100 text-slate-600";
+      return "bg-[#eef1ef] text-muted-foreground";
   }
 }
 
@@ -112,16 +112,16 @@ function MetricCard({
   tone: "amber" | "blue" | "green" | "red";
 }) {
   const toneClass = {
-    amber: "text-amber-700",
-    blue: "text-sky-700",
+    amber: "text-[#d68a2e]",
+    blue: "text-[#2f6f8f]",
     green: "text-primary",
-    red: "text-red-700",
+    red: "text-destructive",
   }[tone];
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)]">
+    <div className="border-l-2 border-l-input pl-3.5">
       <p className="text-[13px] font-medium text-muted-foreground">{label}</p>
-      <p className={`mt-1.5 text-3xl font-bold leading-none ${toneClass}`}>
+      <p className={`mt-1.5 text-[30px] font-bold leading-none ${toneClass}`}>
         {value}
       </p>
     </div>
@@ -130,7 +130,7 @@ function MetricCard({
 
 function EmptyPanel({ message }: { message: string }) {
   return (
-    <div className="rounded-2xl border border-dashed border-border bg-[hsl(var(--emerald-tint))]/60 px-5 py-10 text-sm text-muted-foreground shadow-[var(--surface-shadow)]">
+    <div className="rounded-2xl border border-dashed border-border bg-[hsl(var(--emerald-tint))]/60 px-5 py-10 text-center text-sm text-muted-foreground shadow-[var(--surface-shadow)]">
       {message}
     </div>
   );
@@ -515,56 +515,32 @@ export default function RemindersPage() {
     statusFilter,
   ]);
 
-  function toggleSort(key: SortKey) {
-    if (sortKey === key) {
-      setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
-      return;
-    }
-
-    setSortKey(key);
-    setSortDirection(key === "createdAt" ? "desc" : "asc");
-  }
-
-  function sortLabel(key: SortKey) {
-    if (sortKey !== key) return "";
-    return sortDirection === "asc" ? " ↑" : " ↓";
-  }
-
   return (
-    <section className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <p className="text-xs font-medium text-muted-foreground">
-            Pilotage
+    <section className="space-y-[22px]">
+      <div className="flex items-center justify-between gap-4">
+        {!loading && !error ? (
+          <p className="text-[13px] font-medium text-muted-foreground">
+            {reminderCountLabel(filteredRows.length)} sur {rows.length} au total
           </p>
-          <h1 className="mt-1 text-2xl font-bold">Relances</h1>
-          <p className="mt-1 text-sm font-medium text-muted-foreground">
-            Aucune relance ne peut être envoyée sans approbation humaine.
-          </p>
-        </div>
-
+        ) : <span />}
         <button
           type="button"
           onClick={loadReminders}
           disabled={loading}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-xl border bg-card px-4 py-2.5 text-sm font-semibold shadow-[var(--surface-shadow)] hover:border-primary hover:text-primary disabled:opacity-50 sm:w-auto"
+          className="inline-flex items-center justify-center gap-2 rounded-[11px] border border-input bg-card px-4 py-2.5 text-sm font-semibold shadow-[var(--surface-shadow)] transition hover:border-primary hover:text-primary disabled:opacity-50"
         >
           <RefreshCw className="h-4 w-4" />
           Rafraîchir
         </button>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <MetricCard
-          label="À approuver"
-          value={pendingApprovalCount}
-          tone="amber"
-        />
-        <MetricCard label="Programmées" value={scheduledCount} tone="blue" />
-        <MetricCard label="Envoyées" value={sentCount} tone="green" />
-        <MetricCard label="Échec" value={failedCount} tone="red" />
-
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)]">
+      <div className="rounded-2xl border border-border bg-card px-6 py-[22px] shadow-[var(--surface-shadow)]">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-[repeat(4,1fr)_190px] lg:items-center">
+          <MetricCard label="À approuver" value={pendingApprovalCount} tone="amber" />
+          <MetricCard label="Programmées" value={scheduledCount} tone="blue" />
+          <MetricCard label="Envoyées" value={sentCount} tone="green" />
+          <MetricCard label="Échec" value={failedCount} tone="red" />
+          <div>
           <p className="text-[13px] font-medium text-muted-foreground">
             Affichage
           </p>
@@ -573,7 +549,7 @@ export default function RemindersPage() {
             onChange={(event) =>
               setDisplayFilter(event.target.value as DisplayFilter)
             }
-            className="mt-2 w-full rounded-xl border border-input bg-card px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-[hsl(var(--emerald-soft))]"
+            className="mt-2 w-full rounded-[11px] border border-input bg-card px-[13px] py-[11px] text-sm outline-none focus:border-primary focus:ring-[3px] focus:ring-[hsl(var(--emerald-soft))]"
           >
             {DISPLAY_FILTERS.map((filter) => (
               <option
@@ -584,19 +560,20 @@ export default function RemindersPage() {
               </option>
             ))}
           </select>
+          </div>
         </div>
       </div>
 
-      <div className="grid gap-4 rounded-2xl border border-border bg-card p-4 shadow-[var(--surface-shadow)] sm:p-5 lg:grid-cols-[1fr_220px_220px_180px]">
+      <div className="grid gap-4 rounded-2xl border border-border bg-card px-5 py-[22px] shadow-[var(--surface-shadow)] lg:grid-cols-[1fr_190px_190px_160px]">
         <div>
           <label className="text-[13px] font-semibold">Recherche</label>
-          <div className="mt-2 flex items-center gap-2 rounded-xl border border-input bg-card px-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-[hsl(var(--emerald-soft))]">
+          <div className="mt-[7px] flex items-center gap-2 rounded-[11px] border border-input bg-card px-[13px] focus-within:border-primary focus-within:ring-[3px] focus-within:ring-[hsl(var(--emerald-soft))]">
             <Search className="h-4 w-4 text-muted-foreground" />
             <input
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder="Sujet, message, statut, prospect, société, devis..."
-              className="w-full bg-transparent py-2.5 text-sm outline-none"
+              className="w-full bg-transparent py-[11px] text-sm outline-none"
             />
           </div>
         </div>
@@ -606,7 +583,7 @@ export default function RemindersPage() {
           <select
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value)}
-            className="mt-2 w-full rounded-xl border border-input bg-card px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-[hsl(var(--emerald-soft))]"
+            className="mt-[7px] w-full rounded-[11px] border border-input bg-card px-[13px] py-[11px] text-sm outline-none focus:border-primary focus:ring-[3px] focus:ring-[hsl(var(--emerald-soft))]"
           >
             <option value="ALL">Tous les statuts</option>
             {Object.entries(REMINDER_STATUS_LABELS).map(([status, label]) => (
@@ -622,7 +599,7 @@ export default function RemindersPage() {
           <select
             value={sortKey}
             onChange={(event) => setSortKey(event.target.value as SortKey)}
-            className="mt-2 w-full rounded-xl border border-input bg-card px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-[hsl(var(--emerald-soft))]"
+            className="mt-[7px] w-full rounded-[11px] border border-input bg-card px-[13px] py-[11px] text-sm outline-none focus:border-primary focus:ring-[3px] focus:ring-[hsl(var(--emerald-soft))]"
           >
             <option value="createdAt">Date de création</option>
             <option value="status">Statut</option>
@@ -638,7 +615,7 @@ export default function RemindersPage() {
             onChange={(event) =>
               setSortDirection(event.target.value as SortDirection)
             }
-            className="mt-2 w-full rounded-xl border border-input bg-card px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-[hsl(var(--emerald-soft))]"
+            className="mt-[7px] w-full rounded-[11px] border border-input bg-card px-[13px] py-[11px] text-sm outline-none focus:border-primary focus:ring-[3px] focus:ring-[hsl(var(--emerald-soft))]"
           >
             <option value="desc">Décroissant</option>
             <option value="asc">Croissant</option>
@@ -657,12 +634,6 @@ export default function RemindersPage() {
         </p>
       )}
 
-      {!loading && !error && (
-        <p className="text-sm font-medium text-muted-foreground">
-          {reminderCountLabel(filteredRows.length)} sur {rows.length} au total.
-        </p>
-      )}
-
       {loading ? (
         <div className="rounded-2xl border border-border bg-card p-5 text-sm text-muted-foreground shadow-[var(--surface-shadow)]">
           Chargement…
@@ -678,119 +649,56 @@ export default function RemindersPage() {
               key={row.id}
               className="overflow-hidden rounded-2xl border border-border bg-card shadow-[var(--surface-shadow)]"
             >
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[1120px] text-sm">
-                  <thead>
-                    <tr className="border-b bg-[hsl(var(--emerald-tint))] text-left">
-                      <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
-                        Sujet
-                      </th>
-                      <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
-                        <button
-                          type="button"
-                          onClick={() => toggleSort("prospect")}
-                          className="hover:text-primary/80"
+              <div className="grid gap-5 p-5 lg:grid-cols-[1fr_auto] lg:items-start">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <StatusBadge status={row.status} />
+                    <span className="text-xs text-muted-foreground">
+                      Créée le {formatDate(row.createdAt)}
+                    </span>
+                  </div>
+                  <h2 className="mt-3 text-[17px] font-bold">{row.subject}</h2>
+                  <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-[13px] text-muted-foreground">
+                    <span>
+                      Prospect :{" "}
+                      {row.prospect ? (
+                        <Link
+                          href={`/prospects/${row.prospect.id}`}
+                          className="font-semibold text-foreground hover:text-primary"
                         >
-                          Prospect{sortLabel("prospect")}
-                        </button>
-                      </th>
-                      <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
-                        <button
-                          type="button"
-                          onClick={() => toggleSort("quote")}
-                          className="hover:text-primary/80"
+                          {prospectDisplayName(row)}
+                        </Link>
+                      ) : "—"}
+                    </span>
+                    <span>
+                      Devis :{" "}
+                      {row.quote ? (
+                        <Link
+                          href={`/quotes/${row.quote.id}`}
+                          className="font-semibold text-foreground hover:text-primary"
                         >
-                          Devis{sortLabel("quote")}
-                        </button>
-                      </th>
-                      <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
-                        <button
-                          type="button"
-                          onClick={() => toggleSort("status")}
-                          className="hover:text-primary/80"
-                        >
-                          Statut{sortLabel("status")}
-                        </button>
-                      </th>
-                      <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
-                        <button
-                          type="button"
-                          onClick={() => toggleSort("createdAt")}
-                          className="hover:text-primary/80"
-                        >
-                          Créée le{sortLabel("createdAt")}
-                        </button>
-                      </th>
-                      <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
-                        Approuvée le
-                      </th>
-                      <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
-                        Programmation
-                      </th>
-                      <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
-                        Envoyée le
-                      </th>
-                      <th className="px-4 py-3"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="transition hover:bg-[hsl(var(--emerald-tint))]/70">
-                      <td className="min-w-48 px-4 py-4 font-semibold">
-                        {row.subject}
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {row.prospect ? (
-                          <Link
-                            href={`/prospects/${row.prospect.id}`}
-                            className="font-semibold text-foreground hover:text-primary"
-                          >
-                            {row.prospect.name}
-                          </Link>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                      <td className="min-w-40 px-4 py-3 text-muted-foreground">
-                        {row.quote ? (
-                          <Link
-                            href={`/quotes/${row.quote.id}`}
-                            className="font-semibold text-foreground hover:text-primary"
-                          >
-                            {row.quote.title}
-                            {row.quote.quoteNumber
-                              ? ` #${row.quote.quoteNumber}`
-                              : ""}
-                          </Link>
-                        ) : (
-                          "—"
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        <StatusBadge status={row.status} />
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {formatDate(row.createdAt)}
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {formatDate(row.approvedAt)}
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">
+                          {quoteDisplayName(row)}
+                        </Link>
+                      ) : "—"}
+                    </span>
+                    <span>
+                      Programmation :{" "}
+                      <strong className="font-semibold text-foreground">
                         {row.scheduledAt
                           ? formatScheduledDateTime(row.scheduledAt)
                           : "Non programmée"}
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {formatDate(row.sentAt)}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex flex-wrap justify-end gap-2">
+                      </strong>
+                    </span>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2 lg:max-w-[250px] lg:justify-end">
                           {row.status === "SCHEDULED" && (
                             <>
                               <button
                                 type="button"
                                 onClick={() => startSchedulingReminder(row)}
                                 disabled={actionId === row.id}
-                                className="inline-flex items-center justify-center gap-2 rounded-lg border bg-card px-3 py-1.5 text-xs font-semibold hover:border-primary hover:text-primary disabled:opacity-50"
+                                className="inline-flex items-center justify-center gap-2 rounded-[9px] border border-input bg-card px-3 py-2 text-xs font-semibold hover:border-primary hover:text-primary disabled:opacity-50"
                               >
                                 <CalendarClock className="h-3.5 w-3.5" />
                                 Modifier
@@ -800,7 +708,7 @@ export default function RemindersPage() {
                                 type="button"
                                 onClick={() => cancelScheduledReminder(row.id)}
                                 disabled={actionId === row.id}
-                                className="inline-flex items-center justify-center gap-2 rounded-lg border bg-card px-3 py-1.5 text-xs font-semibold text-destructive hover:border-destructive disabled:opacity-50"
+                                className="inline-flex items-center justify-center gap-2 rounded-[9px] border border-input bg-card px-3 py-2 text-xs font-semibold text-destructive hover:border-destructive disabled:opacity-50"
                               >
                                 <X className="h-3.5 w-3.5" />
                                 Annuler
@@ -813,7 +721,7 @@ export default function RemindersPage() {
                               type="button"
                               onClick={() => approveReminder(row.id)}
                               disabled={actionId === row.id}
-                              className="inline-flex items-center justify-center gap-2 rounded-lg border bg-card px-3 py-1.5 text-xs font-semibold hover:border-primary hover:text-primary disabled:opacity-50"
+                              className="inline-flex items-center justify-center gap-2 rounded-[9px] border border-input bg-card px-3 py-2 text-xs font-semibold hover:border-primary hover:text-primary disabled:opacity-50"
                             >
                               <Check className="h-3.5 w-3.5" />
                               Approuver
@@ -825,7 +733,7 @@ export default function RemindersPage() {
                               type="button"
                               onClick={() => sendReminder(row.id)}
                               disabled={actionId === row.id}
-                              className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                              className="inline-flex items-center justify-center gap-2 rounded-[9px] bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                             >
                               <Send className="h-3.5 w-3.5" />
                               Envoyer
@@ -837,7 +745,7 @@ export default function RemindersPage() {
                               type="button"
                               onClick={() => sendReminder(row.id)}
                               disabled={actionId === row.id}
-                              className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                              className="inline-flex items-center justify-center gap-2 rounded-[9px] bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                             >
                               <RotateCw className="h-3.5 w-3.5" />
                               {actionId === row.id
@@ -845,14 +753,10 @@ export default function RemindersPage() {
                                 : "Réessayer"}
                             </button>
                           )}
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                </div>
               </div>
 
-              <div className="border-t bg-card px-4 py-4">
+              <div className="border-t bg-[hsl(var(--emerald-tint))]/35 px-5 py-4">
                 {row.status === "FAILED" && (
                   <p className="mb-3 rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm font-medium text-destructive">
                     Échec d’envoi. Cette relance ne sera pas renvoyée
@@ -892,10 +796,10 @@ export default function RemindersPage() {
                     </div>
                   </div>
                 )}
-                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-primary">
                   Contenu de la relance
                 </p>
-                <div className="whitespace-pre-line rounded-xl bg-muted/50 p-4 text-sm leading-6">
+                <div className="whitespace-pre-line rounded-xl border border-border bg-card p-4 text-sm leading-6 text-[#364740]">
                   {row.body}
                 </div>
               </div>

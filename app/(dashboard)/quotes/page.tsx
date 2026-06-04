@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { FileText, Plus, Search } from "lucide-react";
+import { ArrowUpRight, FileText, Search } from "lucide-react";
 import { compareText, formatAmount, formatDate } from "@/lib/formatters";
 import { QUOTE_STATUS_LABELS, quoteStatusLabel } from "@/lib/status-labels";
 
@@ -47,15 +47,15 @@ function statusTone(status: string) {
     case "ACCEPTED":
       return "bg-[hsl(var(--emerald-soft))] text-primary";
     case "SENT":
-      return "bg-amber-50 text-amber-700";
+      return "bg-[#faf0df] text-[#9a6a1e]";
     case "DRAFT":
     case "CANCELLED":
-      return "bg-slate-100 text-slate-600";
+      return "bg-[#eef1ef] text-muted-foreground";
     case "EXPIRED":
     case "REJECTED":
-      return "bg-red-50 text-red-700";
+      return "bg-[#fbeceb] text-destructive";
     default:
-      return "bg-slate-100 text-slate-600";
+      return "bg-[#eef1ef] text-muted-foreground";
   }
 }
 
@@ -84,10 +84,10 @@ function MetricCard({
   accent?: boolean;
 }) {
   return (
-    <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)]">
+    <div className="min-h-[124px] rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)]">
       <p className="text-[13px] font-medium text-muted-foreground">{label}</p>
       <p
-        className={`mt-1.5 truncate text-3xl font-bold leading-none ${
+        className={`mt-2 truncate text-[32px] font-bold leading-none tracking-normal ${
           accent ? "text-primary" : ""
         }`}
       >
@@ -218,52 +218,8 @@ export default function QuotesPage() {
     return sum + quote.totalAmount;
   }, 0);
 
-  function toggleSort(key: SortKey) {
-    if (sortKey === key) {
-      setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
-      return;
-    }
-
-    setSortKey(key);
-    setSortDirection(key === "createdAt" || key === "amount" ? "desc" : "asc");
-  }
-
-  function sortLabel(key: SortKey) {
-    if (sortKey !== key) return "";
-    return sortDirection === "asc" ? " ↑" : " ↓";
-  }
-
   return (
-    <section className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <p className="text-xs font-medium text-muted-foreground">
-            Pilotage
-          </p>
-          <h1 className="mt-1 text-2xl font-bold">Devis</h1>
-          <p className="mt-1 text-sm font-medium text-muted-foreground">
-            Liste globale de tous vos devis, prospects liés et montants.
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-          <Link
-            href="/prospects/new"
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-[var(--surface-shadow)] hover:bg-primary/90"
-          >
-            <Plus className="h-4 w-4" />
-            Nouveau prospect
-          </Link>
-
-          <Link
-            href="/dashboard"
-            className="inline-flex items-center justify-center rounded-xl border bg-card px-4 py-2.5 text-sm font-semibold shadow-[var(--surface-shadow)] hover:border-primary hover:text-primary"
-          >
-            Dashboard
-          </Link>
-        </div>
-      </div>
-
+    <section className="space-y-[22px]">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard
           label="Devis affichés"
@@ -277,7 +233,7 @@ export default function QuotesPage() {
           accent
         />
 
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)]">
+        <div className="min-h-[124px] rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)]">
           <p className="text-[13px] font-medium text-muted-foreground">
             Affichage
           </p>
@@ -286,7 +242,7 @@ export default function QuotesPage() {
             onChange={(event) =>
               setDisplayFilter(event.target.value as DisplayFilter)
             }
-            className="mt-2 w-full rounded-xl border border-input bg-card px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-[hsl(var(--emerald-soft))]"
+            className="mt-2 w-full rounded-[11px] border border-input bg-card px-[13px] py-[11px] text-sm outline-none focus:border-primary focus:ring-[3px] focus:ring-[hsl(var(--emerald-soft))]"
           >
             {DISPLAY_FILTERS.map((filter) => (
               <option
@@ -299,14 +255,14 @@ export default function QuotesPage() {
           </select>
         </div>
 
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)]">
+        <div className="min-h-[124px] rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)]">
           <p className="text-[13px] font-medium text-muted-foreground">
             Filtre statut
           </p>
           <select
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value)}
-            className="mt-2 w-full rounded-xl border border-input bg-card px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-[hsl(var(--emerald-soft))]"
+            className="mt-2 w-full rounded-[11px] border border-input bg-card px-[13px] py-[11px] text-sm outline-none focus:border-primary focus:ring-[3px] focus:ring-[hsl(var(--emerald-soft))]"
           >
             <option value="ALL">Tous les statuts</option>
             {Object.entries(QUOTE_STATUS_LABELS).map(([status, label]) => (
@@ -318,16 +274,16 @@ export default function QuotesPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 rounded-2xl border border-border bg-card p-4 shadow-[var(--surface-shadow)] sm:p-5 lg:grid-cols-[1fr_220px_180px]">
+      <div className="grid gap-4 rounded-2xl border border-border bg-card px-5 py-[22px] shadow-[var(--surface-shadow)] lg:grid-cols-[1fr_220px_180px]">
         <div>
           <label className="text-[13px] font-semibold">Recherche</label>
-          <div className="mt-2 flex items-center gap-2 rounded-xl border border-input bg-card px-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-[hsl(var(--emerald-soft))]">
+          <div className="mt-[7px] flex items-center gap-2 rounded-[11px] border border-input bg-card px-[13px] focus-within:border-primary focus-within:ring-[3px] focus-within:ring-[hsl(var(--emerald-soft))]">
             <Search className="h-4 w-4 text-muted-foreground" />
             <input
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder="Numéro, titre, prospect, société, email..."
-              className="w-full bg-transparent py-2.5 text-sm outline-none"
+              className="w-full bg-transparent py-[11px] text-sm outline-none"
             />
           </div>
         </div>
@@ -337,7 +293,7 @@ export default function QuotesPage() {
           <select
             value={sortKey}
             onChange={(event) => setSortKey(event.target.value as SortKey)}
-            className="mt-2 w-full rounded-xl border border-input bg-card px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-[hsl(var(--emerald-soft))]"
+            className="mt-[7px] w-full rounded-[11px] border border-input bg-card px-[13px] py-[11px] text-sm outline-none focus:border-primary focus:ring-[3px] focus:ring-[hsl(var(--emerald-soft))]"
           >
             <option value="createdAt">Date de création</option>
             <option value="amount">Montant</option>
@@ -354,7 +310,7 @@ export default function QuotesPage() {
             onChange={(event) =>
               setSortDirection(event.target.value as SortDirection)
             }
-            className="mt-2 w-full rounded-xl border border-input bg-card px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-[hsl(var(--emerald-soft))]"
+            className="mt-[7px] w-full rounded-[11px] border border-input bg-card px-[13px] py-[11px] text-sm outline-none focus:border-primary focus:ring-[3px] focus:ring-[hsl(var(--emerald-soft))]"
           >
             <option value="desc">Décroissant</option>
             <option value="asc">Croissant</option>
@@ -392,121 +348,49 @@ export default function QuotesPage() {
       )}
 
       {!loading && !error && filteredQuotes.length > 0 && (
-        <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-[var(--surface-shadow)]">
-          <table className="w-full min-w-[920px] text-sm">
-            <thead>
-              <tr className="border-b bg-[hsl(var(--emerald-tint))] text-left">
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
-                  Numéro
-                </th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
-                  <button
-                    type="button"
-                    onClick={() => toggleSort("title")}
-                    className="hover:text-primary/80"
+        <div className="grid gap-3 md:grid-cols-2">
+          {filteredQuotes.map((quote) => (
+            <article
+              key={quote.id}
+              className="rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)] transition hover:border-[hsl(var(--emerald-soft))] hover:shadow-[0_14px_40px_-18px_rgba(7,55,42,0.22)]"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-muted-foreground">
+                    {quote.quoteNumber ?? "Sans numéro"}
+                  </p>
+                  <Link
+                    href={`/quotes/${quote.id}`}
+                    className="mt-1 block truncate text-[16px] font-bold hover:text-primary"
                   >
-                    Titre{sortLabel("title")}
-                  </button>
-                </th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
-                  <button
-                    type="button"
-                    onClick={() => toggleSort("prospect")}
-                    className="hover:text-primary/80"
+                    {quote.title}
+                  </Link>
+                </div>
+                <StatusBadge status={quote.status} />
+              </div>
+              <div className="mt-5 flex items-end justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-xs text-muted-foreground">Prospect associé</p>
+                  <Link
+                    href={`/prospects/${quote.prospect.id}`}
+                    className="mt-1 block truncate text-sm font-semibold hover:text-primary"
                   >
-                    Prospect{sortLabel("prospect")}
-                  </button>
-                </th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
-                  <button
-                    type="button"
-                    onClick={() => toggleSort("amount")}
-                    className="hover:text-primary/80"
-                  >
-                    Montant{sortLabel("amount")}
-                  </button>
-                </th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
-                  <button
-                    type="button"
-                    onClick={() => toggleSort("status")}
-                    className="hover:text-primary/80"
-                  >
-                    Statut{sortLabel("status")}
-                  </button>
-                </th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
-                  <button
-                    type="button"
-                    onClick={() => toggleSort("createdAt")}
-                    className="hover:text-primary/80"
-                  >
-                    Créé le{sortLabel("createdAt")}
-                  </button>
-                </th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
-                  Validité
-                </th>
-                <th className="px-4 py-3"></th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {filteredQuotes.map((quote) => (
-                <tr
-                  key={quote.id}
-                  className="border-b transition last:border-0 hover:bg-[hsl(var(--emerald-tint))]/70"
-                >
-                  <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
-                    {quote.quoteNumber ?? "—"}
-                  </td>
-
-                  <td className="px-4 py-3 font-medium">
-                    <Link
-                      href={`/quotes/${quote.id}`}
-                      className="font-semibold hover:text-primary"
-                    >
-                      {quote.title}
-                    </Link>
-                  </td>
-
-                  <td className="px-4 py-3 text-muted-foreground">
-                    <Link
-                      href={`/prospects/${quote.prospect.id}`}
-                      className="font-medium hover:text-primary"
-                    >
-                      {prospectDisplayName(quote)}
-                    </Link>
-                  </td>
-
-                  <td className="whitespace-nowrap px-4 py-3 font-medium">
-                    {formatAmount(quote.totalAmount, quote.currency)}
-                  </td>
-
-                  <td className="px-4 py-3">
-                    <StatusBadge status={quote.status} />
-                  </td>
-
-                  <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
-                    {formatDate(quote.createdAt)}
-                  </td>
-
-                  <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
-                    {formatDate(quote.validUntil)}
-                  </td>
-
-                  <td className="whitespace-nowrap px-4 py-3 text-right">
-                    <Link
-                      href={`/quotes/${quote.id}`}
-                      className="text-sm font-semibold text-primary hover:underline"
-                    >
-                      Voir →
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    {prospectDisplayName(quote)}
+                  </Link>
+                </div>
+                <p className="shrink-0 text-[24px] font-bold leading-none text-primary">
+                  {formatAmount(quote.totalAmount, quote.currency)}
+                </p>
+              </div>
+              <div className="mt-5 flex items-center justify-between gap-3 border-t border-border pt-3 text-xs text-muted-foreground">
+                <span>Créé le {formatDate(quote.createdAt)}</span>
+                <span>Validité : {formatDate(quote.validUntil)}</span>
+                <Link href={`/quotes/${quote.id}`} aria-label={`Voir ${quote.title}`}>
+                  <ArrowUpRight className="h-4 w-4 text-primary" />
+                </Link>
+              </div>
+            </article>
+          ))}
         </div>
       )}
     </section>

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Plus, Search } from "lucide-react";
+import { ArrowUpRight, Search, UserRound } from "lucide-react";
 import { compareText, formatDate } from "@/lib/formatters";
 import {
   PROSPECT_STATUS_LABELS,
@@ -32,18 +32,18 @@ const DISPLAY_FILTER_LABELS: Record<DisplayFilter, string> = {
 function statusTone(status: string) {
   switch (status) {
     case "CONTACTED":
-      return "bg-sky-50 text-sky-700";
+      return "bg-[#e3eef3] text-[#2f6f8f]";
     case "QUALIFIED":
       return "bg-[hsl(var(--emerald-soft))] text-primary";
     case "WON":
       return "bg-primary text-primary-foreground";
     case "LOST":
-      return "bg-red-50 text-red-700";
+      return "bg-[#fbeceb] text-destructive";
     case "ARCHIVED":
-      return "bg-slate-100 text-slate-600";
+      return "bg-[#eef1ef] text-muted-foreground";
     case "NEW":
     default:
-      return "bg-slate-100 text-slate-600";
+      return "bg-[#eef1ef] text-muted-foreground";
   }
 }
 
@@ -62,8 +62,11 @@ function StatusBadge({ status }: { status: string }) {
 
 function EmptyPanel({ message }: { message: string }) {
   return (
-    <div className="rounded-2xl border border-dashed border-border bg-[hsl(var(--emerald-tint))]/60 px-5 py-10 text-center text-sm text-muted-foreground shadow-[var(--surface-shadow)]">
-      {message}
+    <div className="rounded-2xl border border-dashed border-border bg-[hsl(var(--emerald-tint))]/60 px-5 py-12 text-center shadow-[var(--surface-shadow)]">
+      <span className="mx-auto grid h-[46px] w-[46px] place-items-center rounded-[13px] border border-[hsl(var(--emerald-soft))] bg-card text-primary">
+        <UserRound className="h-[22px] w-[22px]" />
+      </span>
+      <p className="mt-4 text-sm text-muted-foreground">{message}</p>
     </div>
   );
 }
@@ -154,21 +157,6 @@ export default function ProspectsPage() {
     statusFilter,
   ]);
 
-  function toggleSort(key: SortKey) {
-    if (sortKey === key) {
-      setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
-      return;
-    }
-
-    setSortKey(key);
-    setSortDirection(key === "createdAt" ? "desc" : "asc");
-  }
-
-  function sortLabel(key: SortKey) {
-    if (sortKey !== key) return "";
-    return sortDirection === "asc" ? " ↑" : " ↓";
-  }
-
   const hasNoFilteredProspects =
     !loading &&
     !error &&
@@ -183,41 +171,28 @@ export default function ProspectsPage() {
         : "Aucun prospect ne correspond à vos filtres.";
 
   return (
-    <section className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <p className="text-xs font-medium text-muted-foreground">
-            Pilotage
+    <section className="space-y-[22px]">
+      {!loading && !error && (
+        <div className="flex items-center justify-between gap-4">
+          <p className="text-[13px] font-medium text-muted-foreground">
+            {filteredProspects.length} prospect
+            {filteredProspects.length > 1 ? "s" : ""} affiché
+            {filteredProspects.length > 1 ? "s" : ""} ·{" "}
+            {DISPLAY_FILTER_LABELS[displayFilter].toLowerCase()}
           </p>
-          <h1 className="mt-1 text-2xl font-bold">Prospects</h1>
-          {!loading && !error && (
-            <p className="mt-1 text-sm font-medium text-muted-foreground">
-              {filteredProspects.length} prospect
-              {filteredProspects.length > 1 ? "s" : ""} affiché
-              {filteredProspects.length > 1 ? "s" : ""} ·{" "}
-              {DISPLAY_FILTER_LABELS[displayFilter].toLowerCase()}
-            </p>
-          )}
         </div>
-        <Link
-          href="/prospects/new"
-          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-[var(--surface-shadow)] hover:bg-primary/90 sm:w-auto"
-        >
-          <Plus className="h-4 w-4" />
-          Nouveau prospect
-        </Link>
-      </div>
+      )}
 
-      <div className="grid gap-4 rounded-2xl border border-border bg-card p-4 shadow-[var(--surface-shadow)] sm:p-5 lg:grid-cols-[1fr_160px_180px_180px_180px]">
+      <div className="grid gap-4 rounded-2xl border border-border bg-card px-5 py-[22px] shadow-[var(--surface-shadow)] lg:grid-cols-[1fr_150px_170px_170px_150px]">
         <div>
           <label className="text-[13px] font-semibold">Recherche</label>
-          <div className="mt-2 flex items-center gap-2 rounded-xl border border-input bg-card px-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-[hsl(var(--emerald-soft))]">
+          <div className="mt-[7px] flex items-center gap-2 rounded-[11px] border border-input bg-card px-[13px] focus-within:border-primary focus-within:ring-[3px] focus-within:ring-[hsl(var(--emerald-soft))]">
             <Search className="h-4 w-4 text-muted-foreground" />
             <input
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder="Nom, société, email, téléphone, statut..."
-              className="w-full bg-transparent py-2.5 text-sm outline-none"
+              className="w-full bg-transparent py-[11px] text-sm outline-none"
             />
           </div>
         </div>
@@ -229,7 +204,7 @@ export default function ProspectsPage() {
             onChange={(event) =>
               setDisplayFilter(event.target.value as DisplayFilter)
             }
-            className="mt-2 w-full rounded-xl border border-input bg-card px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-[hsl(var(--emerald-soft))]"
+            className="mt-[7px] w-full rounded-[11px] border border-input bg-card px-[13px] py-[11px] text-sm outline-none focus:border-primary focus:ring-[3px] focus:ring-[hsl(var(--emerald-soft))]"
           >
             <option value="ACTIVE">Actifs</option>
             <option value="ARCHIVED">Archivés</option>
@@ -242,7 +217,7 @@ export default function ProspectsPage() {
           <select
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value)}
-            className="mt-2 w-full rounded-xl border border-input bg-card px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-[hsl(var(--emerald-soft))]"
+            className="mt-[7px] w-full rounded-[11px] border border-input bg-card px-[13px] py-[11px] text-sm outline-none focus:border-primary focus:ring-[3px] focus:ring-[hsl(var(--emerald-soft))]"
           >
             <option value="ALL">Tous les statuts</option>
             {Object.entries(PROSPECT_STATUS_LABELS).map(([status, label]) => (
@@ -258,7 +233,7 @@ export default function ProspectsPage() {
           <select
             value={sortKey}
             onChange={(event) => setSortKey(event.target.value as SortKey)}
-            className="mt-2 w-full rounded-xl border border-input bg-card px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-[hsl(var(--emerald-soft))]"
+            className="mt-[7px] w-full rounded-[11px] border border-input bg-card px-[13px] py-[11px] text-sm outline-none focus:border-primary focus:ring-[3px] focus:ring-[hsl(var(--emerald-soft))]"
           >
             <option value="createdAt">Date de création</option>
             <option value="name">Nom</option>
@@ -274,7 +249,7 @@ export default function ProspectsPage() {
             onChange={(event) =>
               setSortDirection(event.target.value as SortDirection)
             }
-            className="mt-2 w-full rounded-xl border border-input bg-card px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-[hsl(var(--emerald-soft))]"
+            className="mt-[7px] w-full rounded-[11px] border border-input bg-card px-[13px] py-[11px] text-sm outline-none focus:border-primary focus:ring-[3px] focus:ring-[hsl(var(--emerald-soft))]"
           >
             <option value="desc">Décroissant</option>
             <option value="asc">Croissant</option>
@@ -301,96 +276,32 @@ export default function ProspectsPage() {
       {hasNoFilteredProspects && <EmptyPanel message={emptyFilteredMessage} />}
 
       {!loading && !error && filteredProspects.length > 0 && (
-        <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-[var(--surface-shadow)]">
-          <table className="w-full min-w-[820px] text-sm">
-            <thead>
-              <tr className="border-b bg-[hsl(var(--emerald-tint))] text-left">
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
-                  <button
-                    type="button"
-                    onClick={() => toggleSort("name")}
-                    className="hover:text-primary/80"
-                  >
-                    Nom{sortLabel("name")}
-                  </button>
-                </th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
-                  Email
-                </th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
-                  Téléphone
-                </th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
-                  <button
-                    type="button"
-                    onClick={() => toggleSort("company")}
-                    className="hover:text-primary/80"
-                  >
-                    Société{sortLabel("company")}
-                  </button>
-                </th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
-                  <button
-                    type="button"
-                    onClick={() => toggleSort("status")}
-                    className="hover:text-primary/80"
-                  >
-                    Statut{sortLabel("status")}
-                  </button>
-                </th>
-                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-primary">
-                  <button
-                    type="button"
-                    onClick={() => toggleSort("createdAt")}
-                    className="hover:text-primary/80"
-                  >
-                    Créé le{sortLabel("createdAt")}
-                  </button>
-                </th>
-                <th className="px-4 py-3"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredProspects.map((p) => (
-                <tr
-                  key={p.id}
-                  className="border-b transition last:border-0 hover:bg-[hsl(var(--emerald-tint))]/70"
-                >
-                  <td className="px-4 py-3 font-medium">
-                    <Link
-                      href={`/prospects/${p.id}`}
-                      className="font-semibold hover:text-primary"
-                    >
-                      {p.name}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {p.email ?? "—"}
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {p.phone ?? "—"}
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {p.company ?? "—"}
-                  </td>
-                  <td className="px-4 py-3">
-                    <StatusBadge status={p.status} />
-                  </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-muted-foreground">
-                    {formatDate(p.createdAt)}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <Link
-                      href={`/prospects/${p.id}`}
-                      className="text-sm font-semibold text-primary hover:underline"
-                    >
-                      Voir →
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {filteredProspects.map((p) => (
+            <Link
+              key={p.id}
+              href={`/prospects/${p.id}`}
+              className="group rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)] transition hover:-translate-y-0.5 hover:border-[hsl(var(--emerald-soft))] hover:shadow-[0_14px_40px_-18px_rgba(7,55,42,0.22)]"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-[15px] font-bold">{p.name}</p>
+                  <p className="mt-1 truncate text-[13px] text-muted-foreground">
+                    {p.company ?? "Particulier"}
+                  </p>
+                </div>
+                <StatusBadge status={p.status} />
+              </div>
+              <div className="mt-5 space-y-1.5 text-[13px] text-muted-foreground">
+                <p className="truncate">{p.email ?? "Email non renseigné"}</p>
+                <p>{p.phone ?? "Téléphone non renseigné"}</p>
+              </div>
+              <div className="mt-5 flex items-center justify-between border-t border-border pt-3 text-xs text-muted-foreground">
+                <span>Créé le {formatDate(p.createdAt)}</span>
+                <ArrowUpRight className="h-4 w-4 text-primary transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              </div>
+            </Link>
+          ))}
         </div>
       )}
     </section>
