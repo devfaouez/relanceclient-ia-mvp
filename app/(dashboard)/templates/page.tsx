@@ -45,6 +45,9 @@ const cardClass =
 const inputClass =
   "mt-1.5 w-full rounded-[11px] border border-input bg-card px-3 py-2.5 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-[hsl(var(--emerald-soft))] disabled:opacity-50";
 
+const filterSelectClass =
+  "mt-[7px] h-[44px] w-full rounded-[11px] border border-input bg-card px-[13px] text-sm shadow-[var(--surface-shadow)] outline-none transition focus:border-primary focus:ring-[3px] focus:ring-[hsl(var(--emerald-soft))]";
+
 const primaryButtonClass =
   "inline-flex items-center justify-center gap-2 rounded-[11px] bg-primary px-4 py-2.5 text-sm font-semibold leading-none text-primary-foreground shadow-[var(--surface-shadow)] transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50";
 
@@ -590,17 +593,17 @@ export default function TemplatesPage() {
       )}
 
       <div
-        className={`${cardClass} grid gap-4 p-4 sm:p-5 lg:grid-cols-[minmax(0,1fr)_180px_180px_180px]`}
+        className={`${cardClass} grid gap-4 px-5 py-[22px] sm:grid-cols-2 lg:grid-cols-[minmax(300px,1fr)_200px_180px_150px]`}
       >
         <div>
           <label className="text-[13px] font-semibold">Recherche</label>
-          <div className="mt-2 flex items-center gap-2 rounded-xl border border-input bg-card px-3 focus-within:border-primary focus-within:ring-2 focus-within:ring-[hsl(var(--emerald-soft))]">
+          <div className="mt-[7px] flex h-[44px] items-center gap-2 rounded-[11px] border border-input bg-card px-[13px] shadow-[var(--surface-shadow)] transition focus-within:border-primary focus-within:ring-[3px] focus-within:ring-[hsl(var(--emerald-soft))]">
             <Search className="h-4 w-4 text-muted-foreground" />
             <input
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder="Nom, sujet, contenu, statut..."
-              className="w-full bg-transparent py-2.5 text-sm outline-none"
+              className="w-full bg-transparent text-sm outline-none"
             />
           </div>
         </div>
@@ -610,7 +613,7 @@ export default function TemplatesPage() {
           <select
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value)}
-            className={inputClass}
+            className={filterSelectClass}
           >
             <option value="ALL">Tous les statuts</option>
             {Object.entries(TEMPLATE_STATUS_LABELS).map(([status, label]) => (
@@ -626,7 +629,7 @@ export default function TemplatesPage() {
           <select
             value={sortKey}
             onChange={(event) => setSortKey(event.target.value as SortKey)}
-            className={inputClass}
+            className={filterSelectClass}
           >
             <option value="createdAt">Date de création</option>
             <option value="name">Nom</option>
@@ -642,7 +645,7 @@ export default function TemplatesPage() {
             onChange={(event) =>
               setSortDirection(event.target.value as SortDirection)
             }
-            className={inputClass}
+            className={filterSelectClass}
           >
             <option value="desc">Décroissant</option>
             <option value="asc">Croissant</option>

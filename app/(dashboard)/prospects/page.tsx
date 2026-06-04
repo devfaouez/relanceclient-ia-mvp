@@ -29,6 +29,9 @@ const DISPLAY_FILTER_LABELS: Record<DisplayFilter, string> = {
   ALL: "Tous",
 };
 
+const filterSelectClass =
+  "h-[44px] w-full rounded-[11px] border border-input bg-card px-[13px] text-sm shadow-[var(--surface-shadow)] outline-none transition focus:border-primary focus:ring-[3px] focus:ring-[hsl(var(--emerald-soft))]";
+
 function statusTone(status: string) {
   switch (status) {
     case "CONTACTED":
@@ -183,7 +186,7 @@ export default function ProspectsPage() {
         </div>
       )}
 
-      <div className="grid gap-4 rounded-2xl border border-border bg-card px-5 py-[22px] shadow-[var(--surface-shadow)] lg:grid-cols-[1fr_150px_170px_170px_150px]">
+      <div className="grid gap-4 rounded-2xl border border-border bg-card px-5 py-[22px] shadow-[var(--surface-shadow)] sm:grid-cols-2 lg:grid-cols-[minmax(280px,1fr)_150px_190px_180px_150px]">
         <div>
           <label className="text-[13px] font-semibold">Recherche</label>
           <div className="mt-[7px] flex items-center gap-2 rounded-[11px] border border-input bg-card px-[13px] focus-within:border-primary focus-within:ring-[3px] focus-within:ring-[hsl(var(--emerald-soft))]">
@@ -204,7 +207,7 @@ export default function ProspectsPage() {
             onChange={(event) =>
               setDisplayFilter(event.target.value as DisplayFilter)
             }
-            className="mt-[7px] w-full rounded-[11px] border border-input bg-card px-[13px] py-[11px] text-sm outline-none focus:border-primary focus:ring-[3px] focus:ring-[hsl(var(--emerald-soft))]"
+            className={`mt-[7px] ${filterSelectClass}`}
           >
             <option value="ACTIVE">Actifs</option>
             <option value="ARCHIVED">Archivés</option>
@@ -217,7 +220,7 @@ export default function ProspectsPage() {
           <select
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value)}
-            className="mt-[7px] w-full rounded-[11px] border border-input bg-card px-[13px] py-[11px] text-sm outline-none focus:border-primary focus:ring-[3px] focus:ring-[hsl(var(--emerald-soft))]"
+            className={`mt-[7px] ${filterSelectClass}`}
           >
             <option value="ALL">Tous les statuts</option>
             {Object.entries(PROSPECT_STATUS_LABELS).map(([status, label]) => (
@@ -233,7 +236,7 @@ export default function ProspectsPage() {
           <select
             value={sortKey}
             onChange={(event) => setSortKey(event.target.value as SortKey)}
-            className="mt-[7px] w-full rounded-[11px] border border-input bg-card px-[13px] py-[11px] text-sm outline-none focus:border-primary focus:ring-[3px] focus:ring-[hsl(var(--emerald-soft))]"
+            className={`mt-[7px] ${filterSelectClass}`}
           >
             <option value="createdAt">Date de création</option>
             <option value="name">Nom</option>
@@ -249,7 +252,7 @@ export default function ProspectsPage() {
             onChange={(event) =>
               setSortDirection(event.target.value as SortDirection)
             }
-            className="mt-[7px] w-full rounded-[11px] border border-input bg-card px-[13px] py-[11px] text-sm outline-none focus:border-primary focus:ring-[3px] focus:ring-[hsl(var(--emerald-soft))]"
+            className={`mt-[7px] ${filterSelectClass}`}
           >
             <option value="desc">Décroissant</option>
             <option value="asc">Croissant</option>
