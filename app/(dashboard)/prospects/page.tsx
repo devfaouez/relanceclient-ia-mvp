@@ -186,7 +186,7 @@ export default function ProspectsPage() {
         </div>
       )}
 
-      <div className="grid gap-4 rounded-2xl border border-border bg-card px-5 py-[22px] shadow-[var(--surface-shadow)] sm:grid-cols-2 lg:grid-cols-[minmax(280px,1fr)_170px_210px_200px_170px]">
+      <div className="grid gap-4 rounded-2xl border border-border bg-card px-5 py-[22px] shadow-[var(--surface-shadow)] sm:grid-cols-2 lg:grid-cols-[minmax(280px,1fr)_160px_200px_190px_160px] lg:pr-7">
         <div>
           <label className="text-[13px] font-semibold">Recherche</label>
           <div className="mt-[7px] flex h-[44px] items-center gap-2 rounded-[11px] border border-input bg-card px-4 focus-within:border-primary focus-within:ring-[3px] focus-within:ring-[hsl(var(--emerald-soft))]">
@@ -202,7 +202,7 @@ export default function ProspectsPage() {
 
         <div>
           <label className="text-[13px] font-semibold">Affichage</label>
-          <div className="relative mt-[7px] w-full lg:w-[170px]">
+          <div className="relative mt-[7px] w-full lg:w-[160px]">
             <select
               value={displayFilter}
               onChange={(event) =>
@@ -220,7 +220,7 @@ export default function ProspectsPage() {
 
         <div>
           <label className="text-[13px] font-semibold">Statut</label>
-          <div className="relative mt-[7px] w-full lg:w-[210px]">
+          <div className="relative mt-[7px] w-full lg:w-[200px]">
             <select
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value)}
@@ -239,7 +239,7 @@ export default function ProspectsPage() {
 
         <div>
           <label className="text-[13px] font-semibold">Trier par</label>
-          <div className="relative mt-[7px] w-full lg:w-[200px]">
+          <div className="relative mt-[7px] w-full lg:w-[190px]">
             <select
               value={sortKey}
               onChange={(event) => setSortKey(event.target.value as SortKey)}
@@ -256,7 +256,7 @@ export default function ProspectsPage() {
 
         <div>
           <label className="text-[13px] font-semibold">Ordre</label>
-          <div className="relative mt-[7px] w-full lg:w-[170px]">
+          <div className="relative mt-[7px] w-full lg:w-[160px]">
             <select
               value={sortDirection}
               onChange={(event) =>

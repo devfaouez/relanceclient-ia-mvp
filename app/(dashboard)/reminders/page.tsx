@@ -539,7 +539,7 @@ export default function RemindersPage() {
       </div>
 
       <div className="rounded-2xl border border-border bg-card px-6 py-[22px] shadow-[var(--surface-shadow)]">
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-[repeat(4,1fr)_170px] lg:items-center">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-[repeat(4,1fr)_160px] lg:items-center">
           <MetricCard label="À approuver" value={pendingApprovalCount} tone="amber" />
           <MetricCard label="Programmées" value={scheduledCount} tone="blue" />
           <MetricCard label="Envoyées" value={sentCount} tone="green" />
@@ -548,7 +548,7 @@ export default function RemindersPage() {
           <p className="text-[13px] font-medium text-muted-foreground">
             Affichage
           </p>
-          <div className="relative mt-2 w-full lg:w-[170px]">
+          <div className="relative mt-2 w-full lg:w-[160px]">
             <select
               value={displayFilter}
               onChange={(event) =>
@@ -568,7 +568,7 @@ export default function RemindersPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 rounded-2xl border border-border bg-card px-5 py-[22px] shadow-[var(--surface-shadow)] sm:grid-cols-2 lg:grid-cols-[minmax(300px,1fr)_210px_200px_170px]">
+      <div className="grid gap-4 rounded-2xl border border-border bg-card px-5 py-[22px] shadow-[var(--surface-shadow)] sm:grid-cols-2 lg:grid-cols-[minmax(300px,1fr)_200px_190px_160px] lg:pr-7">
         <div>
           <label className="text-[13px] font-semibold">Recherche</label>
           <div className="mt-[7px] flex h-[44px] items-center gap-2 rounded-[11px] border border-input bg-card px-4 focus-within:border-primary focus-within:ring-[3px] focus-within:ring-[hsl(var(--emerald-soft))]">
@@ -584,7 +584,7 @@ export default function RemindersPage() {
 
         <div>
           <label className="text-[13px] font-semibold">Statut</label>
-          <div className="relative mt-[7px] w-full lg:w-[210px]">
+          <div className="relative mt-[7px] w-full lg:w-[200px]">
             <select
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value)}
@@ -603,7 +603,7 @@ export default function RemindersPage() {
 
         <div>
           <label className="text-[13px] font-semibold">Trier par</label>
-          <div className="relative mt-[7px] w-full lg:w-[200px]">
+          <div className="relative mt-[7px] w-full lg:w-[190px]">
             <select
               value={sortKey}
               onChange={(event) => setSortKey(event.target.value as SortKey)}
@@ -620,7 +620,7 @@ export default function RemindersPage() {
 
         <div>
           <label className="text-[13px] font-semibold">Ordre</label>
-          <div className="relative mt-[7px] w-full lg:w-[170px]">
+          <div className="relative mt-[7px] w-full lg:w-[160px]">
             <select
               value={sortDirection}
               onChange={(event) =>

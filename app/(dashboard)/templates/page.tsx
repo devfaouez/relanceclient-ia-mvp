@@ -594,7 +594,7 @@ export default function TemplatesPage() {
       )}
 
       <div
-        className={`${cardClass} grid gap-4 px-5 py-[22px] sm:grid-cols-2 lg:grid-cols-[minmax(300px,1fr)_210px_200px_170px]`}
+        className={`${cardClass} grid gap-4 px-5 py-[22px] sm:grid-cols-2 lg:grid-cols-[minmax(300px,1fr)_200px_190px_160px] lg:pr-7`}
       >
         <div>
           <label className="text-[13px] font-semibold">Recherche</label>
@@ -611,7 +611,7 @@ export default function TemplatesPage() {
 
         <div>
           <label className="text-[13px] font-semibold">Statut</label>
-          <div className="relative mt-[7px] w-full lg:w-[210px]">
+          <div className="relative mt-[7px] w-full lg:w-[200px]">
             <select
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value)}
@@ -630,7 +630,7 @@ export default function TemplatesPage() {
 
         <div>
           <label className="text-[13px] font-semibold">Trier par</label>
-          <div className="relative mt-[7px] w-full lg:w-[200px]">
+          <div className="relative mt-[7px] w-full lg:w-[190px]">
             <select
               value={sortKey}
               onChange={(event) => setSortKey(event.target.value as SortKey)}
@@ -647,7 +647,7 @@ export default function TemplatesPage() {
 
         <div>
           <label className="text-[13px] font-semibold">Ordre</label>
-          <div className="relative mt-[7px] w-full lg:w-[170px]">
+          <div className="relative mt-[7px] w-full lg:w-[160px]">
             <select
               value={sortDirection}
               onChange={(event) =>
