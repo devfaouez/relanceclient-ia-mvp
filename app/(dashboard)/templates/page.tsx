@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Archive,
   CheckCircle2,
+  ChevronDown,
   Edit,
   Loader2,
   Plus,
@@ -46,7 +47,7 @@ const inputClass =
   "mt-1.5 w-full rounded-[11px] border border-input bg-card px-3 py-2.5 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-[hsl(var(--emerald-soft))] disabled:opacity-50";
 
 const filterSelectClass =
-  "mt-[7px] h-[44px] w-full rounded-[20px] border border-input bg-card px-4 text-sm shadow-[var(--surface-shadow)] outline-none transition focus:border-primary focus:ring-[3px] focus:ring-[hsl(var(--emerald-soft))]";
+  "h-[44px] w-full appearance-none rounded-[20px] border border-input bg-card px-4 pr-10 text-sm shadow-[var(--surface-shadow)] outline-none transition focus:border-primary focus:ring-[3px] focus:ring-[hsl(var(--emerald-soft))]";
 
 const primaryButtonClass =
   "inline-flex items-center justify-center gap-2 rounded-[11px] bg-primary px-4 py-2.5 text-sm font-semibold leading-none text-primary-foreground shadow-[var(--surface-shadow)] transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50";
@@ -593,7 +594,7 @@ export default function TemplatesPage() {
       )}
 
       <div
-        className={`${cardClass} grid gap-4 px-5 py-[22px] sm:grid-cols-2 lg:grid-cols-[minmax(300px,1fr)_200px_180px_150px]`}
+        className={`${cardClass} grid gap-4 px-5 py-[22px] sm:grid-cols-2 lg:grid-cols-[minmax(300px,1fr)_210px_200px_170px]`}
       >
         <div>
           <label className="text-[13px] font-semibold">Recherche</label>
@@ -610,46 +611,55 @@ export default function TemplatesPage() {
 
         <div>
           <label className="text-[13px] font-semibold">Statut</label>
-          <select
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-            className={filterSelectClass}
-          >
-            <option value="ALL">Tous les statuts</option>
-            {Object.entries(TEMPLATE_STATUS_LABELS).map(([status, label]) => (
-              <option key={status} value={status}>
-                {label}
-              </option>
-            ))}
-          </select>
+          <div className="relative mt-[7px] w-full lg:w-[210px]">
+            <select
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+              className={filterSelectClass}
+            >
+              <option value="ALL">Tous les statuts</option>
+              {Object.entries(TEMPLATE_STATUS_LABELS).map(([status, label]) => (
+                <option key={status} value={status}>
+                  {label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          </div>
         </div>
 
         <div>
           <label className="text-[13px] font-semibold">Trier par</label>
-          <select
-            value={sortKey}
-            onChange={(event) => setSortKey(event.target.value as SortKey)}
-            className={filterSelectClass}
-          >
-            <option value="createdAt">Date de création</option>
-            <option value="name">Nom</option>
-            <option value="subject">Sujet</option>
-            <option value="status">Statut</option>
-          </select>
+          <div className="relative mt-[7px] w-full lg:w-[200px]">
+            <select
+              value={sortKey}
+              onChange={(event) => setSortKey(event.target.value as SortKey)}
+              className={filterSelectClass}
+            >
+              <option value="createdAt">Date de création</option>
+              <option value="name">Nom</option>
+              <option value="subject">Sujet</option>
+              <option value="status">Statut</option>
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          </div>
         </div>
 
         <div>
           <label className="text-[13px] font-semibold">Ordre</label>
-          <select
-            value={sortDirection}
-            onChange={(event) =>
-              setSortDirection(event.target.value as SortDirection)
-            }
-            className={filterSelectClass}
-          >
-            <option value="desc">Décroissant</option>
-            <option value="asc">Croissant</option>
-          </select>
+          <div className="relative mt-[7px] w-full lg:w-[170px]">
+            <select
+              value={sortDirection}
+              onChange={(event) =>
+                setSortDirection(event.target.value as SortDirection)
+              }
+              className={filterSelectClass}
+            >
+              <option value="desc">Décroissant</option>
+              <option value="asc">Croissant</option>
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          </div>
         </div>
       </div>
 

@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   CalendarClock,
   Check,
+  ChevronDown,
   RefreshCw,
   Search,
   Send,
@@ -71,7 +72,7 @@ const ACTIONABLE_REMINDER_STATUSES = [
 ];
 
 const filterSelectClass =
-  "h-[44px] w-full rounded-[20px] border border-input bg-card px-4 text-sm shadow-[var(--surface-shadow)] outline-none transition focus:border-primary focus:ring-[3px] focus:ring-[hsl(var(--emerald-soft))]";
+  "h-[44px] w-full appearance-none rounded-[20px] border border-input bg-card px-4 pr-10 text-sm shadow-[var(--surface-shadow)] outline-none transition focus:border-primary focus:ring-[3px] focus:ring-[hsl(var(--emerald-soft))]";
 
 function statusTone(status: string) {
   switch (status) {
@@ -538,7 +539,7 @@ export default function RemindersPage() {
       </div>
 
       <div className="rounded-2xl border border-border bg-card px-6 py-[22px] shadow-[var(--surface-shadow)]">
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-[repeat(4,1fr)_190px] lg:items-center">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-[repeat(4,1fr)_170px] lg:items-center">
           <MetricCard label="À approuver" value={pendingApprovalCount} tone="amber" />
           <MetricCard label="Programmées" value={scheduledCount} tone="blue" />
           <MetricCard label="Envoyées" value={sentCount} tone="green" />
@@ -547,27 +548,27 @@ export default function RemindersPage() {
           <p className="text-[13px] font-medium text-muted-foreground">
             Affichage
           </p>
-          <select
-            value={displayFilter}
-            onChange={(event) =>
-              setDisplayFilter(event.target.value as DisplayFilter)
-            }
-            className={`mt-2 ${filterSelectClass}`}
-          >
-            {DISPLAY_FILTERS.map((filter) => (
-              <option
-                key={filter.value}
-                value={filter.value}
-              >
-                {filter.label}
-              </option>
-            ))}
-          </select>
+          <div className="relative mt-2 w-full lg:w-[170px]">
+            <select
+              value={displayFilter}
+              onChange={(event) =>
+                setDisplayFilter(event.target.value as DisplayFilter)
+              }
+              className={filterSelectClass}
+            >
+              {DISPLAY_FILTERS.map((filter) => (
+                <option key={filter.value} value={filter.value}>
+                  {filter.label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          </div>
           </div>
         </div>
       </div>
 
-      <div className="grid gap-4 rounded-2xl border border-border bg-card px-5 py-[22px] shadow-[var(--surface-shadow)] sm:grid-cols-2 lg:grid-cols-[minmax(300px,1fr)_200px_180px_150px]">
+      <div className="grid gap-4 rounded-2xl border border-border bg-card px-5 py-[22px] shadow-[var(--surface-shadow)] sm:grid-cols-2 lg:grid-cols-[minmax(300px,1fr)_210px_200px_170px]">
         <div>
           <label className="text-[13px] font-semibold">Recherche</label>
           <div className="mt-[7px] flex h-[44px] items-center gap-2 rounded-[11px] border border-input bg-card px-4 focus-within:border-primary focus-within:ring-[3px] focus-within:ring-[hsl(var(--emerald-soft))]">
@@ -583,46 +584,55 @@ export default function RemindersPage() {
 
         <div>
           <label className="text-[13px] font-semibold">Statut</label>
-          <select
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-            className={`mt-[7px] ${filterSelectClass}`}
-          >
-            <option value="ALL">Tous les statuts</option>
-            {Object.entries(REMINDER_STATUS_LABELS).map(([status, label]) => (
-              <option key={status} value={status}>
-                {label}
-              </option>
-            ))}
-          </select>
+          <div className="relative mt-[7px] w-full lg:w-[210px]">
+            <select
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+              className={filterSelectClass}
+            >
+              <option value="ALL">Tous les statuts</option>
+              {Object.entries(REMINDER_STATUS_LABELS).map(([status, label]) => (
+                <option key={status} value={status}>
+                  {label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          </div>
         </div>
 
         <div>
           <label className="text-[13px] font-semibold">Trier par</label>
-          <select
-            value={sortKey}
-            onChange={(event) => setSortKey(event.target.value as SortKey)}
-            className={`mt-[7px] ${filterSelectClass}`}
-          >
-            <option value="createdAt">Date de création</option>
-            <option value="status">Statut</option>
-            <option value="prospect">Prospect</option>
-            <option value="quote">Devis</option>
-          </select>
+          <div className="relative mt-[7px] w-full lg:w-[200px]">
+            <select
+              value={sortKey}
+              onChange={(event) => setSortKey(event.target.value as SortKey)}
+              className={filterSelectClass}
+            >
+              <option value="createdAt">Date de création</option>
+              <option value="status">Statut</option>
+              <option value="prospect">Prospect</option>
+              <option value="quote">Devis</option>
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          </div>
         </div>
 
         <div>
           <label className="text-[13px] font-semibold">Ordre</label>
-          <select
-            value={sortDirection}
-            onChange={(event) =>
-              setSortDirection(event.target.value as SortDirection)
-            }
-            className={`mt-[7px] ${filterSelectClass}`}
-          >
-            <option value="desc">Décroissant</option>
-            <option value="asc">Croissant</option>
-          </select>
+          <div className="relative mt-[7px] w-full lg:w-[170px]">
+            <select
+              value={sortDirection}
+              onChange={(event) =>
+                setSortDirection(event.target.value as SortDirection)
+              }
+              className={filterSelectClass}
+            >
+              <option value="desc">Décroissant</option>
+              <option value="asc">Croissant</option>
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          </div>
         </div>
       </div>
 
