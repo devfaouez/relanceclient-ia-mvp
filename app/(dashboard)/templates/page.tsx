@@ -50,7 +50,7 @@ const filterSelectClass =
   "h-[44px] w-full appearance-none rounded-[20px] border border-input bg-card px-4 pr-10 text-sm shadow-[var(--surface-shadow)] outline-none transition focus:border-primary focus:ring-[3px] focus:ring-[hsl(var(--emerald-soft))]";
 
 const primaryButtonClass =
-  "inline-flex items-center justify-center gap-2 rounded-[11px] bg-primary px-4 py-2.5 text-sm font-semibold leading-none text-primary-foreground shadow-[var(--surface-shadow)] transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex items-center justify-center gap-2 rounded-[11px] bg-primary px-4 py-2.5 text-sm font-semibold leading-none text-primary-foreground shadow-[var(--surface-shadow)] transition hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-[0_14px_40px_-18px_rgba(7,55,42,0.28)] disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-50";
 
 const secondaryButtonClass =
   "inline-flex items-center justify-center gap-2 rounded-[11px] border border-input bg-card px-4 py-2.5 text-sm font-semibold leading-none shadow-[var(--surface-shadow)] transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50";
@@ -94,8 +94,8 @@ function Message({
     <p
       className={
         type === "success"
-          ? "flex items-start gap-2 rounded-xl border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))] px-4 py-3 text-sm font-medium text-primary"
-          : "flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive"
+          ? "flex items-start gap-2 rounded-2xl border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))] px-4 py-3.5 text-sm font-medium text-primary shadow-[var(--surface-shadow)]"
+          : "flex items-start gap-2 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3.5 text-sm font-medium text-destructive shadow-[var(--surface-shadow)]"
       }
     >
       <Icon className="mt-0.5 h-4 w-4 shrink-0" />
@@ -404,20 +404,12 @@ export default function TemplatesPage() {
   ).length;
 
   return (
-    <section className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <section className="space-y-[22px]">
+      <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card px-5 py-4 shadow-[var(--surface-shadow)] sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <div>
-          <p className="text-xs font-medium text-muted-foreground">
-            Configuration
-          </p>
-          <h1 className="mt-1 text-2xl font-bold">Modèles de relance</h1>
-          <p className="mt-2 max-w-2xl text-sm font-medium text-muted-foreground">
-            Centralisez les sujets et contenus utilisés pour générer des
-            relances cohérentes. Variables utiles : {"{nom_client}"},{" "}
-            {"{montant_devis}"}, {"{date_devis}"}, {"{nom_artisan}"}.
-          </p>
+          <p className="text-sm font-semibold">Bibliothèque de modèles</p>
           {!loading && !error && (
-            <p className="mt-2 text-sm font-medium text-muted-foreground">
+            <p className="mt-1 text-sm text-muted-foreground">
               {templates.length} modèle{templates.length > 1 ? "s" : ""} au
               total, dont {activeCount} actif{activeCount > 1 ? "s" : ""}.
             </p>
@@ -464,10 +456,10 @@ export default function TemplatesPage() {
           onSubmit={handleSubmit}
           className={`${cardClass} overflow-hidden`}
         >
-          <div className="border-b border-border bg-[hsl(var(--emerald-tint))]/70 px-5 py-4 sm:px-6">
+          <div className="border-b border-border bg-[hsl(var(--emerald-tint))]/55 px-5 py-5 sm:px-6">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-primary">
                   {editingId ? "Modification" : "Création"}
                 </p>
                 <h2 className="mt-1 text-[19px] font-bold">
@@ -491,6 +483,10 @@ export default function TemplatesPage() {
           </div>
 
           <div className="p-5 sm:p-6">
+            <div className="mb-5 rounded-xl border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))]/60 px-4 py-3 text-xs font-medium text-muted-foreground">
+              Variables disponibles : {"{nom_client}"}, {"{montant_devis}"},{" "}
+              {"{date_devis}"}, {"{nom_artisan}"}.
+            </div>
             <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px]">
               <div>
                 <label className="block text-sm font-semibold">
@@ -565,10 +561,6 @@ export default function TemplatesPage() {
                 placeholder="Message de relance..."
                 className={`${inputClass} min-h-56 resize-y leading-6`}
               />
-              <p className="mt-2 text-xs font-medium text-muted-foreground">
-                Vous pouvez utiliser les variables entre accolades dans le sujet
-                et le contenu.
-              </p>
             </div>
 
             <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
@@ -703,31 +695,36 @@ export default function TemplatesPage() {
           {filteredTemplates.map((template) => (
             <article
               key={template.id}
-              className={`${cardClass} flex min-h-full flex-col p-5 transition hover:border-primary/40 hover:shadow-md`}
+              className={`${cardClass} flex min-h-full flex-col overflow-hidden transition hover:-translate-y-0.5 hover:border-[hsl(var(--emerald-soft))] hover:shadow-[0_14px_40px_-18px_rgba(7,55,42,0.22)]`}
             >
-              <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-2 px-5 pt-5">
                 <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
                   Email de relance
                 </span>
                 <StatusBadge status={template.status} />
               </div>
 
-              <div className="mt-4 min-w-0 flex-1">
+              <div className="min-w-0 flex-1 px-5 pb-5 pt-4">
                 <h2 className="truncate text-[17px] font-bold">
                   {template.name}
                 </h2>
-                <p className="mt-3 text-sm font-semibold text-foreground">
-                  Objet : {template.subject}
-                </p>
-                <p className="mt-2 line-clamp-4 text-sm leading-6 text-muted-foreground">
+                <div className="mt-4 rounded-xl border border-border bg-[hsl(var(--emerald-tint))]/45 p-3.5">
+                  <p className="text-xs font-semibold uppercase tracking-[0.08em] text-primary">
+                    Objet
+                  </p>
+                  <p className="mt-1.5 line-clamp-2 text-sm font-semibold text-foreground">
+                    {template.subject}
+                  </p>
+                </div>
+                <p className="mt-4 line-clamp-4 text-sm leading-6 text-muted-foreground">
                   {template.body}
                 </p>
               </div>
 
-              <div className="mt-5 border-t border-border pt-4">
+              <div className="border-t border-border bg-[hsl(var(--emerald-tint))]/25 px-5 py-4">
                 <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-medium text-muted-foreground">
                   <span>Créé le {formatDate(template.createdAt)}</span>
-                  <span>Mis à jour le {formatDate(template.updatedAt)}</span>
+                  <span>Modifié le {formatDate(template.updatedAt)}</span>
                 </div>
 
                 <div className="mt-4 flex flex-wrap gap-2">

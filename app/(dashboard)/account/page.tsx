@@ -53,7 +53,7 @@ const cardClass =
   "rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)] sm:p-6";
 
 const primaryButtonClass =
-  "inline-flex items-center justify-center gap-2 rounded-[11px] bg-primary px-4 py-2.5 text-sm font-semibold leading-none text-primary-foreground shadow-[var(--surface-shadow)] transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex items-center justify-center gap-2 rounded-[11px] bg-primary px-4 py-2.5 text-sm font-semibold leading-none text-primary-foreground shadow-[var(--surface-shadow)] transition hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-[0_14px_40px_-18px_rgba(7,55,42,0.28)] disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-50";
 
 const secondaryButtonClass =
   "inline-flex items-center justify-center gap-2 rounded-[11px] border border-input bg-card px-4 py-2.5 text-sm font-semibold leading-none transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50";
@@ -107,11 +107,11 @@ function UsageCard({
   const unlimited = limit === null;
 
   return (
-    <div className="rounded-xl border border-border bg-background p-4">
+    <div className="rounded-2xl border border-border bg-[hsl(var(--emerald-tint))]/40 p-5">
       <div className="flex items-start justify-between gap-4">
         <div>
           <dt className="text-sm font-medium text-muted-foreground">{label}</dt>
-          <dd className="mt-1 text-2xl font-bold">
+          <dd className="mt-2 text-[28px] font-bold leading-none text-primary">
             {usageValueLabel(used, limit)}
           </dd>
         </div>
@@ -121,7 +121,7 @@ function UsageCard({
           </span>
         )}
       </div>
-      <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-[hsl(var(--emerald-soft))]">
+      <div className="mt-5 h-2 overflow-hidden rounded-full bg-[hsl(var(--emerald-soft))]">
         <div
           className="h-full rounded-full bg-primary"
           style={{ width: `${percent}%` }}
@@ -149,7 +149,7 @@ function FeedbackMessage({
 
   return (
     <div
-      className={`rounded-xl border px-4 py-3 text-sm font-medium ${className}`}
+      className={`rounded-2xl border px-4 py-3.5 text-sm font-medium shadow-[var(--surface-shadow)] ${className}`}
     >
       {children}
     </div>
@@ -305,16 +305,7 @@ export default function AccountPage() {
       ));
 
   return (
-    <section className="space-y-6">
-      <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)]">
-        <p className="text-sm font-medium text-muted-foreground">Facturation</p>
-        <h1 className="mt-1 text-2xl font-bold">Compte</h1>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-          Suivi du plan, de l&apos;utilisation et de l&apos;abonnement Stripe,
-          sans bloquer l&apos;accès pendant la bêta.
-        </p>
-      </div>
-
+    <section className="space-y-[22px]">
       <div className="space-y-3">
         {paymentSuccess ? (
           <FeedbackMessage tone="success">
@@ -335,17 +326,17 @@ export default function AccountPage() {
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_420px]">
-        <div className={cardClass}>
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[var(--surface-shadow)]">
+          <div className="flex flex-col gap-5 px-5 py-5 sm:flex-row sm:items-start sm:justify-between sm:px-6 sm:py-6">
             <div className="flex items-start gap-3">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))] text-primary">
-                <CreditCard className="h-5 w-5" />
+              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-[13px] border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))] text-primary">
+                <CreditCard className="h-[22px] w-[22px]" />
               </span>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
                   Plan actuel
                 </p>
-                <h2 className="mt-1 text-3xl font-bold">
+                <h2 className="mt-1 text-[32px] font-bold leading-none text-primary">
                   {planLabels[subscription.plan]}
                 </h2>
               </div>
@@ -354,8 +345,8 @@ export default function AccountPage() {
             <SubscriptionBadge status={subscription.subscriptionStatus} />
           </div>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-xl border border-border bg-background px-4 py-3">
+          <div className="grid border-t border-border bg-[hsl(var(--emerald-tint))]/35 sm:grid-cols-3">
+            <div className="px-5 py-4 sm:px-6">
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Statut
               </p>
@@ -364,7 +355,7 @@ export default function AccountPage() {
               </p>
             </div>
 
-            <div className="rounded-xl border border-border bg-background px-4 py-3">
+            <div className="border-t border-border px-5 py-4 sm:border-l sm:border-t-0 sm:px-6">
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Fin de période
               </p>
@@ -373,7 +364,7 @@ export default function AccountPage() {
               </p>
             </div>
 
-            <div className="rounded-xl border border-border bg-background px-4 py-3">
+            <div className="border-t border-border px-5 py-4 sm:border-l sm:border-t-0 sm:px-6">
               <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Synchronisation
               </p>
@@ -385,7 +376,7 @@ export default function AccountPage() {
           </div>
         </div>
 
-        <div className={cardClass}>
+        <div className={`${cardClass} flex flex-col`}>
           <div className="flex items-start gap-3">
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))] text-primary">
               <ShieldCheck className="h-5 w-5" />
@@ -399,70 +390,75 @@ export default function AccountPage() {
             </div>
           </div>
 
-          {subscription.plan === "FREE" ? (
-            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+          <div className="mt-auto">
+            {subscription.plan === "FREE" ? (
+              <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => startCheckout("monthly")}
+                  disabled={checkoutLoading !== null}
+                  className={primaryButtonClass}
+                >
+                  {checkoutLoading === "monthly" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <ArrowUpRight className="h-4 w-4" />
+                  )}
+                  Pro mensuel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => startCheckout("yearly")}
+                  disabled={checkoutLoading !== null}
+                  className={secondaryButtonClass}
+                >
+                  {checkoutLoading === "yearly" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <ArrowUpRight className="h-4 w-4" />
+                  )}
+                  Pro annuel
+                </button>
+              </div>
+            ) : (
               <button
                 type="button"
-                onClick={() => startCheckout("monthly")}
-                disabled={checkoutLoading !== null}
-                className={primaryButtonClass}
+                onClick={openBillingPortal}
+                disabled={portalLoading}
+                className={`mt-5 w-full ${primaryButtonClass} sm:w-auto lg:w-full`}
               >
-                {checkoutLoading === "monthly" ? (
+                {portalLoading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <ArrowUpRight className="h-4 w-4" />
                 )}
-                Pro mensuel
+                Gérer l&apos;abonnement
               </button>
-              <button
-                type="button"
-                onClick={() => startCheckout("yearly")}
-                disabled={checkoutLoading !== null}
-                className={secondaryButtonClass}
-              >
-                {checkoutLoading === "yearly" ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <ArrowUpRight className="h-4 w-4" />
-                )}
-                Pro annuel
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={openBillingPortal}
-              disabled={portalLoading}
-              className={`mt-5 w-full ${primaryButtonClass} sm:w-auto lg:w-full`}
-            >
-              {portalLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <ArrowUpRight className="h-4 w-4" />
-              )}
-              Gérer l&apos;abonnement
-            </button>
-          )}
+            )}
 
-          <p className="mt-4 text-xs text-muted-foreground">
-            {subscription.plan === "FREE"
-              ? "Le checkout ouvre une session Stripe sécurisée."
-              : "Le portail Stripe permet de modifier l'abonnement et de consulter les factures."}
-          </p>
+            <p className="mt-4 text-xs text-muted-foreground">
+              {subscription.plan === "FREE"
+                ? "Le checkout ouvre une session Stripe sécurisée."
+                : "Le portail Stripe permet de modifier l'abonnement et de consulter les factures."}
+            </p>
+          </div>
         </div>
       </div>
 
       <div className={cardClass}>
-        <div className="flex items-start gap-3">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))] text-primary">
-            <BarChart3 className="h-5 w-5" />
-          </span>
-          <div>
-            <h2 className="text-[17px] font-bold">Utilisation</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Suivi des quotas inclus dans votre plan.
-            </p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start gap-3">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))] text-primary">
+              <BarChart3 className="h-5 w-5" />
+            </span>
+            <div>
+              <h2 className="text-[17px] font-bold">Utilisation</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Suivi des quotas inclus dans votre plan.
+              </p>
+            </div>
           </div>
+          <SubscriptionBadge status={usage.subscriptionStatus} />
         </div>
 
         <dl className="mt-5 grid gap-4 md:grid-cols-2">

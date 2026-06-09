@@ -55,7 +55,7 @@ const inputClass =
   "mt-1.5 w-full rounded-[11px] border border-input bg-card px-3 py-2.5 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-[hsl(var(--emerald-soft))] disabled:opacity-50";
 
 const primaryButtonClass =
-  "inline-flex items-center justify-center gap-2 rounded-[11px] bg-primary px-4 py-2.5 text-sm font-semibold leading-none text-primary-foreground shadow-[var(--surface-shadow)] transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex items-center justify-center gap-2 rounded-[11px] bg-primary px-4 py-2.5 text-sm font-semibold leading-none text-primary-foreground shadow-[var(--surface-shadow)] transition hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-[0_14px_40px_-18px_rgba(7,55,42,0.28)] disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-50";
 
 function StatusBadge({ ok }: { ok: boolean }) {
   return (
@@ -95,15 +95,18 @@ function Message({
   children: React.ReactNode;
   type: "success" | "error";
 }) {
+  const Icon = type === "success" ? CheckCircle2 : XCircle;
+
   return (
     <p
       className={
         type === "success"
-          ? "rounded-xl border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))] px-4 py-3 text-sm font-medium text-primary"
-          : "rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive"
+          ? "flex items-start gap-2 rounded-2xl border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))] px-4 py-3.5 text-sm font-medium text-primary shadow-[var(--surface-shadow)]"
+          : "flex items-start gap-2 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3.5 text-sm font-medium text-destructive shadow-[var(--surface-shadow)]"
       }
     >
-      {children}
+      <Icon className="mt-0.5 h-4 w-4 shrink-0" />
+      <span>{children}</span>
     </p>
   );
 }
@@ -118,7 +121,7 @@ function SectionHeading({
   description: string;
 }) {
   return (
-    <div className="mb-5 flex items-start gap-3">
+    <div className="mb-5 flex items-start gap-3 border-b border-border pb-5">
       <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))] text-primary">
         <Icon className="h-5 w-5" />
       </span>
@@ -317,37 +320,38 @@ export default function SettingsPage() {
   }
 
   return (
-    <section className="space-y-6">
-      <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)]">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              Configuration
-            </p>
-            <h1 className="mt-1 text-2xl font-bold">Paramètres</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-              Profil de votre entreprise, signature, préférences de devis et
-              état technique du compte.
-            </p>
-          </div>
-
-          {companySettings && (
-            <button
-              type="submit"
-              form="company-settings-form"
-              disabled={savingCompany}
-              className={`${primaryButtonClass} w-full sm:w-auto`}
-            >
-              {savingCompany ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
-              {savingCompany ? "Enregistrement..." : "Enregistrer"}
-            </button>
-          )}
+    <section className="space-y-[22px]">
+      <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card px-5 py-4 shadow-[var(--surface-shadow)] sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <div>
+          <p className="text-sm font-semibold">Configuration entreprise</p>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+            Les modifications s’appliquent aux prochains devis et relances.
+          </p>
         </div>
+
+        {companySettings && (
+          <button
+            type="submit"
+            form="company-settings-form"
+            disabled={savingCompany}
+            className={`${primaryButtonClass} w-full sm:w-auto`}
+          >
+            {savingCompany ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Save className="h-4 w-4" />
+            )}
+            {savingCompany ? "Enregistrement..." : "Enregistrer"}
+          </button>
+        )}
       </div>
+
+      {(companyMessage || companyError) && (
+        <div className="space-y-3">
+          {companyMessage && <Message type="success">{companyMessage}</Message>}
+          {companyError && <Message type="error">{companyError}</Message>}
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         {companySettings && (
@@ -356,15 +360,6 @@ export default function SettingsPage() {
             onSubmit={handleSaveCompanySettings}
             className="space-y-5"
           >
-            {(companyMessage || companyError) && (
-              <div className="space-y-3">
-                {companyMessage && (
-                  <Message type="success">{companyMessage}</Message>
-                )}
-                {companyError && <Message type="error">{companyError}</Message>}
-              </div>
-            )}
-
             <div className={cardClass}>
               <SectionHeading
                 icon={Building2}
@@ -483,15 +478,15 @@ export default function SettingsPage() {
                 />
               </div>
 
-              <div className="mt-5 rounded-xl border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))] p-4">
+              <div className="mt-5 rounded-2xl border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))]/70 p-4">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-                  <div className="grid h-16 w-16 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground">
+                  <div className="grid h-20 w-20 shrink-0 place-items-center rounded-[14px] border border-[hsl(var(--emerald-soft))] bg-card text-primary shadow-[var(--surface-shadow)]">
                     {companySettings.logoUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={companySettings.logoUrl}
                         alt="Logo entreprise"
-                        className="h-full w-full rounded-xl bg-white object-contain p-2"
+                        className="h-full w-full rounded-[14px] bg-white object-contain p-2"
                       />
                     ) : (
                       <ImageIcon className="h-7 w-7" />
@@ -581,7 +576,8 @@ export default function SettingsPage() {
         )}
 
         <aside className="space-y-5 lg:sticky lg:top-24 lg:self-start">
-          <div className={cardClass}>
+          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[var(--surface-shadow)]">
+            <div className="p-5 sm:p-6">
             <div className="flex items-start gap-3">
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))] text-primary">
                 <Mail className="h-5 w-5" />
@@ -607,9 +603,10 @@ export default function SettingsPage() {
                 </p>
               </div>
             </div>
+            </div>
 
-            <dl className="mt-5 space-y-3 text-sm">
-              <div className="rounded-xl border border-border bg-background px-4 py-3">
+            <dl className="space-y-0 border-t border-border bg-[hsl(var(--emerald-tint))]/30 text-sm">
+              <div className="px-5 py-4 sm:px-6">
                 <div className="flex items-center justify-between gap-4">
                   <dt className="font-medium">RESEND_API_KEY</dt>
                   <dd>
@@ -618,7 +615,7 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-border bg-background px-4 py-3">
+              <div className="border-t border-border px-5 py-4 sm:px-6">
                 <div className="flex items-start justify-between gap-4">
                   <dt className="font-medium">RESEND_FROM_EMAIL</dt>
                   <dd>
@@ -659,7 +656,7 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            <ul className="mt-5 space-y-3">
+            <ul className="mt-5 space-y-2">
               <ChecklistItem
                 label="Supabase Auth configuré"
                 ok={status.supabaseAuthConfigured}
