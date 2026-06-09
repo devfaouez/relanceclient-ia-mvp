@@ -5,6 +5,7 @@ import {
   AlertTriangle,
   Building2,
   CheckCircle2,
+  ChevronDown,
   FileText,
   ImageIcon,
   Loader2,
@@ -53,6 +54,9 @@ const cardClass =
 
 const inputClass =
   "mt-1.5 w-full rounded-[11px] border border-input bg-card px-3 py-2.5 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-[hsl(var(--emerald-soft))] disabled:opacity-50";
+
+const selectClass =
+  "h-[44px] w-full appearance-none rounded-[20px] border border-input bg-card px-4 pr-10 text-sm shadow-[var(--surface-shadow)] outline-none transition focus:border-primary focus:ring-[3px] focus:ring-[hsl(var(--emerald-soft))] disabled:opacity-50";
 
 const primaryButtonClass =
   "inline-flex items-center justify-center gap-2 rounded-[11px] bg-primary px-4 py-2.5 text-sm font-semibold leading-none text-primary-foreground shadow-[var(--surface-shadow)] transition hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-[0_14px_40px_-18px_rgba(7,55,42,0.28)] disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-50";
@@ -385,21 +389,24 @@ export default function SettingsPage() {
 
                 <div>
                   <FieldLabel htmlFor="trade">Métier</FieldLabel>
-                  <select
-                    id="trade"
-                    value={companySettings.trade}
-                    onChange={(e) =>
-                      updateCompanyField("trade", e.target.value)
-                    }
-                    className={inputClass}
-                  >
-                    <option value="">Non renseigné</option>
-                    {TRADE_OPTIONS.map((trade) => (
-                      <option key={trade} value={trade}>
-                        {tradeLabel(trade)}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative mt-1.5">
+                    <select
+                      id="trade"
+                      value={companySettings.trade}
+                      onChange={(e) =>
+                        updateCompanyField("trade", e.target.value)
+                      }
+                      className={selectClass}
+                    >
+                      <option value="">Non renseigné</option>
+                      {TRADE_OPTIONS.map((trade) => (
+                        <option key={trade} value={trade}>
+                          {tradeLabel(trade)}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  </div>
                 </div>
 
                 <div>
@@ -448,20 +455,23 @@ export default function SettingsPage() {
                   <FieldLabel htmlFor="defaultTone">
                     Ton par défaut des relances
                   </FieldLabel>
-                  <select
-                    id="defaultTone"
-                    value={companySettings.defaultTone}
-                    onChange={(e) =>
-                      updateCompanyField("defaultTone", e.target.value)
-                    }
-                    className={inputClass}
-                  >
-                    {TONE_OPTIONS.map((tone) => (
-                      <option key={tone} value={tone}>
-                        {reminderToneLabel(tone)}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative mt-1.5">
+                    <select
+                      id="defaultTone"
+                      value={companySettings.defaultTone}
+                      onChange={(e) =>
+                        updateCompanyField("defaultTone", e.target.value)
+                      }
+                      className={selectClass}
+                    >
+                      {TONE_OPTIONS.map((tone) => (
+                        <option key={tone} value={tone}>
+                          {reminderToneLabel(tone)}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  </div>
                 </div>
               </div>
 
