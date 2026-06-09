@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
+  CalendarDays,
   Check,
   Download,
   FileText,
@@ -12,6 +13,7 @@ import {
   Printer,
   Send,
   Sparkles,
+  UserRound,
   XCircle,
 } from "lucide-react";
 import { ConfirmModal } from "@/components/confirm-modal";
@@ -189,7 +191,7 @@ function StatusBadge({ label, tone }: { label: string; tone: string }) {
 }
 
 const primaryButtonClass =
-  "inline-flex items-center justify-center gap-2 rounded-[11px] bg-primary px-4 py-2.5 text-sm font-semibold leading-none text-primary-foreground shadow-[var(--surface-shadow)] transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50";
+  "inline-flex items-center justify-center gap-2 rounded-[11px] bg-primary px-4 py-2.5 text-sm font-semibold leading-none text-primary-foreground shadow-[var(--surface-shadow)] transition hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-[0_14px_40px_-18px_rgba(7,55,42,0.28)] disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-50";
 
 const secondaryButtonClass =
   "inline-flex items-center justify-center gap-2 rounded-[11px] border border-input bg-card px-4 py-2.5 text-sm font-semibold leading-none transition hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50";
@@ -882,26 +884,26 @@ export default function QuotePreviewPage({
         : "Envoyer le devis";
 
   return (
-    <section className="space-y-6">
-      <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)] print:hidden">
-        <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+    <section className="space-y-[22px]">
+      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[var(--surface-shadow)] print:hidden">
+        <div className="flex flex-col gap-6 px-5 py-5 sm:px-6 xl:flex-row xl:items-center xl:justify-between">
           <div className="min-w-0">
             <Link
               href={`/prospects/${quote.prospectId}`}
-              className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground transition hover:text-primary"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className="h-3.5 w-3.5" />
               Retour au prospect
             </Link>
-            <div className="mt-3 flex flex-wrap items-center gap-3">
-              <h1 className="text-2xl font-bold">Prévisualisation du devis</h1>
+            <div className="mt-3 flex flex-wrap items-center gap-2.5">
+              <h1 className="text-2xl font-bold">{quote.title}</h1>
               <StatusBadge
                 label={quoteStatusLabel(quote.status)}
                 tone={quoteStatusTone(quote.status)}
               />
             </div>
             <p className="mt-2 text-sm font-medium text-muted-foreground">
-              {quote.quoteNumber ?? quote.id.slice(0, 8)} · {quote.title} ·{" "}
+              Devis {quote.quoteNumber ?? quote.id.slice(0, 8)} pour{" "}
               {prospect.company ?? prospect.name}
             </p>
           </div>
@@ -926,9 +928,50 @@ export default function QuotePreviewPage({
             </a>
           </div>
         </div>
+        <div className="grid border-t border-border bg-[hsl(var(--emerald-tint))]/45 sm:grid-cols-3">
+          <div className="flex items-center gap-3 px-5 py-4 sm:px-6">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] border border-[hsl(var(--emerald-soft))] bg-card text-primary">
+              <UserRound className="h-4 w-4" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-muted-foreground">Client</p>
+              <p className="mt-0.5 truncate text-sm font-semibold">
+                {prospect.company ?? prospect.name}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 border-t border-border px-5 py-4 sm:border-l sm:border-t-0 sm:px-6">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] border border-[hsl(var(--emerald-soft))] bg-card text-primary">
+              <CalendarDays className="h-4 w-4" />
+            </span>
+            <div>
+              <p className="text-xs font-medium text-muted-foreground">
+                Validité
+              </p>
+              <p className="mt-0.5 text-sm font-semibold">
+                {formatDate(quote.validUntil)}
+              </p>
+            </div>
+          </div>
+          <div className="border-t border-border px-5 py-4 sm:border-l sm:border-t-0 sm:px-6 sm:text-right">
+            <p className="text-xs font-medium text-muted-foreground">
+              Montant total
+            </p>
+            <p className="mt-1 text-[28px] font-bold leading-none text-primary">
+              {formatAmount(totalAmount, quote.currency)}
+            </p>
+          </div>
+        </div>
       </div>
 
-      <div className="flex flex-col gap-2 rounded-2xl border border-border bg-card p-3 shadow-[var(--surface-shadow)] print:hidden sm:flex-row sm:flex-wrap">
+      <div className="rounded-2xl border border-border bg-card p-4 shadow-[var(--surface-shadow)] print:hidden sm:p-5">
+        <div className="mb-4">
+          <h2 className="text-[15px] font-bold">Actions du devis</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Envoyez le devis ou mettez à jour son avancement.
+          </p>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
         <button
           type="button"
           onClick={() => {
@@ -1013,10 +1056,11 @@ export default function QuotePreviewPage({
             )}
           </>
         )}
+        </div>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
-        <div className="quote-print-area mx-auto w-full max-w-5xl rounded-2xl border border-border bg-white p-5 text-slate-950 shadow-[var(--surface-shadow)] sm:p-8 lg:p-10 print:max-w-none print:border-0 print:p-0 print:shadow-none">
+        <div className="quote-print-area mx-auto w-full max-w-5xl rounded-2xl border border-border bg-white p-5 text-slate-950 shadow-[0_14px_40px_-18px_rgba(7,55,42,0.22),0_1px_2px_rgba(7,55,42,0.06)] sm:p-8 lg:p-10 print:max-w-none print:border-0 print:p-0 print:shadow-none">
           <div className="flex flex-col gap-8 border-b border-slate-200 pb-8 sm:flex-row sm:items-start sm:justify-between">
             <div>
               {preferences?.logoUrl ? (
@@ -1114,7 +1158,7 @@ export default function QuotePreviewPage({
           </div>
 
           <div className="py-8">
-            <div className="overflow-x-auto rounded-xl border border-slate-200">
+            <div className="overflow-x-auto rounded-2xl border border-slate-200 shadow-[0_1px_2px_rgba(7,55,42,0.04)]">
               <table className="w-full min-w-[720px] border-collapse text-sm">
                 <thead>
                   <tr className="border-b border-slate-200 bg-[hsl(var(--emerald-tint))] text-left text-primary">
@@ -1148,9 +1192,9 @@ export default function QuotePreviewPage({
                     return (
                       <tr
                         key={line.id}
-                        className="border-b border-slate-200 align-top last:border-0"
+                        className="border-b border-slate-200 align-top transition last:border-0 hover:bg-slate-50"
                       >
-                        <td className="px-4 py-4 font-medium text-slate-900">
+                        <td className="px-4 py-4 font-semibold text-slate-900">
                           {isEditing ? (
                             <textarea
                               required
@@ -1166,7 +1210,7 @@ export default function QuotePreviewPage({
                           )}
                         </td>
 
-                        <td className="px-4 py-4 text-right">
+                        <td className="px-4 py-4 text-right text-slate-600">
                           {isEditing ? (
                             <input
                               required
@@ -1184,7 +1228,7 @@ export default function QuotePreviewPage({
                           )}
                         </td>
 
-                        <td className="px-4 py-4 text-right">
+                        <td className="px-4 py-4 text-right text-slate-600">
                           {isEditing ? (
                             <input
                               required
@@ -1202,7 +1246,7 @@ export default function QuotePreviewPage({
                           )}
                         </td>
 
-                        <td className="px-4 py-4 text-right font-medium">
+                        <td className="px-4 py-4 text-right font-bold text-slate-900">
                           {formatAmount(
                             isEditing ? editedTotal : line.total,
                             quote.currency,
@@ -1264,10 +1308,10 @@ export default function QuotePreviewPage({
             </div>
 
             <div className="mt-6 flex justify-end">
-              <div className="w-full max-w-sm rounded-xl border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))] p-5">
-                <div className="flex justify-between gap-6 text-sm">
-                  <span className="font-medium text-slate-600">Total</span>
-                  <span className="text-lg font-bold text-primary">
+              <div className="w-full max-w-sm rounded-2xl border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))] p-5 shadow-[0_1px_2px_rgba(7,55,42,0.06)]">
+                <div className="flex items-end justify-between gap-6 text-sm">
+                  <span className="font-medium text-slate-600">Total devis</span>
+                  <span className="text-2xl font-bold leading-none text-primary">
                     {formatAmount(totalAmount, quote.currency)}
                   </span>
                 </div>
@@ -1309,15 +1353,22 @@ export default function QuotePreviewPage({
         </div>
 
         <aside className="quote-print-hidden min-w-0 space-y-4 print:hidden xl:sticky xl:top-24 xl:self-start">
-          <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)]">
-            <h2 className="text-[17px] font-bold">Relances liées au devis</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Générez, relisez puis validez. Rien ne part sans approbation.
-            </p>
+          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[var(--surface-shadow)]">
+            <div className="flex items-start gap-3 border-b border-border px-5 py-5">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))] text-primary">
+                <Sparkles className="h-[18px] w-[18px]" />
+              </span>
+              <div>
+                <h2 className="text-[17px] font-bold">Relances associées</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Générez, relisez puis validez avant tout envoi.
+                </p>
+              </div>
+            </div>
 
             <form
               onSubmit={handleGenerateReminder}
-              className="mt-4 space-y-3 rounded-xl border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))] p-4"
+              className="m-4 space-y-3 rounded-xl border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))]/70 p-4"
             >
               <div>
                 <label className="block text-xs font-semibold text-foreground">
@@ -1389,11 +1440,11 @@ export default function QuotePreviewPage({
             </form>
 
             {reminders.length === 0 ? (
-              <p className="mt-4 rounded-xl border border-dashed bg-background p-4 text-sm text-muted-foreground">
+              <p className="m-4 rounded-xl border border-dashed bg-background p-4 text-sm text-muted-foreground">
                 Aucune relance générée pour ce devis.
               </p>
             ) : (
-              <div className="mt-4 space-y-3">
+              <div className="space-y-3 border-t border-border bg-[hsl(var(--emerald-tint))]/25 p-4">
                 {reminders.map((reminder) => {
                   const isEditing = editingReminderId === reminder.id;
                   const isScheduling = schedulingReminderId === reminder.id;
@@ -1412,7 +1463,7 @@ export default function QuotePreviewPage({
                   return (
                     <div
                       key={reminder.id}
-                      className="rounded-xl border border-border bg-background p-4 text-sm"
+                      className="rounded-xl border border-border bg-card p-4 text-sm shadow-[var(--surface-shadow)]"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
@@ -1448,7 +1499,7 @@ export default function QuotePreviewPage({
                             </div>
                           ) : (
                             <>
-                              <p className="font-semibold text-foreground">
+                              <p className="font-bold text-foreground">
                                 {reminder.subject}
                               </p>
                               <p className="mt-2 line-clamp-4 whitespace-pre-line text-xs text-muted-foreground">
@@ -1470,7 +1521,7 @@ export default function QuotePreviewPage({
                         </p>
                       )}
 
-                      <div className="mt-3 space-y-1 rounded-lg bg-muted/40 p-3 text-xs text-muted-foreground">
+                      <div className="mt-3 space-y-1 rounded-lg border border-border bg-[hsl(var(--emerald-tint))]/45 p-3 text-xs text-muted-foreground">
                         <p>Créée le : {formatDate(reminder.createdAt)}</p>
                         <p>Approuvée le : {formatDate(reminder.approvedAt)}</p>
                         <p>
