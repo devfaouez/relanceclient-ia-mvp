@@ -52,11 +52,14 @@ const TONE_OPTIONS = Object.keys(REMINDER_TONE_LABELS);
 const cardClass =
   "rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)] sm:p-6";
 
-const inputClass =
-  "mt-1.5 w-full rounded-[11px] border border-input bg-card px-3 py-2.5 text-sm outline-none transition focus:border-primary focus:ring-4 focus:ring-[hsl(var(--emerald-soft))] disabled:opacity-50";
+const fieldClass =
+  "w-full rounded-[20px] border border-input bg-card px-4 text-sm shadow-[var(--surface-shadow)] outline-none transition focus:border-primary focus:ring-[3px] focus:ring-[hsl(var(--emerald-soft))] disabled:opacity-50";
 
-const selectClass =
-  "h-[44px] w-full appearance-none rounded-[20px] border border-input bg-card px-4 pr-10 text-sm shadow-[var(--surface-shadow)] outline-none transition focus:border-primary focus:ring-[3px] focus:ring-[hsl(var(--emerald-soft))] disabled:opacity-50";
+const inputClass = `mt-1.5 h-[44px] ${fieldClass}`;
+
+const selectClass = `h-[44px] appearance-none pr-10 ${fieldClass}`;
+
+const textareaClass = `mt-1.5 py-3 ${fieldClass}`;
 
 const primaryButtonClass =
   "inline-flex items-center justify-center gap-2 rounded-[11px] bg-primary px-4 py-2.5 text-sm font-semibold leading-none text-primary-foreground shadow-[var(--surface-shadow)] transition hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-[0_14px_40px_-18px_rgba(7,55,42,0.28)] disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-50";
@@ -484,7 +487,7 @@ export default function SettingsPage() {
                   onChange={(e) =>
                     updateCompanyField("companyAddress", e.target.value)
                   }
-                  className={inputClass}
+                  className={textareaClass}
                 />
               </div>
 
@@ -540,7 +543,7 @@ export default function SettingsPage() {
                   updateCompanyField("signatureBlock", e.target.value)
                 }
                 placeholder={"Cordialement,\nVotre nom\nVotre entreprise"}
-                className={inputClass}
+                className={textareaClass}
               />
             </div>
 
@@ -562,7 +565,7 @@ export default function SettingsPage() {
                   updateCompanyField("quoteFooter", e.target.value)
                 }
                 placeholder="Conditions, mentions légales, délai de validité du devis..."
-                className={inputClass}
+                className={textareaClass}
               />
             </div>
 
