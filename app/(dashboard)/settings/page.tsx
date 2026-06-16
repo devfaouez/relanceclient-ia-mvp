@@ -589,8 +589,7 @@ export default function SettingsPage() {
         )}
 
         <aside className="space-y-5 lg:sticky lg:top-24 lg:self-start">
-          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[var(--surface-shadow)]">
-            <div className="p-5 sm:p-6">
+          <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)] sm:p-6">
             <div className="flex items-start gap-3">
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))] text-primary">
                 <Mail className="h-5 w-5" />
@@ -604,20 +603,22 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <div className={cardClass}>
-            <div className="flex items-start gap-3">
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))] text-primary">
-                <Settings2 className="h-5 w-5" />
-              </span>
-              <div>
-                <h2 className="text-[17px] font-bold">Configuration Resend</h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  État de l’expéditeur utilisé pour les emails.
-                </p>
+          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[var(--surface-shadow)]">
+            <div className="p-5 sm:p-6">
+              <div className="flex items-start gap-3">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))] text-primary">
+                  <Settings2 className="h-5 w-5" />
+                </span>
+                <div className="min-w-0">
+                  <h2 className="text-[17px] font-bold">
+                    Configuration Resend
+                  </h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    État de l’expéditeur utilisé pour les emails.
+                  </p>
+                </div>
               </div>
             </div>
-            </div>
-
             <dl className="space-y-0 border-t border-border bg-[hsl(var(--emerald-tint))]/30 text-sm">
               <div className="px-5 py-4 sm:px-6">
                 <div className="flex items-center justify-between gap-4">

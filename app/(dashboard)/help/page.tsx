@@ -168,7 +168,7 @@ function InternalLink({
   return (
     <Link
       href={href}
-      className="rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted"
+      className="inline-flex items-center justify-center rounded-[11px] border border-input bg-card px-3.5 py-2 text-sm font-semibold shadow-[var(--surface-shadow)] transition hover:border-primary hover:text-primary"
     >
       {children}
     </Link>
@@ -177,42 +177,69 @@ function InternalLink({
 
 export default function HelpPage() {
   return (
-    <section className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Aide</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-            Parcours rapide pour créer un devis, envoyer le PDF puis suivre les
-            relances jusqu&apos;à leur envoi.
-          </p>
-        </div>
+    <section className="space-y-[22px]">
+      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[var(--surface-shadow)]">
+        <div className="grid gap-5 px-5 py-5 sm:px-6 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-center">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-primary">
+              Guide opérationnel
+            </p>
+            <h2 className="mt-2 text-[22px] font-bold">
+              Parcours complet de relance
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
+              Les repères essentiels pour créer un prospect, préparer un devis,
+              envoyer le PDF et suivre les relances jusqu&apos;à leur envoi.
+            </p>
+          </div>
 
-        <Link
-          href="/dashboard"
-          className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted"
-        >
-          Retour dashboard
-        </Link>
+          <div className="rounded-2xl border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))]/70 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-primary">
+              Démarrage
+            </p>
+            <p className="mt-2 text-[30px] font-bold leading-none">
+              {workflowSteps.length}
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              étapes pour tester le flux complet.
+            </p>
+          </div>
+        </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
-        <div className="rounded-lg border bg-card p-5">
-          <h2 className="font-semibold">Workflow conseillé</h2>
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.75fr)]">
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)] sm:p-6">
+          <div className="flex items-start gap-3">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))] text-primary">
+              <Activity className="h-5 w-5" />
+            </span>
+            <div>
+              <h2 className="text-[17px] font-bold">Workflow conseillé</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Ordre recommandé pour valider le parcours commercial.
+              </p>
+            </div>
+          </div>
           <div className="mt-5 grid gap-3 md:grid-cols-2">
             {workflowSteps.map((step, index) => {
               const Icon = step.icon;
 
               return (
-                <div key={step.title} className="rounded-md border p-4">
+                <div
+                  key={step.title}
+                  className="rounded-xl border border-border bg-[hsl(var(--emerald-tint))]/35 p-4"
+                >
                   <div className="flex items-start gap-3">
-                    <span className="rounded-md bg-muted p-2 text-primary">
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] border border-[hsl(var(--emerald-soft))] bg-card text-primary">
                       <Icon className="h-4 w-4" />
                     </span>
                     <div className="min-w-0">
-                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      <p className="text-xs font-semibold uppercase tracking-[0.08em] text-primary">
                         Étape {index + 1}
                       </p>
-                      <h3 className="mt-1 font-medium">{step.title}</h3>
+                      <h3 className="mt-1 break-words text-sm font-bold">
+                        {step.title}
+                      </h3>
                       <p className="mt-1 text-sm leading-6 text-muted-foreground">
                         {step.description}
                       </p>
@@ -230,15 +257,30 @@ export default function HelpPage() {
           </div>
         </div>
 
-        <div className="rounded-lg border bg-card p-5">
-          <h2 className="font-semibold">Checklist de démarrage</h2>
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)] sm:p-6">
+          <div className="flex items-start gap-3">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))] text-primary">
+              <CheckCircle2 className="h-5 w-5" />
+            </span>
+            <div>
+              <h2 className="text-[17px] font-bold">Checklist de démarrage</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Pré-requis avant les premiers tests.
+              </p>
+            </div>
+          </div>
           <ul className="mt-4 space-y-3">
             {checklist.map((item) => (
-              <li key={item.title} className="rounded-md border p-4">
+              <li
+                key={item.title}
+                className="rounded-xl border border-border bg-[hsl(var(--emerald-tint))]/35 p-4"
+              >
                 <div className="flex gap-3">
                   <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-                  <div>
-                    <h3 className="text-sm font-medium">{item.title}</h3>
+                  <div className="min-w-0">
+                    <h3 className="break-words text-sm font-bold">
+                      {item.title}
+                    </h3>
                     <p className="mt-1 text-sm leading-6 text-muted-foreground">
                       {item.description}
                     </p>
@@ -256,9 +298,9 @@ export default function HelpPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_1fr]">
-        <div className="rounded-lg border bg-card p-5">
-          <h2 className="font-semibold">Checklist bêta</h2>
+      <div className="grid gap-5 lg:grid-cols-2">
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)] sm:p-6">
+          <h2 className="text-[17px] font-bold">Checklist bêta</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             À cocher avant d&apos;inviter les premiers utilisateurs à tester le
             parcours complet.
@@ -266,16 +308,21 @@ export default function HelpPage() {
 
           <ul className="mt-4 grid gap-2 sm:grid-cols-2">
             {betaChecklist.map((item) => (
-              <li key={item} className="flex gap-2 rounded-md border px-3 py-2">
+              <li
+                key={item}
+                className="flex gap-2 rounded-xl border border-border bg-[hsl(var(--emerald-tint))]/35 px-3 py-2.5"
+              >
                 <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                <span className="text-sm">{item}</span>
+                <span className="min-w-0 break-words text-sm">{item}</span>
               </li>
             ))}
           </ul>
         </div>
 
-        <div className="rounded-lg border bg-card p-5">
-          <h2 className="font-semibold">Test de production recommandé</h2>
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)] sm:p-6">
+          <h2 className="text-[17px] font-bold">
+            Test de production recommandé
+          </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Faites un test court de bout en bout avec une adresse que vous
             maîtrisez avant d&apos;envoyer à un vrai client.
@@ -283,11 +330,16 @@ export default function HelpPage() {
 
           <div className="mt-4 space-y-3">
             {productionTestSteps.map((step, index) => (
-              <div key={step.title} className="rounded-md border p-4">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <div
+                key={step.title}
+                className="rounded-xl border border-border bg-[hsl(var(--emerald-tint))]/35 p-4"
+              >
+                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-primary">
                   Test {index + 1}
                 </p>
-                <h3 className="mt-1 text-sm font-medium">{step.title}</h3>
+                <h3 className="mt-1 break-words text-sm font-bold">
+                  {step.title}
+                </h3>
                 <p className="mt-1 text-sm leading-6 text-muted-foreground">
                   {step.description}
                 </p>
@@ -303,11 +355,13 @@ export default function HelpPage() {
         </div>
       </div>
 
-      <div className="rounded-lg border bg-card p-5">
+      <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)] sm:p-6">
         <div className="flex gap-3">
-          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))] text-primary">
+            <AlertTriangle className="h-5 w-5" />
+          </span>
           <div>
-            <h2 className="font-semibold">Problèmes fréquents</h2>
+            <h2 className="text-[17px] font-bold">Problèmes fréquents</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Les blocages les plus courants se règlent depuis les prospects,
               les paramètres ou le suivi d&apos;activité.
@@ -317,8 +371,11 @@ export default function HelpPage() {
 
         <div className="mt-5 grid gap-3 md:grid-cols-2">
           {frequentIssues.map((issue) => (
-            <div key={issue.title} className="rounded-md border p-4">
-              <h3 className="font-medium">{issue.title}</h3>
+            <div
+              key={issue.title}
+              className="rounded-xl border border-border bg-[hsl(var(--emerald-tint))]/35 p-4"
+            >
+              <h3 className="break-words text-sm font-bold">{issue.title}</h3>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 {issue.description}
               </p>
@@ -333,13 +390,13 @@ export default function HelpPage() {
         </div>
       </div>
 
-      <div className="rounded-lg border bg-card p-5">
+      <div className="rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)] sm:p-6">
         <div className="flex items-center gap-3">
-          <span className="rounded-md bg-muted p-2 text-primary">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))] text-primary">
             <Settings className="h-5 w-5" />
           </span>
-          <div>
-            <h2 className="font-semibold">Accès rapides</h2>
+          <div className="min-w-0">
+            <h2 className="text-[17px] font-bold">Accès rapides</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Retrouvez les pages utiles du parcours commercial.
             </p>

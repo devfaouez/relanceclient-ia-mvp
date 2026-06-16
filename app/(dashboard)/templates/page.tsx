@@ -416,19 +416,19 @@ export default function TemplatesPage() {
           )}
         </div>
 
-        <div className="flex flex-col gap-2 sm:flex-row">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
           <button
             type="button"
             onClick={createDefaultTemplates}
             disabled={creatingDefaults || saving}
-            className={secondaryButtonClass}
+            className={`${secondaryButtonClass} w-full sm:w-auto`}
           >
             {creatingDefaults ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Sparkles className="h-4 w-4" />
             )}
-            <span className="truncate">
+            <span className="min-w-0 truncate">
               {creatingDefaults
                 ? "Création..."
                 : "Créer les modèles par défaut"}
@@ -439,7 +439,7 @@ export default function TemplatesPage() {
             type="button"
             onClick={startNewTemplate}
             disabled={creatingDefaults}
-            className={primaryButtonClass}
+            className={`${primaryButtonClass} w-full sm:w-auto`}
           >
             <Plus className="h-4 w-4" />
             Nouveau modèle
@@ -727,7 +727,7 @@ export default function TemplatesPage() {
                   <span>Modifié le {formatDate(template.updatedAt)}</span>
                 </div>
 
-                <div className="mt-4 flex flex-wrap gap-2">
+                <div className="mt-4 flex flex-wrap gap-2 sm:[&>button]:flex-none [&>button]:flex-1">
                   <button
                     type="button"
                     onClick={() => startEditTemplate(template)}

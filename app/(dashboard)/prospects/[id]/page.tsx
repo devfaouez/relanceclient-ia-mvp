@@ -739,9 +739,9 @@ export default function ProspectDetailPage({
                   <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[13px] border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))] text-primary">
                     <UserRound className="h-5 w-5" />
                   </span>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2.5">
-                      <h1 className="truncate text-2xl font-bold">
+                      <h1 className="min-w-0 break-words text-2xl font-bold">
                         {prospect.name}
                       </h1>
                       <StatusBadge
@@ -1085,13 +1085,13 @@ export default function ProspectDetailPage({
                   />
                 </div>
                 <div className="mt-4">
-                  <p className="text-[15px] font-bold">{q.title}</p>
+                  <p className="break-words text-[15px] font-bold">{q.title}</p>
                   <p className="mt-1 text-xs font-medium text-muted-foreground">
                     {q.quoteNumber ?? "Numéro à générer"} ·{" "}
                     {formatDate(q.createdAt)}
                   </p>
                 </div>
-                <p className="mt-5 text-2xl font-bold text-primary">
+                <p className="mt-5 break-words text-2xl font-bold text-primary">
                   {quoteTotal(q) > 0
                     ? formatAmount(quoteTotal(q), q.currency)
                     : "Montant à définir"}
@@ -1199,7 +1199,9 @@ export default function ProspectDetailPage({
                       ) : (
                         <>
                           <div className="space-y-1">
-                            <p className="text-[15px] font-bold">{r.subject}</p>
+                            <p className="break-words text-[15px] font-bold">
+                              {r.subject}
+                            </p>
                             <p className="text-xs text-muted-foreground">
                               Devis lié :{" "}
                               {quote ? (
@@ -1216,7 +1218,7 @@ export default function ProspectDetailPage({
                           </div>
                           <div className="space-y-2">
                             <p
-                              className={`whitespace-pre-line rounded-xl border border-border bg-[hsl(var(--emerald-tint))]/45 p-4 text-xs leading-5 text-muted-foreground ${
+                              className={`break-words whitespace-pre-line rounded-xl border border-border bg-[hsl(var(--emerald-tint))]/45 p-4 text-xs leading-5 text-muted-foreground ${
                                 expandedReminderIds.has(r.id)
                                   ? ""
                                   : "line-clamp-3"
@@ -1291,7 +1293,7 @@ export default function ProspectDetailPage({
                       )}
                     </div>
 
-                    <div className="flex w-full shrink-0 flex-wrap gap-2 sm:w-auto sm:flex-col sm:items-end">
+                    <div className="flex w-full shrink-0 flex-wrap gap-2 sm:w-auto sm:flex-col sm:items-end sm:[&>button]:flex-none [&>button]:flex-1">
                       {editingReminderId === r.id && (
                         <StatusBadge
                           label={reminderStatusLabel(r.status)}
@@ -1556,11 +1558,11 @@ export default function ProspectDetailPage({
       {/* Formulaire d'ajout de devis */}
       <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[var(--surface-shadow)]">
         <div className="flex flex-col gap-4 border-b border-border px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <div>
-          <h2 className="text-[17px] font-bold">Créer un nouveau devis</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Créez un brouillon ou un devis prêt à suivre depuis cette fiche.
-          </p>
+          <div className="min-w-0">
+            <h2 className="text-[17px] font-bold">Créer un nouveau devis</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Créez un brouillon ou un devis prêt à suivre depuis cette fiche.
+            </p>
           </div>
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[13px] border border-[hsl(var(--emerald-soft))] bg-[hsl(var(--emerald-tint))] text-primary">
             <FileText className="h-5 w-5" />
@@ -1572,7 +1574,7 @@ export default function ProspectDetailPage({
           className="grid gap-4 px-5 py-5 sm:grid-cols-2 sm:px-6 lg:grid-cols-[minmax(0,1fr)_220px_220px]"
         >
           {formError && (
-            <p className="rounded-xl border border-destructive/20 bg-destructive/5 p-3 text-sm font-medium text-destructive">
+            <p className="rounded-xl border border-destructive/20 bg-destructive/5 p-3 text-sm font-medium text-destructive sm:col-span-2 lg:col-span-3">
               {formError}
             </p>
           )}

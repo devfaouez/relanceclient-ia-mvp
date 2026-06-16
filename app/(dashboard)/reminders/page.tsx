@@ -521,7 +521,7 @@ export default function RemindersPage() {
 
   return (
     <section className="space-y-[22px]">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         {!loading && !error ? (
           <p className="text-[13px] font-medium text-muted-foreground">
             {reminderCountLabel(filteredRows.length)} sur {rows.length} au total
@@ -531,39 +531,39 @@ export default function RemindersPage() {
           type="button"
           onClick={loadReminders}
           disabled={loading}
-          className="inline-flex items-center justify-center gap-2 rounded-[11px] border border-input bg-card px-4 py-2.5 text-sm font-semibold shadow-[var(--surface-shadow)] transition hover:border-primary hover:text-primary disabled:opacity-50"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-[11px] border border-input bg-card px-4 py-2.5 text-sm font-semibold shadow-[var(--surface-shadow)] transition hover:border-primary hover:text-primary disabled:opacity-50 sm:w-auto"
         >
           <RefreshCw className="h-4 w-4" />
           Rafraîchir
         </button>
       </div>
 
-      <div className="rounded-2xl border border-border bg-card px-6 py-[22px] shadow-[var(--surface-shadow)]">
+      <div className="rounded-2xl border border-border bg-card px-5 py-[22px] shadow-[var(--surface-shadow)] sm:px-6">
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-[repeat(4,1fr)_160px] lg:items-center">
           <MetricCard label="À approuver" value={pendingApprovalCount} tone="amber" />
           <MetricCard label="Programmées" value={scheduledCount} tone="blue" />
           <MetricCard label="Envoyées" value={sentCount} tone="green" />
           <MetricCard label="Échec" value={failedCount} tone="red" />
           <div>
-          <p className="text-[13px] font-medium text-muted-foreground">
-            Affichage
-          </p>
-          <div className="relative mt-2 w-full lg:w-[160px]">
-            <select
-              value={displayFilter}
-              onChange={(event) =>
-                setDisplayFilter(event.target.value as DisplayFilter)
-              }
-              className={filterSelectClass}
-            >
-              {DISPLAY_FILTERS.map((filter) => (
-                <option key={filter.value} value={filter.value}>
-                  {filter.label}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          </div>
+            <p className="text-[13px] font-medium text-muted-foreground">
+              Affichage
+            </p>
+            <div className="relative mt-2 w-full lg:w-[160px]">
+              <select
+                value={displayFilter}
+                onChange={(event) =>
+                  setDisplayFilter(event.target.value as DisplayFilter)
+                }
+                className={filterSelectClass}
+              >
+                {DISPLAY_FILTERS.map((filter) => (
+                  <option key={filter.value} value={filter.value}>
+                    {filter.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            </div>
           </div>
         </div>
       </div>
@@ -704,7 +704,7 @@ export default function RemindersPage() {
                     </span>
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-2 lg:max-w-[250px] lg:justify-end">
+                <div className="flex flex-wrap gap-2 sm:[&>button]:flex-none [&>button]:flex-1 lg:max-w-[250px] lg:justify-end">
                           {row.status === "SCHEDULED" && (
                             <>
                               <button

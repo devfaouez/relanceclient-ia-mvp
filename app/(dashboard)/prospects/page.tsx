@@ -53,7 +53,7 @@ function statusTone(status: string) {
 function StatusBadge({ status }: { status: string }) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${statusTone(
+      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${statusTone(
         status,
       )}`}
     >
@@ -299,7 +299,7 @@ export default function ProspectsPage() {
               className="group rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)] transition hover:-translate-y-0.5 hover:border-[hsl(var(--emerald-soft))] hover:shadow-[0_14px_40px_-18px_rgba(7,55,42,0.22)]"
             >
               <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="truncate text-[15px] font-bold">{p.name}</p>
                   <p className="mt-1 truncate text-[13px] text-muted-foreground">
                     {p.company ?? "Particulier"}
@@ -311,7 +311,7 @@ export default function ProspectsPage() {
                 <p className="truncate">{p.email ?? "Email non renseigné"}</p>
                 <p>{p.phone ?? "Téléphone non renseigné"}</p>
               </div>
-              <div className="mt-5 flex items-center justify-between border-t border-border pt-3 text-xs text-muted-foreground">
+              <div className="mt-5 flex flex-col gap-2 border-t border-border pt-3 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
                 <span>Créé le {formatDate(p.createdAt)}</span>
                 <ArrowUpRight className="h-4 w-4 text-primary transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </div>

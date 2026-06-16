@@ -65,7 +65,7 @@ function statusTone(status: string) {
 function StatusBadge({ status }: { status: string }) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${statusTone(
+      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${statusTone(
         status,
       )}`}
     >
@@ -367,7 +367,7 @@ export default function QuotesPage() {
               className="rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)] transition hover:border-[hsl(var(--emerald-soft))] hover:shadow-[0_14px_40px_-18px_rgba(7,55,42,0.22)]"
             >
               <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <p className="text-xs font-medium text-muted-foreground">
                     {quote.quoteNumber ?? "Sans numéro"}
                   </p>
@@ -380,7 +380,7 @@ export default function QuotesPage() {
                 </div>
                 <StatusBadge status={quote.status} />
               </div>
-              <div className="mt-5 flex items-end justify-between gap-4">
+              <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div className="min-w-0">
                   <p className="text-xs text-muted-foreground">Prospect associé</p>
                   <Link
@@ -390,11 +390,11 @@ export default function QuotesPage() {
                     {prospectDisplayName(quote)}
                   </Link>
                 </div>
-                <p className="shrink-0 text-[24px] font-bold leading-none text-primary">
+                <p className="break-words text-[24px] font-bold leading-none text-primary sm:shrink-0 sm:text-right">
                   {formatAmount(quote.totalAmount, quote.currency)}
                 </p>
               </div>
-              <div className="mt-5 flex items-center justify-between gap-3 border-t border-border pt-3 text-xs text-muted-foreground">
+              <div className="mt-5 flex flex-col gap-2 border-t border-border pt-3 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
                 <span>Créé le {formatDate(quote.createdAt)}</span>
                 <span>Validité : {formatDate(quote.validUntil)}</span>
                 <Link href={`/quotes/${quote.id}`} aria-label={`Voir ${quote.title}`}>

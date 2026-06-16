@@ -896,13 +896,15 @@ export default function QuotePreviewPage({
               Retour au prospect
             </Link>
             <div className="mt-3 flex flex-wrap items-center gap-2.5">
-              <h1 className="text-2xl font-bold">{quote.title}</h1>
+              <h1 className="min-w-0 break-words text-2xl font-bold">
+                {quote.title}
+              </h1>
               <StatusBadge
                 label={quoteStatusLabel(quote.status)}
                 tone={quoteStatusTone(quote.status)}
               />
             </div>
-            <p className="mt-2 text-sm font-medium text-muted-foreground">
+            <p className="mt-2 break-words text-sm font-medium text-muted-foreground">
               Devis {quote.quoteNumber ?? quote.id.slice(0, 8)} pour{" "}
               {prospect.company ?? prospect.name}
             </p>
@@ -1099,7 +1101,7 @@ export default function QuotePreviewPage({
               </div>
             </div>
 
-            <div className="sm:text-right">
+            <div className="min-w-0 sm:text-right">
               <p className="text-3xl font-extrabold uppercase tracking-wide">
                 Devis
               </p>
@@ -1144,16 +1146,18 @@ export default function QuotePreviewPage({
               <div className="mt-3 space-y-1 text-sm">
                 <p className="font-semibold">{prospect.name}</p>
                 {prospect.company && <p>{prospect.company}</p>}
-                {prospect.email && <p>{prospect.email}</p>}
+                {prospect.email && <p className="break-words">{prospect.email}</p>}
                 {prospect.phone && <p>{prospect.phone}</p>}
               </div>
             </div>
 
-            <div>
+            <div className="min-w-0">
               <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
                 Objet du devis
               </h3>
-              <p className="mt-3 text-sm font-medium">{quote.title}</p>
+              <p className="mt-3 break-words text-sm font-medium">
+                {quote.title}
+              </p>
             </div>
           </div>
 
@@ -1206,7 +1210,9 @@ export default function QuotePreviewPage({
                               className="w-full rounded-[10px] border border-slate-300 px-3 py-2 text-sm font-normal outline-none focus:border-primary focus:ring-4 focus:ring-[hsl(var(--emerald-soft))]"
                             />
                           ) : (
-                            line.description
+                            <span className="break-words">
+                              {line.description}
+                            </span>
                           )}
                         </td>
 
@@ -1499,10 +1505,10 @@ export default function QuotePreviewPage({
                             </div>
                           ) : (
                             <>
-                              <p className="font-bold text-foreground">
+                              <p className="break-words font-bold text-foreground">
                                 {reminder.subject}
                               </p>
-                              <p className="mt-2 line-clamp-4 whitespace-pre-line text-xs text-muted-foreground">
+                              <p className="mt-2 line-clamp-4 break-words whitespace-pre-line text-xs text-muted-foreground">
                                 {reminder.body}
                               </p>
                             </>
@@ -1551,7 +1557,7 @@ export default function QuotePreviewPage({
                         </div>
                       )}
 
-                      <div className="mt-3 flex flex-wrap gap-2">
+                      <div className="mt-3 flex flex-wrap gap-2 sm:[&>button]:flex-none [&>button]:flex-1">
                         {isEditing ? (
                           <>
                             <button
