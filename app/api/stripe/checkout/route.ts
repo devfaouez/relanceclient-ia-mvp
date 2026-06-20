@@ -4,6 +4,11 @@ import {
   UnauthorizedError,
 } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import {
+  createBillingPortalSession,
+  getProPriceId,
+  type BillingCycle,
+} from "@/lib/stripe-billing";
 import { getStripe } from "@/lib/stripe";
 
 export const dynamic = "force-dynamic";
@@ -15,22 +20,12 @@ function getAppUrl(request: NextRequest) {
   );
 }
 
-type BillingCycle = "monthly" | "yearly";
-
 function getBillingCycle(value: unknown): BillingCycle {
   return value === "yearly" ? "yearly" : "monthly";
 }
 
-function getProPriceId(billingCycle: BillingCycle) {
-  if (billingCycle === "yearly") {
-    return process.env.STRIPE_PRO_YEARLY_PRICE_ID;
-  }
-
-  return (
-    process.env.STRIPE_PRO_MONTHLY_PRICE_ID ??
-    process.env.STRIPE_PRO_PRICE_ID ??
-    process.env.STRIPE_PRICE_PRO_ID
-  );
+function hasExistingSubscription(status: string) {
+  return status === "ACTIVE" || status === "TRIALING" || status === "PAST_DUE";
 }
 
 export async function POST(request: NextRequest) {
@@ -72,6 +67,25 @@ export async function POST(request: NextRequest) {
     }
 
     const { dbUser } = await requireCurrentUserWithDb();
+    const appUrl = getAppUrl(request);
+
+    if (
+      dbUser.stripeCustomerId &&
+      hasExistingSubscription(dbUser.subscriptionStatus)
+    ) {
+      const portalSession = await createBillingPortalSession({
+        stripe,
+        customerId: dbUser.stripeCustomerId,
+        returnUrl: `${appUrl}/account`,
+        subscriptionId: dbUser.stripeSubscriptionId,
+        targetBillingCycle:
+          dbUser.stripeSubscriptionId && billingCycle === "yearly"
+            ? "yearly"
+            : undefined,
+      });
+
+      return NextResponse.json({ url: portalSession.url, mode: "portal" });
+    }
 
     let stripeCustomerId = dbUser.stripeCustomerId;
 
@@ -92,7 +106,6 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const appUrl = getAppUrl(request);
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer: stripeCustomerId,

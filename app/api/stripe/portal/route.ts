@@ -3,6 +3,7 @@ import {
   requireCurrentUserWithDb,
   UnauthorizedError,
 } from "@/lib/auth";
+import { createBillingPortalSession } from "@/lib/stripe-billing";
 import { getStripe } from "@/lib/stripe";
 
 export const dynamic = "force-dynamic";
@@ -12,6 +13,12 @@ function getAppUrl(request: NextRequest) {
     /\/$/,
     ""
   );
+}
+
+type PortalAction = "manage" | "switch_to_yearly";
+
+function getPortalAction(value: unknown): PortalAction {
+  return value === "switch_to_yearly" ? "switch_to_yearly" : "manage";
 }
 
 export async function POST(request: NextRequest) {
@@ -26,6 +33,18 @@ export async function POST(request: NextRequest) {
     }
 
     const { dbUser } = await requireCurrentUserWithDb();
+    let body: unknown = {};
+    try {
+      body = await request.json();
+    } catch {
+      body = {};
+    }
+
+    const bodyRecord =
+      body && typeof body === "object" && !Array.isArray(body) ? body : {};
+    const action = getPortalAction(
+      "action" in bodyRecord ? bodyRecord.action : undefined
+    );
 
     if (!dbUser.stripeCustomerId) {
       return NextResponse.json(
@@ -37,10 +56,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (action === "switch_to_yearly" && !dbUser.stripeSubscriptionId) {
+      return NextResponse.json(
+        {
+          error:
+            "Aucun abonnement Stripe actif n'est associé à ce compte. Passez d'abord au plan Pro.",
+        },
+        { status: 400 }
+      );
+    }
+
     const appUrl = getAppUrl(request);
-    const session = await stripe.billingPortal.sessions.create({
-      customer: dbUser.stripeCustomerId,
-      return_url: `${appUrl}/account`,
+    const session = await createBillingPortalSession({
+      stripe,
+      customerId: dbUser.stripeCustomerId,
+      returnUrl: `${appUrl}/account`,
+      subscriptionId: dbUser.stripeSubscriptionId,
+      targetBillingCycle:
+        action === "switch_to_yearly" ? "yearly" : undefined,
     });
 
     return NextResponse.json({ url: session.url });

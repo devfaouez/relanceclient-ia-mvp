@@ -12,6 +12,9 @@ import {
 } from "lucide-react";
 import { formatDate } from "@/lib/formatters";
 
+type BillingCycle = "monthly" | "yearly";
+type PortalAction = "manage" | "switch_to_yearly";
+
 type Subscription = {
   plan: "FREE" | "PRO";
   subscriptionStatus:
@@ -23,6 +26,8 @@ type Subscription = {
   currentPeriodEnd: string | null;
   stripeCustomerId: string | null;
   stripeSubscriptionId: string | null;
+  billingCycle: BillingCycle | null;
+  canSwitchToYearly: boolean;
 };
 
 type Usage = {
@@ -33,8 +38,6 @@ type Usage = {
   aiRemindersUsedThisMonth: number;
   maxAiRemindersPerMonth: number | null;
 };
-
-type BillingCycle = "monthly" | "yearly";
 
 const planLabels: Record<Subscription["plan"], string> = {
   FREE: "Gratuit",
@@ -47,6 +50,11 @@ const statusLabels: Record<Subscription["subscriptionStatus"], string> = {
   ACTIVE: "Actif",
   PAST_DUE: "Paiement en retard",
   CANCELED: "Annulé",
+};
+
+const billingCycleLabels: Record<BillingCycle, string> = {
+  monthly: "Mensuel",
+  yearly: "Annuel",
 };
 
 const cardClass =
@@ -164,12 +172,13 @@ export default function AccountPage() {
   const [checkoutLoading, setCheckoutLoading] = useState<BillingCycle | null>(
     null,
   );
-  const [portalLoading, setPortalLoading] = useState(false);
+  const [portalLoading, setPortalLoading] = useState<PortalAction | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   const paymentSuccess = searchParams.get("success") === "1";
   const paymentCanceled = searchParams.get("canceled") === "1";
+  const subscriptionUpdated = searchParams.get("updated") === "1";
 
   useEffect(() => {
     Promise.all([
@@ -230,13 +239,17 @@ export default function AccountPage() {
     }
   }
 
-  async function openBillingPortal() {
+  async function openBillingPortal(action: PortalAction = "manage") {
     setCheckoutError(null);
-    setPortalLoading(true);
+    setPortalLoading(action);
 
     try {
       const response = await fetch("/api/stripe/portal", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ action }),
       });
       const data = (await response.json()) as { url?: string; error?: string };
 
@@ -258,7 +271,7 @@ export default function AccountPage() {
           ? e.message
           : "Impossible d'ouvrir le portail Stripe. Vérifiez sa configuration.",
       );
-      setPortalLoading(false);
+      setPortalLoading(null);
     }
   }
 
@@ -320,6 +333,13 @@ export default function AccountPage() {
           </FeedbackMessage>
         ) : null}
 
+        {subscriptionUpdated ? (
+          <FeedbackMessage tone="success">
+            Modification d&apos;abonnement confirmée. La période sera mise à
+            jour dès réception du webhook Stripe.
+          </FeedbackMessage>
+        ) : null}
+
         {checkoutError ? (
           <FeedbackMessage tone="error">{checkoutError}</FeedbackMessage>
         ) : null}
@@ -339,6 +359,13 @@ export default function AccountPage() {
                 <h2 className="mt-1 text-[32px] font-bold leading-none text-primary">
                   {planLabels[subscription.plan]}
                 </h2>
+                {subscription.plan === "PRO" ? (
+                  <p className="mt-2 text-sm font-semibold text-muted-foreground">
+                    {subscription.billingCycle
+                      ? billingCycleLabels[subscription.billingCycle]
+                      : "Périodicité non disponible"}
+                  </p>
+                ) : null}
               </div>
             </div>
 
@@ -421,25 +448,49 @@ export default function AccountPage() {
                 </button>
               </div>
             ) : (
-              <button
-                type="button"
-                onClick={openBillingPortal}
-                disabled={portalLoading}
-                className={`mt-5 w-full ${primaryButtonClass} sm:w-auto lg:w-full`}
-              >
-                {portalLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <ArrowUpRight className="h-4 w-4" />
-                )}
-                Gérer l&apos;abonnement
-              </button>
+              <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                {subscription.canSwitchToYearly ? (
+                  <button
+                    type="button"
+                    onClick={() => openBillingPortal("switch_to_yearly")}
+                    disabled={portalLoading !== null}
+                    className={primaryButtonClass}
+                  >
+                    {portalLoading === "switch_to_yearly" ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ArrowUpRight className="h-4 w-4" />
+                    )}
+                    Passer à l&apos;annuel
+                  </button>
+                ) : null}
+
+                <button
+                  type="button"
+                  onClick={() => openBillingPortal("manage")}
+                  disabled={portalLoading !== null}
+                  className={
+                    subscription.canSwitchToYearly
+                      ? secondaryButtonClass
+                      : `w-full ${primaryButtonClass} sm:w-auto lg:w-full`
+                  }
+                >
+                  {portalLoading === "manage" ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <ArrowUpRight className="h-4 w-4" />
+                  )}
+                  Gérer l&apos;abonnement
+                </button>
+              </div>
             )}
 
             <p className="mt-4 text-xs text-muted-foreground">
               {subscription.plan === "FREE"
                 ? "Le checkout ouvre une session Stripe sécurisée."
-                : "Le portail Stripe permet de modifier l'abonnement et de consulter les factures."}
+                : subscription.canSwitchToYearly
+                  ? "Le passage à l'annuel ouvre Stripe sur la confirmation du changement de période."
+                  : "Le portail Stripe permet de modifier l'abonnement et de consulter les factures."}
             </p>
           </div>
         </div>
