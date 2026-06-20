@@ -937,7 +937,7 @@ export default function QuotePreviewPage({
             </span>
             <div className="min-w-0">
               <p className="text-xs font-medium text-muted-foreground">Client</p>
-              <p className="mt-0.5 truncate text-sm font-semibold">
+              <p className="mt-0.5 break-words text-sm font-semibold">
                 {prospect.company ?? prospect.name}
               </p>
             </div>
@@ -959,7 +959,7 @@ export default function QuotePreviewPage({
             <p className="text-xs font-medium text-muted-foreground">
               Montant total
             </p>
-            <p className="mt-1 text-[28px] font-bold leading-none text-primary">
+            <p className="mt-1 break-words text-[28px] font-bold leading-none text-primary">
               {formatAmount(totalAmount, quote.currency)}
             </p>
           </div>

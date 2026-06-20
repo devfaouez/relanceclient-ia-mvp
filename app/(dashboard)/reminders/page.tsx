@@ -670,14 +670,16 @@ export default function RemindersPage() {
                       Créée le {formatDate(row.createdAt)}
                     </span>
                   </div>
-                  <h2 className="mt-3 text-[17px] font-bold">{row.subject}</h2>
+                  <h2 className="mt-3 break-words text-[17px] font-bold">
+                    {row.subject}
+                  </h2>
                   <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-[13px] text-muted-foreground">
                     <span>
                       Prospect :{" "}
                       {row.prospect ? (
                         <Link
                           href={`/prospects/${row.prospect.id}`}
-                          className="font-semibold text-foreground hover:text-primary"
+                          className="break-words font-semibold text-foreground hover:text-primary"
                         >
                           {prospectDisplayName(row)}
                         </Link>
@@ -688,7 +690,7 @@ export default function RemindersPage() {
                       {row.quote ? (
                         <Link
                           href={`/quotes/${row.quote.id}`}
-                          className="font-semibold text-foreground hover:text-primary"
+                          className="break-words font-semibold text-foreground hover:text-primary"
                         >
                           {quoteDisplayName(row)}
                         </Link>
@@ -812,7 +814,7 @@ export default function RemindersPage() {
                 <p className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-primary">
                   Contenu de la relance
                 </p>
-                <div className="whitespace-pre-line rounded-xl border border-border bg-card p-4 text-sm leading-6 text-[#364740]">
+                <div className="break-words whitespace-pre-line rounded-xl border border-border bg-card p-4 text-sm leading-6 text-[#364740]">
                   {row.body}
                 </div>
               </div>

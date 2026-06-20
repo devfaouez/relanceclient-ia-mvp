@@ -347,7 +347,7 @@ export default function HomePage() {
           <Eyebrow>Suivi de devis & relances pour artisans</Eyebrow>
           <h1 className="mt-5 [font-family:var(--font-display)] text-[clamp(40px,5.4vw,62px)] font-extrabold leading-[1.04] tracking-normal text-[#15201c]">
             Ne laissez plus jamais un{" "}
-            <span className="whitespace-nowrap text-[#0d8a66]">
+            <span className="text-[#0d8a66] sm:whitespace-nowrap">
               devis s&apos;endormir
             </span>
             .

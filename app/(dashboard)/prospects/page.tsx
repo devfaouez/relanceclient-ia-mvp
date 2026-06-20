@@ -300,16 +300,18 @@ export default function ProspectsPage() {
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[15px] font-bold">{p.name}</p>
-                  <p className="mt-1 truncate text-[13px] text-muted-foreground">
+                  <p className="break-words text-[15px] font-bold">{p.name}</p>
+                  <p className="mt-1 break-words text-[13px] text-muted-foreground">
                     {p.company ?? "Particulier"}
                   </p>
                 </div>
                 <StatusBadge status={p.status} />
               </div>
               <div className="mt-5 space-y-1.5 text-[13px] text-muted-foreground">
-                <p className="truncate">{p.email ?? "Email non renseigné"}</p>
-                <p>{p.phone ?? "Téléphone non renseigné"}</p>
+                <p className="break-all">{p.email ?? "Email non renseigné"}</p>
+                <p className="break-words">
+                  {p.phone ?? "Téléphone non renseigné"}
+                </p>
               </div>
               <div className="mt-5 flex flex-col gap-2 border-t border-border pt-3 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
                 <span>Créé le {formatDate(p.createdAt)}</span>

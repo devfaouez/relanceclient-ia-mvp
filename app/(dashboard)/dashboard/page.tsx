@@ -125,7 +125,7 @@ function StatCard({
 
         <div className="min-w-0">
           <p
-            className={`truncate text-[clamp(30px,3.4vw,38px)] font-bold leading-none tracking-normal ${
+            className={`break-words text-[clamp(30px,3.4vw,38px)] font-bold leading-none tracking-normal ${
               accent ? "text-primary" : ""
             }`}
           >

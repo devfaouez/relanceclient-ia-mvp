@@ -90,7 +90,7 @@ function MetricCard({
     <div className="min-h-[124px] rounded-2xl border border-border bg-card p-5 shadow-[var(--surface-shadow)]">
       <p className="text-[13px] font-medium text-muted-foreground">{label}</p>
       <p
-        className={`mt-2 truncate text-[32px] font-bold leading-none tracking-normal ${
+        className={`mt-2 break-words text-[32px] font-bold leading-none tracking-normal ${
           accent ? "text-primary" : ""
         }`}
       >
@@ -373,7 +373,7 @@ export default function QuotesPage() {
                   </p>
                   <Link
                     href={`/quotes/${quote.id}`}
-                    className="mt-1 block truncate text-[16px] font-bold hover:text-primary"
+                    className="mt-1 block break-words text-[16px] font-bold hover:text-primary"
                   >
                     {quote.title}
                   </Link>
@@ -385,7 +385,7 @@ export default function QuotesPage() {
                   <p className="text-xs text-muted-foreground">Prospect associé</p>
                   <Link
                     href={`/prospects/${quote.prospect.id}`}
-                    className="mt-1 block truncate text-sm font-semibold hover:text-primary"
+                    className="mt-1 block break-words text-sm font-semibold hover:text-primary"
                   >
                     {prospectDisplayName(quote)}
                   </Link>

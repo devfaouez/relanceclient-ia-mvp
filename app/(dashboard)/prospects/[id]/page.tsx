@@ -840,7 +840,7 @@ export default function ProspectDetailPage({
                   <dt className="text-xs font-medium text-muted-foreground">
                     Email
                   </dt>
-                  <dd className="mt-1 truncate font-semibold">
+                  <dd className="mt-1 break-all font-semibold">
                     {prospect.email ?? "Non renseigné"}
                   </dd>
                 </div>
@@ -866,7 +866,7 @@ export default function ProspectDetailPage({
                   <dt className="text-xs font-medium text-muted-foreground">
                     Société
                   </dt>
-                  <dd className="mt-1 truncate font-semibold">
+                  <dd className="mt-1 break-words font-semibold">
                     {prospect.company ?? "Particulier"}
                   </dd>
                 </div>
@@ -1207,7 +1207,7 @@ export default function ProspectDetailPage({
                               {quote ? (
                                 <Link
                                   href={`/quotes/${quote.id}`}
-                                  className="font-semibold text-primary hover:underline"
+                                  className="break-words font-semibold text-primary hover:underline"
                                 >
                                   {quoteDisplayName(quote)}
                                 </Link>

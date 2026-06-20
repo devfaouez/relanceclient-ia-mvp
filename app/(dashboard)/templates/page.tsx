@@ -705,7 +705,7 @@ export default function TemplatesPage() {
               </div>
 
               <div className="min-w-0 flex-1 px-5 pb-5 pt-4">
-                <h2 className="truncate text-[17px] font-bold">
+                <h2 className="line-clamp-2 break-words text-[17px] font-bold">
                   {template.name}
                 </h2>
                 <div className="mt-4 rounded-xl border border-border bg-[hsl(var(--emerald-tint))]/45 p-3.5">
