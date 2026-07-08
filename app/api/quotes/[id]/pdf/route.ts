@@ -1,12 +1,10 @@
-import React from "react";
 import { NextRequest, NextResponse } from "next/server";
-import { pdf } from "@react-pdf/renderer";
 import { prisma } from "@/lib/prisma";
 import {
   requireCurrentUserWithDb,
   UnauthorizedError,
 } from "@/lib/auth";
-import { QuotePdfDocument } from "@/lib/pdf/quote-pdf";
+import { renderQuotePdfBuffer } from "@/lib/pdf/render-quote-pdf";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -46,29 +44,7 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
       },
     });
 
-    let buffer: NodeJS.ReadableStream | Buffer;
-
-    try {
-      buffer = await pdf(
-        React.createElement(QuotePdfDocument, {
-          quote,
-          preferences,
-        }) as React.ReactElement
-      ).toBuffer();
-    } catch (error) {
-      if (!preferences?.logoUrl) {
-        throw error;
-      }
-
-      console.warn("QUOTE_PDF_LOGO_ERROR:", error);
-
-      buffer = await pdf(
-        React.createElement(QuotePdfDocument, {
-          quote,
-          preferences: { ...preferences, logoUrl: null },
-        }) as React.ReactElement
-      ).toBuffer();
-    }
+    const buffer = await renderQuotePdfBuffer(quote, preferences);
 
     const filename = `devis-${quote.quoteNumber ?? quote.id.slice(0, 8)}.pdf`;
 

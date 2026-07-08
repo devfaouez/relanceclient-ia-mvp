@@ -1,4 +1,5 @@
 /* eslint-disable jsx-a11y/alt-text */
+import { Buffer } from "node:buffer";
 import React from "react";
 import {
   Document,
@@ -24,7 +25,7 @@ type QuoteLine = {
   sortOrder: number;
 };
 
-type Quote = {
+export type QuotePdfQuote = {
   id: string;
   quoteNumber: string | null;
   title: string;
@@ -39,7 +40,7 @@ type Quote = {
   lines: QuoteLine[];
 };
 
-type Preferences = {
+export type QuotePdfPreferences = {
   businessName: string | null;
   logoUrl: string | null;
   companyAddress: string | null;
@@ -48,6 +49,20 @@ type Preferences = {
   companyWebsite: string | null;
   quoteFooter: string | null;
 } | null;
+
+const SUPPORTED_LOGO_CONTENT_TYPES = new Set([
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+]);
+
+const LOGO_CONTENT_TYPE_BY_EXTENSION: Record<string, string> = {
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".png": "image/png",
+  ".webp": "image/webp",
+};
 
 const styles = StyleSheet.create({
   page: {
@@ -305,7 +320,71 @@ function isPdfCompatibleLogoUrl(value: string | null | undefined) {
   }
 }
 
-function getLines(quote: Quote) {
+function inferLogoContentType(logoUrl: string) {
+  try {
+    const { pathname } = new URL(logoUrl);
+    const extension = pathname.match(/\.[a-z0-9]+$/i)?.[0].toLowerCase();
+    return extension ? LOGO_CONTENT_TYPE_BY_EXTENSION[extension] ?? null : null;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchLogoDataUri(logoUrl: string) {
+  const response = await fetch(logoUrl, { cache: "no-store" });
+
+  if (!response.ok) {
+    throw new Error(`Logo request failed with status ${response.status}`);
+  }
+
+  const responseContentType = response.headers
+    .get("content-type")
+    ?.split(";")[0]
+    .trim()
+    .toLowerCase();
+  const contentType =
+    responseContentType && SUPPORTED_LOGO_CONTENT_TYPES.has(responseContentType)
+      ? responseContentType
+      : inferLogoContentType(logoUrl);
+
+  if (!contentType || !SUPPORTED_LOGO_CONTENT_TYPES.has(contentType)) {
+    throw new Error(
+      `Unsupported logo content type: ${responseContentType ?? "unknown"}`
+    );
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+  const base64 = Buffer.from(arrayBuffer).toString("base64");
+
+  return `data:${contentType};base64,${base64}`;
+}
+
+export async function prepareQuotePdfPreferences(
+  preferences: QuotePdfPreferences
+): Promise<QuotePdfPreferences> {
+  const logoUrl = cleanText(preferences?.logoUrl);
+
+  if (!preferences || !logoUrl) {
+    return preferences;
+  }
+
+  if (!isPdfCompatibleLogoUrl(logoUrl)) {
+    return { ...preferences, logoUrl: null };
+  }
+
+  if (/^data:image\/(png|jpe?g|webp);base64,/i.test(logoUrl)) {
+    return { ...preferences, logoUrl };
+  }
+
+  try {
+    return { ...preferences, logoUrl: await fetchLogoDataUri(logoUrl) };
+  } catch (error) {
+    console.warn("QUOTE_PDF_LOGO_FETCH_ERROR:", error);
+    return { ...preferences, logoUrl: null };
+  }
+}
+
+function getLines(quote: QuotePdfQuote) {
   if (quote.lines.length > 0) {
     return quote.lines.map((line) => {
       const quantity = toNumber(line.quantity);
@@ -338,8 +417,8 @@ export function QuotePdfDocument({
   quote,
   preferences,
 }: {
-  quote: Quote;
-  preferences: Preferences;
+  quote: QuotePdfQuote;
+  preferences: QuotePdfPreferences;
 }) {
   const lines = getLines(quote);
   const total = lines.reduce((sum, line) => sum + line.total, 0);

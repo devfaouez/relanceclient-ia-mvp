@@ -1,6 +1,4 @@
-import React from "react";
 import { NextRequest, NextResponse } from "next/server";
-import { pdf } from "@react-pdf/renderer";
 import { QuoteStatus } from "@prisma/client";
 import { Resend } from "resend";
 import { prisma } from "@/lib/prisma";
@@ -8,7 +6,7 @@ import {
   requireCurrentUserWithDb,
   UnauthorizedError,
 } from "@/lib/auth";
-import { QuotePdfDocument } from "@/lib/pdf/quote-pdf";
+import { renderQuotePdfBuffer } from "@/lib/pdf/render-quote-pdf";
 import {
   buildQuoteEmailHtml,
   buildQuoteEmailText,
@@ -37,36 +35,6 @@ function quoteSendError(message: string, status: number) {
     },
     { status }
   );
-}
-
-async function readableToBuffer(stream: NodeJS.ReadableStream) {
-  const chunks: Buffer[] = [];
-
-  return new Promise<Buffer>((resolve, reject) => {
-    stream.on("data", (chunk: Buffer | string) => {
-      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
-    });
-    stream.on("end", () => resolve(Buffer.concat(chunks)));
-    stream.on("error", reject);
-  });
-}
-
-async function renderQuotePdfBuffer(
-  quote: Parameters<typeof QuotePdfDocument>[0]["quote"],
-  preferences: Parameters<typeof QuotePdfDocument>[0]["preferences"]
-) {
-  const output = await pdf(
-    React.createElement(QuotePdfDocument, {
-      quote,
-      preferences,
-    }) as React.ReactElement
-  ).toBuffer();
-
-  if (Buffer.isBuffer(output)) {
-    return output;
-  }
-
-  return readableToBuffer(output);
 }
 
 export async function POST(_request: NextRequest, { params }: RouteContext) {
@@ -124,19 +92,7 @@ export async function POST(_request: NextRequest, { params }: RouteContext) {
     let pdfBuffer: Buffer;
 
     try {
-      try {
-        pdfBuffer = await renderQuotePdfBuffer(quote, preferences);
-      } catch (error) {
-        if (!preferences?.logoUrl) {
-          throw error;
-        }
-
-        console.warn("QUOTE_SEND_PDF_LOGO_ERROR:", error);
-        pdfBuffer = await renderQuotePdfBuffer(quote, {
-          ...preferences,
-          logoUrl: null,
-        });
-      }
+      pdfBuffer = await renderQuotePdfBuffer(quote, preferences);
     } catch (error) {
       console.error("QUOTE_SEND_PDF_ERROR:", error);
       return quoteSendError(
