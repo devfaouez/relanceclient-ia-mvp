@@ -5,6 +5,7 @@ dist
 build
 .env
 .env*.local
+!.env.example
 *.log
 prisma/dev.db
 coverage
