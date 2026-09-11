@@ -67,26 +67,49 @@ function mapSubscriptionStatus(status: Stripe.Subscription.Status): {
   }
 }
 
-async function syncSubscription(subscription: Stripe.Subscription) {
+async function resolveSubscriptionUser(subscription: Stripe.Subscription) {
   const customerId = stripeId(subscription.customer);
-  const mapped = mapSubscriptionStatus(subscription.status);
-  const userId = subscription.metadata.userId;
+  const userId = subscription.metadata.userId?.trim();
 
-  const where = userId
-    ? { id: userId }
-    : subscription.id
-      ? { stripeSubscriptionId: subscription.id }
-      : customerId
-        ? { stripeCustomerId: customerId }
-        : null;
+  if (userId) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
 
-  if (!where) {
-    console.warn("STRIPE_WEBHOOK_NO_USER_REFERENCE:", subscription.id);
-    return;
+    if (user) return user;
   }
 
+  if (subscription.id) {
+    const user = await prisma.user.findUnique({
+      where: { stripeSubscriptionId: subscription.id },
+    });
+
+    if (user) return user;
+  }
+
+  if (customerId) {
+    const user = await prisma.user.findUnique({
+      where: { stripeCustomerId: customerId },
+    });
+
+    if (user) return user;
+  }
+
+  console.warn("STRIPE_WEBHOOK_NO_USER_REFERENCE:", {
+    customerId,
+    subscriptionId: subscription.id,
+  });
+  return null;
+}
+
+async function syncSubscription(subscription: Stripe.Subscription) {
+  const user = await resolveSubscriptionUser(subscription);
+
+  if (!user) return;
+
+  const customerId = stripeId(subscription.customer);
+  const mapped = mapSubscriptionStatus(subscription.status);
+
   await prisma.user.update({
-    where,
+    where: { id: user.id },
     data: {
       stripeCustomerId: customerId ?? undefined,
       stripeSubscriptionId: subscription.id,
@@ -118,24 +141,14 @@ async function handleCheckoutCompleted(
 }
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
+  const user = await resolveSubscriptionUser(subscription);
+
+  if (!user) return;
+
   const customerId = stripeId(subscription.customer);
-  const userId = subscription.metadata.userId;
-
-  const where = userId
-    ? { id: userId }
-    : subscription.id
-      ? { stripeSubscriptionId: subscription.id }
-      : customerId
-        ? { stripeCustomerId: customerId }
-        : null;
-
-  if (!where) {
-    console.warn("STRIPE_WEBHOOK_NO_USER_REFERENCE:", subscription.id);
-    return;
-  }
 
   await prisma.user.update({
-    where,
+    where: { id: user.id },
     data: {
       plan: SubscriptionPlan.FREE,
       subscriptionStatus: SubscriptionStatus.CANCELED,
