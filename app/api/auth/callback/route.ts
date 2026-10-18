@@ -4,10 +4,35 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
+const DEFAULT_REDIRECT_PATH = "/dashboard";
+
+/**
+ * N'accepte qu'un chemin relatif interne (ex. "/dashboard?tab=1").
+ * Rejette "//evil.com", "/\\evil.com", "@evil.com", "https://..." etc.
+ * pour éviter les redirections ouvertes.
+ */
+function getSafeRedirectPath(value: string | null, origin: string) {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) {
+    return DEFAULT_REDIRECT_PATH;
+  }
+
+  if (value.includes("\\") || /[\u0000-\u001f]/.test(value)) {
+    return DEFAULT_REDIRECT_PATH;
+  }
+
+  try {
+    const url = new URL(value, origin);
+    if (url.origin !== origin) return DEFAULT_REDIRECT_PATH;
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return DEFAULT_REDIRECT_PATH;
+  }
+}
+
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/dashboard";
+  const next = getSafeRedirectPath(searchParams.get("next"), origin);
 
   if (!code) {
     return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`);

@@ -87,12 +87,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Réservation atomique : empêche un double envoi (double clic, onglets).
+    const claimedAt = new Date();
+    const claim = await prisma.reminder.updateMany({
+      where: {
+        id: reminder.id,
+        status: reminder.status,
+        sentAt: null,
+      },
+      data: { sentAt: claimedAt },
+    });
+
+    if (claim.count === 0) {
+      return NextResponse.json(
+        { error: "La relance est déjà en cours d'envoi" },
+        { status: 409 }
+      );
+    }
+
     try {
       await sendReminderEmail(reminder, dbUser.id);
     } catch (error) {
       await prisma.reminder.update({
         where: { id: reminder.id },
-        data: { status: ReminderStatus.FAILED },
+        data: { status: ReminderStatus.FAILED, sentAt: null },
       });
 
       if (error instanceof ReminderEmailConfigurationError) {
@@ -115,7 +133,7 @@ export async function POST(request: NextRequest) {
 
     const updated = await prisma.reminder.update({
       where: { id: reminder.id },
-      data: { status: ReminderStatus.SENT, sentAt: new Date() },
+      data: { status: ReminderStatus.SENT, sentAt: claimedAt },
     });
 
     return NextResponse.json(updated);

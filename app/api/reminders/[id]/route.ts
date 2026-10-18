@@ -143,10 +143,42 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       );
     }
 
+    // sentAt posé sans statut SENT : envoi en cours par le cron.
+    if (existing.sentAt) {
+      return NextResponse.json(
+        { error: "La relance est en cours d'envoi" },
+        { status: 409 }
+      );
+    }
+
+    const contentChanged =
+      (parsed.data.subject !== undefined &&
+        parsed.data.subject !== existing.subject) ||
+      (parsed.data.body !== undefined && parsed.data.body !== existing.body);
+
+    // Un contenu modifié doit être revalidé : on ne programme pas un texte
+    // différent de celui qui a été approuvé.
+    if (contentChanged && parsed.data.status === ReminderStatus.SCHEDULED) {
+      return NextResponse.json(
+        {
+          error:
+            "La relance modifiée doit être approuvée à nouveau avant programmation",
+        },
+        { status: 422 }
+      );
+    }
+
     const approvalFields =
       parsed.data.status === ReminderStatus.APPROVED
         ? { approvedById: dbUser.id, approvedAt: new Date() }
-        : {};
+        : contentChanged
+          ? {
+              status: parsed.data.status ?? ReminderStatus.PENDING_APPROVAL,
+              approvedById: null,
+              approvedAt: null,
+              scheduledAt: null,
+            }
+          : {};
 
     const reminder = await prisma.reminder.update({
       where: { id: params.id },
